@@ -1,0 +1,574 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\AlatBerat;
+use App\Models\MonitoringAlatBerat;
+use App\Models\Pks;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\File;
+use Illuminate\Validation\Rule;
+use Carbon\Carbon;
+
+class OperatorMonitoringController extends Controller
+{
+    /**
+     * Mobile Home / Dashboard for Field Operator
+     */
+    public function index(Request $request)
+    {
+        $user = Auth::user();
+        $tanggal = $request->input('tanggal', date('Y-m-d'));
+
+        // Query Equipment for Operator's PKS
+        $alatBeratQuery = AlatBerat::query();
+        if ($user->id_pks) {
+            $alatBeratQuery->where('id_pks', $user->id_pks);
+        }
+        $alatBeratList = $alatBeratQuery->orderBy('kode_alat')->get();
+
+        // Query Work Logs for Operator's PKS
+        $logQuery = MonitoringAlatBerat::with(['pks', 'alatBerat']);
+        if ($user->id_pks) {
+            $logQuery->where('id_pks', $user->id_pks);
+        }
+
+        if ($request->filled('tanggal')) {
+            $logQuery->whereDate('tanggal', $request->tanggal);
+        } else {
+            // Default to today or recent 15
+            $logQuery->whereDate('tanggal', '>=', Carbon::now()->subDays(7)->toDateString());
+        }
+
+        if ($request->filled('alat_berat_id')) {
+            $logQuery->where('alat_berat_id', $request->alat_berat_id);
+        }
+
+        $logs = $logQuery->orderBy('tanggal', 'desc')->orderBy('id', 'desc')->paginate(10)->withQueryString();
+
+        // Filtered statistics matching current query period
+        $periodQuery = MonitoringAlatBerat::query();
+        if ($user->id_pks) {
+            $periodQuery->where('id_pks', $user->id_pks);
+        }
+        if ($request->filled('tanggal')) {
+            $periodQuery->whereDate('tanggal', $request->tanggal);
+        } else {
+            $periodQuery->whereDate('tanggal', '>=', Carbon::now()->subDays(7)->toDateString());
+        }
+        if ($request->filled('alat_berat_id')) {
+            $periodQuery->where('alat_berat_id', $request->alat_berat_id);
+        }
+        $periodLogs = $periodQuery->get();
+
+        $stats = [
+            'total_laporan_today' => $periodLogs->count(),
+            'total_hm_today' => round($periodLogs->sum('total_hm'), 2),
+            'total_bbm_today' => round($periodLogs->sum('bbm_liter'), 2),
+            'total_bed_today' => $periodLogs->sum('jumlah_bed'),
+            'ready_units' => $alatBeratList->where('status', 'Operational')->count(),
+            'standby_units' => $alatBeratList->where('status', 'Standby')->count(),
+        ];
+
+        return view('operator.index', compact('user', 'logs', 'alatBeratList', 'stats', 'tanggal'));
+    }
+
+    /**
+     * Helper to format HM display
+     */
+    public static function formatHmDisplay($totalHm, $hmAwal = null, $hmAkhir = null): string
+    {
+        $val = (float) $totalHm;
+        if ($val <= 0) {
+            if (!empty($hmAwal) && empty($hmAkhir)) {
+                return 'Proses';
+            }
+            return '00:00 Jam';
+        }
+
+        return MonitoringAlatBerat::formatHm($val, true);
+    }
+
+    /**
+     * Show form to create new heavy equipment work report
+     */
+    public function create()
+    {
+        $user = Auth::user();
+
+        // Get equipment filtered to Operational & Standby status
+        $alatBeratQuery = AlatBerat::query();
+        if ($user->id_pks) {
+            $alatBeratQuery->where('id_pks', $user->id_pks);
+        }
+        $alatBeratList = $alatBeratQuery->whereIn('status', ['Operational', 'Standby'])
+            ->orderBy('kode_alat')
+            ->get();
+
+        $pks = $user->pks ?? Pks::find($user->id_pks);
+
+        return view('operator.create', compact('user', 'alatBeratList', 'pks'));
+    }
+
+    /**
+     * Store new work report
+     */
+    public function store(Request $request)
+    {
+        $user = Auth::user();
+
+        $request->validate([
+            'alat_berat_id' => [
+                'required',
+                Rule::exists('alat_berat', 'id')->where(function ($q) {
+                    $q->whereIn('status', ['Operational', 'Standby']);
+                }),
+            ],
+            'tanggal' => 'required|date',
+            'operator' => 'required|string|max:100',
+            'kegiatan' => 'required|string|max:150',
+            'lokasi_blok' => 'nullable|string|max:100',
+            'flat_bed' => 'nullable|integer|min:0',
+            'long_bed' => 'nullable|integer|min:0',
+            'jumlah_bed' => 'nullable|integer|min:0',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
+            'hm_awal' => 'nullable',
+            'hm_akhir' => 'nullable',
+            'bbm_liter' => 'nullable|numeric|min:0',
+            'kondisi_alat' => 'required|in:Normal,Perlu Perbaikan,Breakdown',
+            'catatan' => 'nullable|string',
+            'foto_sebelum' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+            'foto_sesudah' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+        ]);
+
+        $idPks = $user->id_pks;
+        $uploadDir = public_path('gallery');
+        if (!File::exists($uploadDir)) {
+            File::makeDirectory($uploadDir, 0755, true);
+        }
+
+        $fotoSebelumName = null;
+        $fotoSebelumTs = null;
+        if ($request->hasFile('foto_sebelum')) {
+            $file = $request->file('foto_sebelum');
+            $fotoSebelumName = 'sebelum_' . time() . '_' . rand(1000, 9999) . '.' . $file->getClientOriginalExtension();
+            $file->move($uploadDir, $fotoSebelumName);
+            $fotoSebelumTs = Carbon::now('Asia/Jakarta')->format('Y-m-d H:i:s');
+        }
+
+        $fotoSesudahName = null;
+        $fotoSesudahTs = null;
+        if ($request->hasFile('foto_sesudah')) {
+            $file = $request->file('foto_sesudah');
+            $fotoSesudahName = 'sesudah_' . time() . '_' . rand(1000, 9999) . '.' . $file->getClientOriginalExtension();
+            $file->move($uploadDir, $fotoSesudahName);
+            $fotoSesudahTs = Carbon::now('Asia/Jakarta')->format('Y-m-d H:i:s');
+        }
+
+        // Calculate Bed total
+        $flatBed = (int) $request->input('flat_bed', 0);
+        $longBed = (int) $request->input('long_bed', 0);
+        $jumlahBed = $flatBed + $longBed;
+        if ($jumlahBed === 0 && $request->filled('jumlah_bed')) {
+            $jumlahBed = (int) $request->jumlah_bed;
+        }
+
+        // Prioritaskan input manual hm_awal (jika diisi), baru foto_sebelum
+        if ($request->filled('hm_awal')) {
+            $hmAwalTs = MonitoringAlatBerat::parseTimestamp($request->hm_awal, $request->tanggal);
+        } elseif ($request->hasFile('foto_sebelum')) {
+            $hmAwalTs = Carbon::now('Asia/Jakarta')->format('Y-m-d H:i:s');
+        } else {
+            $hmAwalTs = null;
+        }
+
+        // Prioritaskan input manual hm_akhir (jika diisi), baru foto_sesudah
+        if ($request->filled('hm_akhir')) {
+            $hmAkhirTs = MonitoringAlatBerat::parseTimestamp($request->hm_akhir, $request->tanggal);
+        } elseif ($request->hasFile('foto_sesudah')) {
+            $hmAkhirTs = Carbon::now('Asia/Jakarta')->format('Y-m-d H:i:s');
+        } else {
+            $hmAkhirTs = null;
+        }
+
+        $totalHm = 0.0;
+        $valAwalStr = str_replace(',', '.', trim((string)$request->hm_awal));
+        $valAkhirStr = str_replace(',', '.', trim((string)$request->hm_akhir));
+
+        if ($request->filled('hm_awal') && $request->filled('hm_akhir') && is_numeric($valAwalStr) && is_numeric($valAkhirStr)) {
+            $totalHm = round(max(0, (float)$valAkhirStr - (float)$valAwalStr), 2);
+        } elseif ($hmAwalTs && $hmAkhirTs) {
+            $cStart = Carbon::parse($hmAwalTs);
+            $cEnd = Carbon::parse($hmAkhirTs);
+            if ($cEnd->lessThan($cStart)) {
+                $cEnd->addDay();
+            }
+            $diffMinutes = abs($cStart->diffInMinutes($cEnd));
+            $totalHm = round($diffMinutes / 60, 2);
+        }
+
+        $log = MonitoringAlatBerat::create([
+            'id_pks' => $idPks,
+            'alat_berat_id' => $request->alat_berat_id,
+            'tanggal' => $request->tanggal,
+            'operator' => $request->operator,
+            'kegiatan' => $request->kegiatan,
+            'lokasi_blok' => $request->lokasi_blok,
+            'flat_bed' => $flatBed,
+            'long_bed' => $longBed,
+            'jumlah_bed' => $jumlahBed,
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude,
+            'hm_awal' => $hmAwalTs,
+            'hm_akhir' => $hmAkhirTs,
+            'total_hm' => $totalHm,
+            'bbm_liter' => $request->bbm_liter ?? 0,
+            'kondisi_alat' => $request->kondisi_alat,
+            'catatan' => $request->catatan,
+            'foto_sebelum' => $fotoSebelumName,
+            'foto_sesudah' => $fotoSesudahName,
+        ]);
+
+        // Auto update status alat berat if breakdown or needs maintenance
+        $alatBerat = AlatBerat::find($request->alat_berat_id);
+        if ($alatBerat) {
+            if ($request->kondisi_alat === 'Breakdown') {
+                $alatBerat->update(['status' => 'Breakdown']);
+            } elseif ($request->kondisi_alat === 'Perlu Perbaikan') {
+                $alatBerat->update(['status' => 'Maintenance']);
+            }
+        }
+
+        return redirect()->route('operator.index')->with('success', 'Laporan kerja alat berat berhasil disimpan!');
+    }
+
+    /**
+     * Display report detail
+     */
+    public function show($id)
+    {
+        $user = Auth::user();
+        $log = MonitoringAlatBerat::with(['pks', 'alatBerat'])->findOrFail($id);
+
+        if ($user->id_pks && $log->id_pks != $user->id_pks) {
+            abort(403, 'Anda tidak memiliki akses ke laporan ini.');
+        }
+
+        return view('operator.show', compact('log', 'user'));
+    }
+
+    /**
+     * Show edit form
+     */
+    public function edit($id)
+    {
+        $user = Auth::user();
+        $log = MonitoringAlatBerat::with(['pks', 'alatBerat'])->findOrFail($id);
+
+        if ($user->id_pks && $log->id_pks != $user->id_pks) {
+            abort(403, 'Anda tidak memiliki akses untuk mengubah laporan ini.');
+        }
+
+        if ($log->isCompleted()) {
+            return redirect()->route('operator.show', $log->id)
+                ->with('warning', 'Laporan pekerjaan ini telah diselesaikan dan tidak dapat diedit kembali.');
+        }
+
+        $alatBeratQuery = AlatBerat::query();
+        if ($user->id_pks) {
+            $alatBeratQuery->where('id_pks', $user->id_pks);
+        }
+        $alatBeratQuery->where(function($q) use ($log) {
+            $q->whereIn('status', ['Operational', 'Standby']);
+            if ($log->alat_berat_id) {
+                $q->orWhere('id', $log->alat_berat_id);
+            }
+        });
+        $alatBeratList = $alatBeratQuery->orderBy('kode_alat')->get();
+
+        return view('operator.edit', compact('log', 'alatBeratList', 'user'));
+    }
+
+    /**
+     * Update report
+     */
+    public function update(Request $request, $id)
+    {
+        $user = Auth::user();
+        $log = MonitoringAlatBerat::findOrFail($id);
+
+        if ($user->id_pks && $log->id_pks != $user->id_pks) {
+            abort(403, 'Anda tidak memiliki akses untuk mengubah laporan ini.');
+        }
+
+        if ($log->isCompleted()) {
+            return redirect()->route('operator.show', $log->id)
+                ->with('warning', 'Laporan pekerjaan ini telah diselesaikan dan tidak dapat diperbarui kembali.');
+        }
+
+        $request->validate([
+            'alat_berat_id' => [
+                'required',
+                Rule::exists('alat_berat', 'id')->where(function ($q) use ($log) {
+                    $q->whereIn('status', ['Operational', 'Standby']);
+                    if ($log->alat_berat_id) {
+                        $q->orWhere('id', $log->alat_berat_id);
+                    }
+                }),
+            ],
+            'tanggal' => 'required|date',
+            'operator' => 'required|string|max:100',
+            'kegiatan' => 'required|string|max:150',
+            'lokasi_blok' => 'nullable|string|max:100',
+            'flat_bed' => 'nullable|integer|min:0',
+            'long_bed' => 'nullable|integer|min:0',
+            'jumlah_bed' => 'nullable|integer|min:0',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
+            'hm_awal' => 'nullable',
+            'hm_akhir' => 'nullable',
+            'bbm_liter' => 'nullable|numeric|min:0',
+            'kondisi_alat' => 'required|in:Normal,Perlu Perbaikan,Breakdown',
+            'catatan' => 'nullable|string',
+            'foto_sebelum' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+            'foto_sesudah' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+        ]);
+
+        $uploadDir = public_path('gallery');
+
+        $fotoSebelumName = $log->foto_sebelum;
+        $fotoSebelumTs = null;
+        if ($request->hasFile('foto_sebelum')) {
+            if ($log->foto_sebelum && File::exists($uploadDir . '/' . $log->foto_sebelum)) {
+                File::delete($uploadDir . '/' . $log->foto_sebelum);
+            }
+            $file = $request->file('foto_sebelum');
+            $fotoSebelumName = 'sebelum_' . time() . '_' . rand(1000, 9999) . '.' . $file->getClientOriginalExtension();
+            $file->move($uploadDir, $fotoSebelumName);
+            $fotoSebelumTs = Carbon::now('Asia/Jakarta')->format('Y-m-d H:i:s');
+        }
+
+        $fotoSesudahName = $log->foto_sesudah;
+        $fotoSesudahTs = null;
+        if ($request->hasFile('foto_sesudah')) {
+            if ($log->foto_sesudah && File::exists($uploadDir . '/' . $log->foto_sesudah)) {
+                File::delete($uploadDir . '/' . $log->foto_sesudah);
+            }
+            $file = $request->file('foto_sesudah');
+            $fotoSesudahName = 'sesudah_' . time() . '_' . rand(1000, 9999) . '.' . $file->getClientOriginalExtension();
+            $file->move($uploadDir, $fotoSesudahName);
+            $fotoSesudahTs = Carbon::now('Asia/Jakarta')->format('Y-m-d H:i:s');
+        }
+
+        // Bed calculation
+        $flatBed = (int) $request->input('flat_bed', 0);
+        $longBed = (int) $request->input('long_bed', 0);
+        $jumlahBed = $flatBed + $longBed;
+        if ($jumlahBed === 0 && $request->filled('jumlah_bed')) {
+            $jumlahBed = (int) $request->jumlah_bed;
+        }
+
+        // HM calculation - prioritaskan input manual
+        if ($request->filled('hm_awal')) {
+            $hmAwalTs = MonitoringAlatBerat::parseTimestamp($request->hm_awal, $request->tanggal);
+        } elseif ($request->hasFile('foto_sebelum')) {
+            $hmAwalTs = Carbon::now('Asia/Jakarta')->format('Y-m-d H:i:s');
+        } else {
+            $hmAwalTs = $log->hm_awal;
+        }
+
+        if (!empty($log->hm_akhir)) {
+            $hmAkhirTs = $log->hm_akhir;
+        } elseif ($request->filled('hm_akhir')) {
+            $hmAkhirTs = MonitoringAlatBerat::parseTimestamp($request->hm_akhir, $request->tanggal);
+        } elseif ($request->hasFile('foto_sesudah')) {
+            $hmAkhirTs = Carbon::now('Asia/Jakarta')->format('Y-m-d H:i:s');
+        } else {
+            $hmAkhirTs = null;
+        }
+
+        $totalHm = $log->total_hm;
+        $valAwalStr = str_replace(',', '.', trim((string)$request->hm_awal));
+        $valAkhirStr = str_replace(',', '.', trim((string)$request->hm_akhir));
+
+        if ($request->filled('hm_awal') && $request->filled('hm_akhir') && is_numeric($valAwalStr) && is_numeric($valAkhirStr)) {
+            $totalHm = round(max(0, (float)$valAkhirStr - (float)$valAwalStr), 2);
+        } elseif ($hmAwalTs && $hmAkhirTs) {
+            $cStart = Carbon::parse($hmAwalTs);
+            $cEnd = Carbon::parse($hmAkhirTs);
+            if ($cEnd->lessThan($cStart)) {
+                $cEnd->addDay();
+            }
+            $diffMinutes = abs($cStart->diffInMinutes($cEnd));
+            $totalHm = round($diffMinutes / 60, 2);
+        }
+
+        $log->update([
+            'alat_berat_id' => $request->alat_berat_id,
+            'tanggal' => $request->tanggal,
+            'operator' => $request->operator,
+            'kegiatan' => $request->kegiatan,
+            'lokasi_blok' => $request->lokasi_blok,
+            'flat_bed' => $flatBed,
+            'long_bed' => $longBed,
+            'jumlah_bed' => $jumlahBed,
+            'latitude' => $request->latitude ?? $log->latitude,
+            'longitude' => $request->longitude ?? $log->longitude,
+            'hm_awal' => $hmAwalTs,
+            'hm_akhir' => $hmAkhirTs,
+            'total_hm' => $totalHm,
+            'bbm_liter' => $request->bbm_liter ?? $log->bbm_liter,
+            'kondisi_alat' => $request->kondisi_alat,
+            'catatan' => $request->catatan,
+            'foto_sebelum' => $fotoSebelumName,
+            'foto_sesudah' => $fotoSesudahName,
+        ]);
+
+        $alatBerat = AlatBerat::find($request->alat_berat_id);
+        if ($alatBerat) {
+            if ($request->kondisi_alat === 'Breakdown') {
+                $alatBerat->update(['status' => 'Breakdown']);
+            } elseif ($request->kondisi_alat === 'Perlu Perbaikan') {
+                $alatBerat->update(['status' => 'Maintenance']);
+            }
+        }
+
+        return redirect()->route('operator.index')->with('success', 'Laporan kerja berhasil diperbarui!');
+    }
+
+    /**
+     * Heavy Equipment Management Index for Operator / Unit
+     */
+    public function alatBeratIndex(Request $request)
+    {
+        $user = Auth::user();
+        $query = AlatBerat::query();
+
+        if ($user->id_pks) {
+            $query->where('id_pks', $user->id_pks);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('kode_alat', 'like', "%{$search}%")
+                  ->orWhere('nama_alat', 'like', "%{$search}%")
+                  ->orWhere('merk_tipe', 'like', "%{$search}%");
+            });
+        }
+
+        $alatBeratList = $query->orderBy('kode_alat')->get();
+
+        return view('operator.alat_berat', compact('user', 'alatBeratList'));
+    }
+
+    /**
+     * Store new Heavy Equipment
+     */
+    public function alatBeratStore(Request $request)
+    {
+        $user = Auth::user();
+
+        $request->validate([
+            'kode_alat' => 'required|string|max:30|unique:alat_berat,kode_alat',
+            'nama_alat' => 'required|string|max:100',
+            'jenis_alat' => 'required|in:Excavator,Wheel Loader,Bulldozer,Dump Truck,Compactor,Lainnya',
+            'merk_tipe' => 'nullable|string|max:100',
+            'tahun_pengadaan' => 'nullable|digits:4|integer|min:1900|max:' . date('Y'),
+            'status' => 'required|in:Operational,Maintenance,Breakdown,Standby,Rolling',
+            'keterangan' => 'nullable|string',
+        ]);
+
+        AlatBerat::create([
+            'id_pks' => $user->id_pks,
+            'kode_alat' => strtoupper($request->kode_alat),
+            'nama_alat' => $request->nama_alat,
+            'jenis_alat' => $request->jenis_alat,
+            'merk_tipe' => $request->merk_tipe,
+            'tahun_pengadaan' => $request->tahun_pengadaan,
+            'status' => $request->status,
+            'keterangan' => $request->keterangan,
+        ]);
+
+        return redirect()->route('operator.alat-berat.index')->with('success', 'Unit alat berat baru berhasil ditambahkan!');
+    }
+
+    /**
+     * Update Heavy Equipment details and status
+     */
+    public function alatBeratUpdate(Request $request, $id)
+    {
+        $user = Auth::user();
+        $alatBerat = AlatBerat::findOrFail($id);
+
+        if ($user->id_pks && $alatBerat->id_pks != $user->id_pks) {
+            abort(403, 'Anda tidak memiliki akses untuk mengubah unit alat berat ini.');
+        }
+
+        $request->validate([
+            'kode_alat' => 'required|string|max:30|unique:alat_berat,kode_alat,' . $id,
+            'nama_alat' => 'required|string|max:100',
+            'jenis_alat' => 'required|in:Excavator,Wheel Loader,Bulldozer,Dump Truck,Compactor,Lainnya',
+            'merk_tipe' => 'nullable|string|max:100',
+            'tahun_pengadaan' => 'nullable|digits:4|integer|min:1900|max:' . date('Y'),
+            'status' => 'required|in:Operational,Maintenance,Breakdown,Standby,Rolling',
+            'keterangan' => 'nullable|string',
+        ]);
+
+        $alatBerat->update([
+            'kode_alat' => strtoupper($request->kode_alat),
+            'nama_alat' => $request->nama_alat,
+            'jenis_alat' => $request->jenis_alat,
+            'merk_tipe' => $request->merk_tipe,
+            'tahun_pengadaan' => $request->tahun_pengadaan,
+            'status' => $request->status,
+            'keterangan' => $request->keterangan,
+        ]);
+
+        return redirect()->route('operator.alat-berat.index')->with('success', 'Data unit alat berat berhasil diperbarui!');
+    }
+
+    /**
+     * Quick status update
+     */
+    public function alatBeratUpdateStatus(Request $request, $id)
+    {
+        $user = Auth::user();
+        $alatBerat = AlatBerat::findOrFail($id);
+
+        if ($user->id_pks && $alatBerat->id_pks != $user->id_pks) {
+            abort(403, 'Anda tidak memiliki akses untuk mengubah status unit alat berat ini.');
+        }
+
+        $request->validate([
+            'status' => 'required|in:Operational,Maintenance,Breakdown,Standby,Rolling',
+        ]);
+
+        $alatBerat->update(['status' => $request->status]);
+
+        return redirect()->back()->with('success', "Status unit {$alatBerat->kode_alat} berhasil diubah menjadi {$request->status}!");
+    }
+
+    /**
+     * Delete Heavy Equipment
+     */
+    public function alatBeratDestroy($id)
+    {
+        $user = Auth::user();
+        $alatBerat = AlatBerat::findOrFail($id);
+
+        if ($user->id_pks && $alatBerat->id_pks != $user->id_pks) {
+            abort(403, 'Anda tidak memiliki akses untuk menghapus unit alat berat ini.');
+        }
+
+        $alatBerat->delete();
+
+        return redirect()->route('operator.alat-berat.index')->with('success', 'Unit alat berat berhasil dihapus!');
+    }
+}
