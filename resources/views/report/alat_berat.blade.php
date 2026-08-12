@@ -331,8 +331,21 @@
                         <td>{{ $item->operator }}</td>
                         <td>
                             {{ $item->kegiatan }} {{ $item->lokasi_blok ? '('.$item->lokasi_blok.')' : '' }}
-                            @if($item->latitude && $item->longitude)
-                                <div style="font-size: 8px; color: #4b5563;">GPS: {{ $item->latitude }}, {{ $item->longitude }}</div>
+                            @php
+                                $latAwal = $item->latitude_awal ?? $item->latitude;
+                                $longAwal = $item->longitude_awal ?? $item->longitude;
+                                $latAkhir = $item->latitude_akhir;
+                                $longAkhir = $item->longitude_akhir;
+                            @endphp
+                            @if(($latAwal && $longAwal) || ($latAkhir && $longAkhir))
+                                <div style="font-size: 8px; color: #4b5563; margin-top: 2px;">
+                                    @if($latAwal && $longAwal)
+                                        <div>GPS Awal: {{ $latAwal }}, {{ $longAwal }}</div>
+                                    @endif
+                                    @if($latAkhir && $longAkhir)
+                                        <div>GPS Akhir: {{ $latAkhir }}, {{ $longAkhir }}</div>
+                                    @endif
+                                </div>
                             @endif
                         </td>
                         <td style="text-align:center;">F: {{ $item->flat_bed ?? 0 }}<br>L: {{ $item->long_bed ?? 0 }}</td>
@@ -550,11 +563,24 @@
                                     @if($item->lokasi_blok)
                                         <div class="small text-muted">Loc: {{ $item->lokasi_blok }}</div>
                                     @endif
-                                    @if($item->latitude && $item->longitude)
-                                        <div class="mt-1">
-                                            <a href="{{ $item->google_maps_url }}" target="_blank" class="badge bg-soft-primary text-primary text-decoration-none" title="Buka di Maps">
-                                                <i class="feather-map-pin me-1"></i>{{ number_format($item->latitude, 4) }}, {{ number_format($item->longitude, 4) }}
-                                            </a>
+                                    @php
+                                        $latAwal = $item->latitude_awal ?? $item->latitude;
+                                        $longAwal = $item->longitude_awal ?? $item->longitude;
+                                        $latAkhir = $item->latitude_akhir;
+                                        $longAkhir = $item->longitude_akhir;
+                                    @endphp
+                                    @if(($latAwal && $longAwal) || ($latAkhir && $longAkhir))
+                                        <div class="mt-1 d-flex flex-wrap gap-1">
+                                            @if($latAwal && $longAwal)
+                                                <a href="{{ $item->google_maps_url_awal }}" target="_blank" class="badge bg-soft-primary text-primary text-decoration-none" title="GPS Awal Kerja">
+                                                    <i class="feather-map-pin me-1"></i>Awal: {{ number_format((float)$latAwal, 4) }}, {{ number_format((float)$longAwal, 4) }}
+                                                </a>
+                                            @endif
+                                            @if($latAkhir && $longAkhir)
+                                                <a href="{{ $item->google_maps_url_akhir }}" target="_blank" class="badge bg-soft-success text-success text-decoration-none" title="GPS Akhir Kerja">
+                                                    <i class="feather-map-pin me-1"></i>Akhir: {{ number_format((float)$latAkhir, 4) }}, {{ number_format((float)$longAkhir, 4) }}
+                                                </a>
+                                            @endif
                                         </div>
                                     @endif
                                 </td>
