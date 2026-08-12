@@ -252,7 +252,12 @@
     <header class="operator-topbar">
         <div class="d-flex align-items-center justify-content-between">
             <a href="{{ route('operator.index') }}" class="operator-brand">
-                <i class="feather-truck"></i> SIMOLII OPERATOR
+                <i class="feather-truck me-1"></i> 
+                @if(Auth::user()->isMandor())
+                    SIMOLII MANDOR
+                @else
+                    SIMOLII OPERATOR
+                @endif
             </a>
             <div class="d-flex align-items-center gap-2">
                 @if(Auth::user()->isMandor())
@@ -264,10 +269,11 @@
                         <i class="feather-user me-1"></i>OPERATOR {{ Auth::user()->pks ? Auth::user()->pks->akro : '' }}
                     </span>
                 @endif
-                <form action="{{ route('logout') }}" method="POST" class="d-inline">
+                <form action="{{ route('logout') }}" method="POST" class="d-inline ms-1" onsubmit="return confirm('Apakah Anda yakin ingin keluar dari aplikasi?');">
                     @csrf
-                    <button type="submit" class="btn btn-sm btn-outline-light rounded-circle px-2 py-1" title="Keluar">
-                        <i class="feather-log-out"></i>
+                    <button type="submit" class="btn btn-sm btn-danger text-white rounded-pill px-3 py-1 d-inline-flex align-items-center gap-1 shadow-sm border-0 fs-12 fw-bold" title="Keluar dari Aplikasi">
+                        <i class="feather-log-out fs-13"></i>
+                        <span>Keluar</span>
                     </button>
                 </form>
             </div>
