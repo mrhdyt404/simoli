@@ -18,6 +18,17 @@
     <link rel="stylesheet" type="text/css" href="{{ asset('duraluxadmin/assets/css/theme.min.css') }}" />
     @yield('styles')
     <style>
+        /* ===== Safeguard for Pagination SVG Arrows & Icons ===== */
+        .pagination svg,
+        .page-item svg,
+        nav[aria-label="Pagination Navigation"] svg,
+        nav[role="navigation"] svg {
+            max-width: 16px !important;
+            max-height: 16px !important;
+            width: 16px !important;
+            height: 16px !important;
+        }
+
         /* ===== Dark Mode Overrides for Custom SIMOLI Styles ===== */
         html.app-skin-dark .filter-card {
             border-color: #1b2436 !important;

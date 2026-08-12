@@ -23,6 +23,17 @@
             --op-text-muted: #64748B;
         }
 
+        /* ===== Safeguard for Pagination SVG Arrows & Icons ===== */
+        .pagination svg,
+        .page-item svg,
+        nav[aria-label="Pagination Navigation"] svg,
+        nav[role="navigation"] svg {
+            max-width: 16px !important;
+            max-height: 16px !important;
+            width: 16px !important;
+            height: 16px !important;
+        }
+
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
             background-color: var(--op-bg);
