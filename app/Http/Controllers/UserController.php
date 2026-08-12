@@ -56,8 +56,10 @@ class UserController extends Controller
         $totalUsers = User::count();
         $totalAdmin = User::where('level_akses', 'admin')->count();
         $totalUnit = User::where('level_akses', 'unit')->count();
+        $totalMandor = User::where('level_akses', 'mandor')->count();
+        $totalOperator = User::where('level_akses', 'operator')->count();
 
-        return view('pengguna.index', compact('users', 'totalUsers', 'totalAdmin', 'totalUnit'));
+        return view('pengguna.index', compact('users', 'totalUsers', 'totalAdmin', 'totalUnit', 'totalMandor', 'totalOperator'));
     }
 
     public function create()
@@ -74,13 +76,16 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $this->requireAdmin();
+
+        $idPksRules = ['required'];
+        if ($request->level_akses === 'unit') {
+            $idPksRules[] = Rule::unique('user', 'id_pks')->where(function($q) {
+                return $q->where('level_akses', 'unit');
+            });
+        }
+
         $validated = $request->validate([
-            'id_pks' => [
-                'required',
-                Rule::unique('user', 'id_pks')->where(function($q) use ($request) {
-                    return $q->where('level_akses', 'unit');
-                })
-            ],
+            'id_pks' => $idPksRules,
             'username' => [
                 'required',
                 Rule::unique('user', 'username')
@@ -88,8 +93,15 @@ class UserController extends Controller
             'password' => 'required',
             'level_akses' => [
                 'required',
-                Rule::in(['admin', 'unit', 'operator'])
+                Rule::in(['admin', 'unit', 'mandor', 'operator'])
             ],
+        ], [
+            'id_pks.required' => 'PKS Unit wajib dipilih.',
+            'id_pks.unique' => 'PKS ini sudah memiliki akun Unit. Hanya boleh ada 1 akun Unit per PKS.',
+            'username.required' => 'Username wajib diisi.',
+            'username.unique' => 'Username ini sudah digunakan, silakan gunakan username lain.',
+            'password.required' => 'Password wajib diisi.',
+            'level_akses.required' => 'Level Akses wajib dipilih.',
         ]);
 
         User::create($validated);
@@ -111,13 +123,16 @@ class UserController extends Controller
     {
         $this->requireAdmin();
         $user = User::findOrFail($id);
+
+        $idPksRules = ['required'];
+        if ($request->level_akses === 'unit') {
+            $idPksRules[] = Rule::unique('user', 'id_pks')->ignore($user->ID, 'ID')->where(function($q) {
+                return $q->where('level_akses', 'unit');
+            });
+        }
+
         $validated = $request->validate([
-            'id_pks' => [
-                'required',
-                Rule::unique('user', 'id_pks')->ignore($user->ID, 'ID')->where(function($q) use ($request) {
-                    return $q->where('level_akses', 'unit');
-                })
-            ],
+            'id_pks' => $idPksRules,
             'username' => [
                 'required',
                 Rule::unique('user', 'username')->ignore($user->ID, 'ID')
@@ -125,8 +140,15 @@ class UserController extends Controller
             'password' => 'required',
             'level_akses' => [
                 'required',
-                Rule::in(['admin', 'unit', 'operator'])
+                Rule::in(['admin', 'unit', 'mandor', 'operator'])
             ],
+        ], [
+            'id_pks.required' => 'PKS Unit wajib dipilih.',
+            'id_pks.unique' => 'PKS ini sudah memiliki akun Unit. Hanya boleh ada 1 akun Unit per PKS.',
+            'username.required' => 'Username wajib diisi.',
+            'username.unique' => 'Username ini sudah digunakan, silakan gunakan username lain.',
+            'password.required' => 'Password wajib diisi.',
+            'level_akses.required' => 'Level Akses wajib dipilih.',
         ]);
 
         $user->update($validated);

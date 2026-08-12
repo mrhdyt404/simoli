@@ -91,18 +91,39 @@
                                             <th class="bg-light">Total Bed Dikerjakan</th>
                                             <td><span class="badge bg-soft-primary text-primary fs-13">{{ $log->jumlah_bed }} Bed</span></td>
                                         </tr>
+                                        @php
+                                            $latAwal = $log->latitude_awal ?? $log->latitude;
+                                            $longAwal = $log->longitude_awal ?? $log->longitude;
+                                            $latAkhir = $log->latitude_akhir;
+                                            $longAkhir = $log->longitude_akhir;
+                                        @endphp
                                         <tr>
-                                            <th class="bg-light">Titik Koordinat GPS</th>
+                                            <th class="bg-light">Titik Koordinat GPS Awal</th>
                                             <td>
-                                                @if($log->latitude && $log->longitude)
+                                                @if($latAwal && $longAwal)
                                                     <div class="d-flex flex-wrap align-items-center gap-2">
-                                                        <span class="badge bg-soft-primary text-primary fs-13 text-break"><i class="feather-map-pin me-1"></i>{{ $log->latitude }}, {{ $log->longitude }}</span>
-                                                        <a href="{{ $log->google_maps_url }}" target="_blank" class="btn btn-xs btn-outline-primary text-nowrap">
-                                                            <i class="feather-external-link me-1"></i> Buka di Google Maps
+                                                        <span class="badge bg-soft-primary text-primary fs-13 text-break"><i class="feather-navigation me-1"></i>{{ $latAwal }}, {{ $longAwal }}</span>
+                                                        <a href="{{ $log->google_maps_url_awal }}" target="_blank" class="btn btn-xs btn-outline-primary text-nowrap">
+                                                            <i class="feather-external-link me-1"></i> Peta GPS Awal
                                                         </a>
                                                     </div>
                                                 @else
-                                                    <span class="text-muted fs-13">Titik koordinat tidak direkam</span>
+                                                    <span class="text-muted fs-13">Koordinat Awal tidak direkam</span>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th class="bg-light">Titik Koordinat GPS Akhir</th>
+                                            <td>
+                                                @if($latAkhir && $longAkhir)
+                                                    <div class="d-flex flex-wrap align-items-center gap-2">
+                                                        <span class="badge bg-soft-success text-success fs-13 text-break"><i class="feather-navigation me-1"></i>{{ $latAkhir }}, {{ $longAkhir }}</span>
+                                                        <a href="{{ $log->google_maps_url_akhir }}" target="_blank" class="btn btn-xs btn-outline-success text-nowrap">
+                                                            <i class="feather-external-link me-1"></i> Peta GPS Akhir
+                                                        </a>
+                                                    </div>
+                                                @else
+                                                    <span class="text-muted fs-13">Koordinat Akhir tidak direkam</span>
                                                 @endif
                                             </td>
                                         </tr>

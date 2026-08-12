@@ -321,7 +321,7 @@ class _OperatorFormPageState extends State<OperatorFormPage> {
                           const Text('Pilih Alat Berat', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                           const SizedBox(height: 6),
                           DropdownButtonFormField<int>(
-                            value: _selectedAlatId,
+                            initialValue: _selectedAlatId,
                             isExpanded: true,
                             decoration: const InputDecoration(
                               border: OutlineInputBorder(),
@@ -454,7 +454,7 @@ class _OperatorFormPageState extends State<OperatorFormPage> {
                           const Text('Kondisi Alat Berat', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                           const SizedBox(height: 6),
                           DropdownButtonFormField<String>(
-                            value: _kondisiAlat,
+                            initialValue: _kondisiAlat,
                             decoration: const InputDecoration(border: OutlineInputBorder()),
                             items: const [
                               DropdownMenuItem(value: 'Baik', child: Text('Baik (Siap Operasi)', style: TextStyle(color: Colors.green))),

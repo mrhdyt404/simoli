@@ -114,15 +114,40 @@
             </div>
         @endif
 
-        @if($log->latitude && $log->longitude)
-            <div class="mb-3 p-2 bg-light rounded border d-flex align-items-center justify-content-between">
-                <div>
-                    <span class="text-muted fs-11 d-block fw-semibold">LOKASI KOORDINAT GPS</span>
-                    <span class="fs-12 text-dark fw-bold">{{ $log->latitude }}, {{ $log->longitude }}</span>
+        @php
+            $latAwal = $log->latitude_awal ?? $log->latitude;
+            $longAwal = $log->longitude_awal ?? $log->longitude;
+            $latAkhir = $log->latitude_akhir;
+            $longAkhir = $log->longitude_akhir;
+        @endphp
+
+        @if($latAwal || $latAkhir)
+            <div class="mb-3 p-3 bg-light rounded-3 border">
+                <span class="text-muted fs-11 d-block fw-bold text-uppercase mb-2"><i class="feather-map-pin me-1 text-primary"></i>Lokasi Koordinat GPS Kerja</span>
+                <div class="row g-2">
+                    @if($latAwal && $longAwal)
+                        <div class="col-6">
+                            <div class="p-2 bg-white rounded border">
+                                <span class="fs-11 text-muted d-block fw-semibold text-primary"><i class="feather-navigation me-1"></i>GPS Awal</span>
+                                <span class="fs-12 text-dark fw-bold d-block my-1">{{ $latAwal }}, {{ $longAwal }}</span>
+                                <a href="https://maps.google.com/?q={{ $latAwal }},{{ $longAwal }}" target="_blank" class="btn btn-xs btn-outline-primary rounded-pill w-100 mt-1 fs-11">
+                                    <i class="feather-map me-1"></i>Peta Awal
+                                </a>
+                            </div>
+                        </div>
+                    @endif
+                    @if($latAkhir && $longAkhir)
+                        <div class="col-6">
+                            <div class="p-2 bg-white rounded border">
+                                <span class="fs-11 text-muted d-block fw-semibold text-success"><i class="feather-navigation me-1"></i>GPS Akhir</span>
+                                <span class="fs-12 text-dark fw-bold d-block my-1">{{ $latAkhir }}, {{ $longAkhir }}</span>
+                                <a href="https://maps.google.com/?q={{ $latAkhir }},{{ $longAkhir }}" target="_blank" class="btn btn-xs btn-outline-success rounded-pill w-100 mt-1 fs-11">
+                                    <i class="feather-map me-1"></i>Peta Akhir
+                                </a>
+                            </div>
+                        </div>
+                    @endif
                 </div>
-                <a href="https://maps.google.com/?q={{ $log->latitude }},{{ $log->longitude }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill">
-                    <i class="feather-map me-1"></i>Buka Peta
-                </a>
             </div>
         @endif
     </div>

@@ -200,11 +200,24 @@
                                                 @if($log->lokasi_blok)
                                                     <div class="small text-muted"><i class="feather-map-pin me-1"></i>{{ $log->lokasi_blok }}</div>
                                                 @endif
-                                                @if($log->latitude && $log->longitude)
-                                                    <div class="mt-1">
-                                                        <a href="{{ $log->google_maps_url }}" target="_blank" class="badge bg-soft-info text-info text-decoration-none" title="Buka Koordinat di Maps">
-                                                            <i class="feather-crosshair me-1"></i>{{ number_format($log->latitude, 4) }}, {{ number_format($log->longitude, 4) }}
-                                                        </a>
+                                                @php
+                                                    $latAwal = $log->latitude_awal ?? $log->latitude;
+                                                    $longAwal = $log->longitude_awal ?? $log->longitude;
+                                                    $latAkhir = $log->latitude_akhir;
+                                                    $longAkhir = $log->longitude_akhir;
+                                                @endphp
+                                                @if($latAwal || $latAkhir)
+                                                    <div class="mt-1 d-flex flex-wrap gap-1">
+                                                        @if($latAwal && $longAwal)
+                                                            <a href="{{ $log->google_maps_url_awal }}" target="_blank" class="badge bg-soft-primary text-primary text-decoration-none" title="GPS Awal Kerja">
+                                                                <i class="feather-navigation me-1"></i>Awal: {{ number_format((float)$latAwal, 4) }}, {{ number_format((float)$longAwal, 4) }}
+                                                            </a>
+                                                        @endif
+                                                        @if($latAkhir && $longAkhir)
+                                                            <a href="{{ $log->google_maps_url_akhir }}" target="_blank" class="badge bg-soft-success text-success text-decoration-none" title="GPS Akhir Kerja">
+                                                                <i class="feather-navigation me-1"></i>Akhir: {{ number_format((float)$latAkhir, 4) }}, {{ number_format((float)$longAkhir, 4) }}
+                                                            </a>
+                                                        @endif
                                                     </div>
                                                 @endif
                                             </td>

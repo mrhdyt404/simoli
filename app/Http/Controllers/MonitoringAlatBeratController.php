@@ -163,6 +163,10 @@ class MonitoringAlatBeratController extends Controller
             'jumlah_bed' => 'nullable|integer|min:0',
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
+            'latitude_awal' => 'nullable|numeric|between:-90,90',
+            'longitude_awal' => 'nullable|numeric|between:-180,180',
+            'latitude_akhir' => 'nullable|numeric|between:-90,90',
+            'longitude_akhir' => 'nullable|numeric|between:-180,180',
             'hm_awal' => 'nullable',
             'hm_akhir' => 'nullable',
             'bbm_liter' => 'nullable|numeric|min:0',
@@ -200,6 +204,11 @@ class MonitoringAlatBeratController extends Controller
         $longBed = $request->long_bed ?? 0;
         $jumlahBed = ($flatBed + $longBed) > 0 ? ($flatBed + $longBed) : ($request->jumlah_bed ?? 0);
 
+        $latAwal = $request->latitude_awal ?? $request->latitude;
+        $longAwal = $request->longitude_awal ?? $request->longitude;
+        $latAkhir = $request->latitude_akhir;
+        $longAkhir = $request->longitude_akhir;
+
         MonitoringAlatBerat::create([
             'id_pks' => $idPks,
             'alat_berat_id' => $request->alat_berat_id,
@@ -210,8 +219,12 @@ class MonitoringAlatBeratController extends Controller
             'flat_bed' => $flatBed,
             'long_bed' => $longBed,
             'jumlah_bed' => $jumlahBed,
-            'latitude' => $request->latitude,
-            'longitude' => $request->longitude,
+            'latitude' => $latAwal,
+            'longitude' => $longAwal,
+            'latitude_awal' => $latAwal,
+            'longitude_awal' => $longAwal,
+            'latitude_akhir' => $latAkhir,
+            'longitude_akhir' => $longAkhir,
             'hm_awal' => $hmAwalTs,
             'hm_akhir' => $hmAkhirTs,
             'total_hm' => $totalHm,
@@ -349,6 +362,10 @@ class MonitoringAlatBeratController extends Controller
             'jumlah_bed' => 'nullable|integer|min:0',
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
+            'latitude_awal' => 'nullable|numeric|between:-90,90',
+            'longitude_awal' => 'nullable|numeric|between:-180,180',
+            'latitude_akhir' => 'nullable|numeric|between:-90,90',
+            'longitude_akhir' => 'nullable|numeric|between:-180,180',
             'hm_awal' => 'nullable',
             'hm_akhir' => 'nullable',
             'bbm_liter' => 'nullable|numeric|min:0',
@@ -372,7 +389,10 @@ class MonitoringAlatBeratController extends Controller
         }
 
         $filenameSebelum = $log->foto_sebelum;
-        if ($request->hasFile('foto_sebelum')) {
+        if (!empty($log->foto_sebelum)) {
+            // Foto Sebelum dikunci jika sudah terisi untuk mencegah manipulasi data
+            $filenameSebelum = $log->foto_sebelum;
+        } elseif ($request->hasFile('foto_sebelum')) {
             if ($log->foto_sebelum && File::exists(public_path('gallery/' . $log->foto_sebelum))) {
                 File::delete(public_path('gallery/' . $log->foto_sebelum));
             }
@@ -395,6 +415,11 @@ class MonitoringAlatBeratController extends Controller
         $longBed = $request->long_bed ?? 0;
         $jumlahBed = ($flatBed + $longBed) > 0 ? ($flatBed + $longBed) : ($request->jumlah_bed ?? 0);
 
+        $latAwal = $request->latitude_awal ?? $log->latitude_awal ?? $request->latitude ?? $log->latitude;
+        $longAwal = $request->longitude_awal ?? $log->longitude_awal ?? $request->longitude ?? $log->longitude;
+        $latAkhir = $request->latitude_akhir ?? $log->latitude_akhir;
+        $longAkhir = $request->longitude_akhir ?? $log->longitude_akhir;
+
         $log->update([
             'id_pks' => $idPks,
             'alat_berat_id' => $request->alat_berat_id,
@@ -405,8 +430,12 @@ class MonitoringAlatBeratController extends Controller
             'flat_bed' => $flatBed,
             'long_bed' => $longBed,
             'jumlah_bed' => $jumlahBed,
-            'latitude' => $request->latitude,
-            'longitude' => $request->longitude,
+            'latitude' => $latAwal,
+            'longitude' => $longAwal,
+            'latitude_awal' => $latAwal,
+            'longitude_awal' => $longAwal,
+            'latitude_akhir' => $latAkhir,
+            'longitude_akhir' => $longAkhir,
             'hm_awal' => $hmAwalTs,
             'hm_akhir' => $hmAkhirTs,
             'total_hm' => $totalHm,

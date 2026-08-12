@@ -59,10 +59,136 @@
         </div>
     </div>
 
-    <!-- Card 2: Hasil Aplikasi Bed -->
+    <!-- Card 2: Lokasi GPS Kerja (Koordinat Awal & Akhir Kerja) - POSISI DI ATAS -->
     <div class="op-card mb-3">
         <div class="op-card-header">
-            <span><div class="feather-grid d-inline me-2 text-primary"></div>2. Hasil Aplikasi Bed (Aplikasi Lahan)</span>
+            <span><i class="feather-map-pin me-2 text-primary"></i>2. Lokasi GPS Kerja (Koordinat Awal & Akhir)</span>
+        </div>
+        <div class="op-card-body">
+            <div class="row g-3">
+                <!-- GPS Awal -->
+                <div class="col-md-6 border-end-md pb-2">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <label class="form-label fw-bold mb-0 text-primary fs-12"><i class="feather-navigation me-1"></i>Koordinat Awal Kerja</label>
+                        <button type="button" class="btn btn-xs btn-outline-primary rounded-pill px-2.5 py-0.5 fs-11" onclick="getGpsAwal()">
+                            <i class="feather-crosshair me-1"></i>GPS Awal
+                        </button>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <input type="text" name="latitude_awal" id="latitude_awal" class="form-control form-control-sm bg-light" readonly placeholder="Lat Awal" value="{{ old('latitude_awal') }}">
+                            <input type="hidden" name="latitude" id="latitude" value="{{ old('latitude') }}">
+                        </div>
+                        <div class="col-6">
+                            <input type="text" name="longitude_awal" id="longitude_awal" class="form-control form-control-sm bg-light" readonly placeholder="Long Awal" value="{{ old('longitude_awal') }}">
+                            <input type="hidden" name="longitude" id="longitude" value="{{ old('longitude') }}">
+                        </div>
+                    </div>
+                    <small id="gps_awal_status" class="fs-11 text-muted mt-1 d-block">Terisi otomatis saat Foto Sebelum dipilih/diambil.</small>
+                </div>
+
+                <!-- GPS Akhir -->
+                <div class="col-md-6 pt-2 pt-md-0">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <label class="form-label fw-bold mb-0 text-success fs-12"><i class="feather-navigation me-1"></i>Koordinat Akhir Kerja</label>
+                        <button type="button" class="btn btn-xs btn-outline-success rounded-pill px-2.5 py-0.5 fs-11" onclick="getGpsAkhir()">
+                            <i class="feather-crosshair me-1"></i>GPS Akhir
+                        </button>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <input type="text" name="latitude_akhir" id="latitude_akhir" class="form-control form-control-sm bg-light" readonly placeholder="Lat Akhir" value="{{ old('latitude_akhir') }}">
+                        </div>
+                        <div class="col-6">
+                            <input type="text" name="longitude_akhir" id="longitude_akhir" class="form-control form-control-sm bg-light" readonly placeholder="Long Akhir" value="{{ old('longitude_akhir') }}">
+                        </div>
+                    </div>
+                    <small id="gps_akhir_status" class="fs-11 text-muted mt-1 d-block">Terisi otomatis saat Foto Sesudah dipilih/diambil.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card 3: Foto Dokumentasi Kerja - GAMBAR DI ATAS JAM -->
+    <div class="op-card mb-3">
+        <div class="op-card-header">
+            <span><i class="feather-camera me-2 text-primary"></i>3. Foto Dokumentasi Kerja</span>
+        </div>
+        <div class="op-card-body">
+            <div class="row g-3">
+                <div class="col-6">
+                    <label class="form-label text-center d-block">Foto Sebelum Kerja <span class="text-danger">*</span></label>
+                    <div class="photo-preview-box" onclick="document.getElementById('foto_sebelum').click()" style="cursor: pointer;">
+                        <div id="preview_sebelum_placeholder" class="text-center p-2">
+                            <i class="feather-camera fs-3 text-muted d-block mb-1"></i>
+                            <span class="fs-12 text-muted fw-semibold">Pilih / Ambil Foto</span>
+                        </div>
+                        <img id="img_sebelum_preview" src="" style="display: none;">
+                        <span id="ts_sebelum_tag" class="timestamp-tag" style="display: none;"></span>
+                    </div>
+                    <input type="file" name="foto_sebelum" id="foto_sebelum" accept="image/*" style="display: none;" onchange="handlePhotoSelect(this, 'img_sebelum_preview', 'preview_sebelum_placeholder', 'ts_sebelum_tag')">
+                    @error('foto_sebelum') <small class="text-danger d-block mt-1 fs-11">{{ $message }}</small> @enderror
+                </div>
+
+                <div class="col-6">
+                    <label class="form-label text-center d-block">Foto Sesudah Kerja</label>
+                    <div class="photo-preview-box" onclick="document.getElementById('foto_sesudah').click()" style="cursor: pointer;">
+                        <div id="preview_sesudah_placeholder" class="text-center p-2">
+                            <i class="feather-camera fs-3 text-muted d-block mb-1"></i>
+                            <span class="fs-12 text-muted fw-semibold">Pilih / Ambil Foto</span>
+                        </div>
+                        <img id="img_sesudah_preview" src="" style="display: none;">
+                        <span id="ts_sesudah_tag" class="timestamp-tag" style="display: none;"></span>
+                    </div>
+                    <input type="file" name="foto_sesudah" id="foto_sesudah" accept="image/*" style="display: none;" onchange="handlePhotoSelect(this, 'img_sesudah_preview', 'preview_sesudah_placeholder', 'ts_sesudah_tag')">
+                    @error('foto_sesudah') <small class="text-danger d-block mt-1 fs-11">{{ $message }}</small> @enderror
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card 4: Hour Meter (HM) & Jam Kerja - JAM TIDAK BOLEH INPUT MANUAL -->
+    <div class="op-card mb-3">
+        <div class="op-card-header">
+            <span><i class="feather-clock me-2 text-primary"></i>4. Hour Meter (HM) & Jam Kerja</span>
+        </div>
+        <div class="op-card-body">
+            <div class="row">
+                <div class="col-6 mb-3">
+                    <label class="form-label">HM / Jam Awal Kerja <span class="text-danger">*</span></label>
+                    <input type="text" name="hm_awal" id="hm_awal" 
+                        class="form-control bg-light @error('hm_awal') is-invalid @enderror" 
+                        value="{{ old('hm_awal') }}" placeholder="HH:MM (Otomatis dari Foto)" 
+                        readonly oninput="hitungHm()">
+                    <small id="msg_hm_awal" class="fs-11 d-block mt-1 text-danger">
+                        <i class="feather-lock me-1"></i>Jam Awal terisi otomatis dari foto & tidak dapat diisi manual.
+                    </small>
+                    @error('hm_awal') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-6 mb-3">
+                    <label class="form-label">HM / Jam Akhir Kerja</label>
+                    <input type="text" name="hm_akhir" id="hm_akhir" 
+                        class="form-control bg-light @error('hm_akhir') is-invalid @enderror" 
+                        value="{{ old('hm_akhir') }}" placeholder="HH:MM (Otomatis dari Foto)" 
+                        readonly oninput="hitungHm()">
+                    <small id="msg_hm_akhir" class="fs-11 d-block mt-1 text-danger">
+                        <i class="feather-lock me-1"></i>Jam Akhir terisi otomatis dari foto & tidak dapat diisi manual.
+                    </small>
+                    @error('hm_akhir') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+            </div>
+
+            <div class="p-2 bg-light rounded-3 text-center border">
+                <span class="text-muted fs-12 fw-semibold">Total Jam Kerja (HM):</span>
+                <span id="total_hm_display" class="fw-bold fs-5 text-success ms-2">00:00 Jam</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card 5: Hasil Aplikasi Bed -->
+    <div class="op-card mb-3">
+        <div class="op-card-header">
+            <span><i class="feather-grid me-2 text-primary"></i>5. Hasil Aplikasi Bed (Aplikasi Lahan)</span>
         </div>
         <div class="op-card-body">
             <div class="row">
@@ -86,57 +212,10 @@
         </div>
     </div>
 
-    <!-- Card 3: Hour Meter (HM) & Jam Kerja -->
-    <!-- Card 3: Hour Meter (HM) & Jam Kerja -->
+    <!-- Card 6: BBM & Kondisi Alat -->
     <div class="op-card mb-3">
         <div class="op-card-header">
-            <span><i class="feather-clock me-2 text-primary"></i>3. Hour Meter (HM) & Jam Kerja</span>
-        </div>
-        <div class="op-card-body">
-            <div class="row">
-                <div class="col-6 mb-3">
-                    <label class="form-label">HM / Jam Awal Kerja</label>
-                    <input type="text" name="hm_awal" id="hm_awal" 
-                        class="form-control @if(old('hm_awal')) bg-light @endif @error('hm_awal') is-invalid @enderror" 
-                        value="{{ old('hm_awal') }}" placeholder="HH:MM (e.g. 08:00)" 
-                        @if(old('hm_awal')) readonly @endif oninput="hitungHm()" onblur="lockIfFilled(this, 'msg_hm_awal', 'HM Awal')">
-                    <small id="msg_hm_awal" class="fs-11 d-block mt-1 @if(old('hm_awal')) text-danger @else text-muted @endif">
-                        @if(old('hm_awal'))
-                            <i class="feather-lock me-1"></i>HM Awal terkunci (terisi) untuk mencegah rekayasa.
-                        @else
-                            <i class="feather-info text-primary me-1"></i>Otomatis terisi & terkunci saat Foto Sebelum di-upload.
-                        @endif
-                    </small>
-                    @error('hm_awal') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                </div>
-                <div class="col-6 mb-3">
-                    <label class="form-label">HM / Jam Akhir Kerja</label>
-                    <input type="text" name="hm_akhir" id="hm_akhir" 
-                        class="form-control @if(old('hm_akhir')) bg-light @endif @error('hm_akhir') is-invalid @enderror" 
-                        value="{{ old('hm_akhir') }}" placeholder="HH:MM (e.g. 15:30)" 
-                        @if(old('hm_akhir')) readonly @endif oninput="hitungHm()" onblur="lockIfFilled(this, 'msg_hm_akhir', 'HM Akhir')">
-                    <small id="msg_hm_akhir" class="fs-11 d-block mt-1 @if(old('hm_akhir')) text-danger @else text-muted @endif">
-                        @if(old('hm_akhir'))
-                            <i class="feather-lock me-1"></i>HM Akhir terkunci (terisi) untuk mencegah rekayasa.
-                        @else
-                            <i class="feather-info text-primary me-1"></i>Otomatis terisi & terkunci saat Foto Sesudah di-upload.
-                        @endif
-                    </small>
-                    @error('hm_akhir') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                </div>
-            </div>
-
-            <div class="p-2 bg-light rounded-3 text-center border">
-                <span class="text-muted fs-12 fw-semibold">Total Jam Kerja (HM):</span>
-                <span id="total_hm_display" class="fw-bold fs-5 text-success ms-2">00:00 Jam</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Card 4: BBM & Kondisi Alat -->
-    <div class="op-card mb-3">
-        <div class="op-card-header">
-            <span><i class="feather-check-square me-2 text-primary"></i>4. Konsumsi BBM & Kondisi Alat</span>
+            <span><i class="feather-check-square me-2 text-primary"></i>6. Konsumsi BBM & Kondisi Alat</span>
         </div>
         <div class="op-card-body">
             <div class="mb-3">
@@ -159,63 +238,6 @@
                 <label class="form-label">Catatan / Kendala Operasional</label>
                 <textarea name="catatan" class="form-control" rows="2" placeholder="Catatan kondisi alat atau kendala di lapangan...">{{ old('catatan') }}</textarea>
             </div>
-        </div>
-    </div>
-
-    <!-- Card 5: Dokumentasi Foto (Auto Laptop/Device Time) -->
-    <div class="op-card mb-3">
-        <div class="op-card-header">
-            <span><i class="feather-camera me-2 text-primary"></i>5. Foto Dokumentasi Kerja</span>
-        </div>
-        <div class="op-card-body">
-            <div class="row g-3">
-                <div class="col-6">
-                    <label class="form-label text-center d-block">Foto Sebelum</label>
-                    <div class="photo-preview-box" onclick="document.getElementById('foto_sebelum').click()">
-                        <div id="preview_sebelum_placeholder" class="text-center p-2">
-                            <i class="feather-camera fs-3 text-muted d-block mb-1"></i>
-                            <span class="fs-12 text-muted fw-semibold">Pilih / Ambil Foto</span>
-                        </div>
-                        <img id="img_sebelum_preview" src="" style="display: none;">
-                        <span id="ts_sebelum_tag" class="timestamp-tag" style="display: none;"></span>
-                    </div>
-                    <input type="file" name="foto_sebelum" id="foto_sebelum" accept="image/*" style="display: none;" onchange="handlePhotoSelect(this, 'img_sebelum_preview', 'preview_sebelum_placeholder', 'ts_sebelum_tag')">
-                </div>
-
-                <div class="col-6">
-                    <label class="form-label text-center d-block">Foto Sesudah</label>
-                    <div class="photo-preview-box" onclick="document.getElementById('foto_sesudah').click()">
-                        <div id="preview_sesudah_placeholder" class="text-center p-2">
-                            <i class="feather-camera fs-3 text-muted d-block mb-1"></i>
-                            <span class="fs-12 text-muted fw-semibold">Pilih / Ambil Foto</span>
-                        </div>
-                        <img id="img_sesudah_preview" src="" style="display: none;">
-                        <span id="ts_sesudah_tag" class="timestamp-tag" style="display: none;"></span>
-                    </div>
-                    <input type="file" name="foto_sesudah" id="foto_sesudah" accept="image/*" style="display: none;" onchange="handlePhotoSelect(this, 'img_sesudah_preview', 'preview_sesudah_placeholder', 'ts_sesudah_tag')">
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Card 6: Lokasi GPS -->
-    <div class="op-card mb-3">
-        <div class="op-card-header d-flex justify-content-between align-items-center">
-            <span><i class="feather-map-pin me-2 text-primary"></i>6. Lokasi GPS Kerja</span>
-            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="getGpsLocation()">
-                <i class="feather-navigation me-1"></i>Ambil GPS
-            </button>
-        </div>
-        <div class="op-card-body">
-            <div class="row">
-                <div class="col-6">
-                    <input type="text" name="latitude" id="latitude" class="form-control form-control-sm" readonly placeholder="Latitude" value="{{ old('latitude') }}">
-                </div>
-                <div class="col-6">
-                    <input type="text" name="longitude" id="longitude" class="form-control form-control-sm" readonly placeholder="Longitude" value="{{ old('longitude') }}">
-                </div>
-            </div>
-            <div id="gps_status" class="fs-12 text-muted mt-2 text-center">Tekan tombol Ambil GPS untuk merekam lokasi posisi Anda saat ini.</div>
         </div>
     </div>
 
@@ -303,20 +325,51 @@
         totalHmDisplay.innerText = minutesToTime(finalDiff);
     }
 
-    function lockInput(inputElem, msgId, labelName) {
-        if (!inputElem) return;
-        inputElem.readOnly = true;
-        inputElem.classList.add('bg-light');
-        const msgElem = document.getElementById(msgId);
-        if (msgElem) {
-            msgElem.className = 'fs-11 d-block mt-1 text-danger';
-            msgElem.innerHTML = `<i class="feather-lock me-1"></i>${labelName || 'HM'} terkunci untuk mencegah rekayasa.`;
+    function getGpsAwal() {
+        const statusElem = document.getElementById('gps_awal_status');
+        if (statusElem) statusElem.innerText = 'Tunggu sebentar, merekam lokasi GPS Awal...';
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    const lat = position.coords.latitude.toFixed(8);
+                    const long = position.coords.longitude.toFixed(8);
+                    document.getElementById('latitude_awal').value = lat;
+                    document.getElementById('longitude_awal').value = long;
+                    document.getElementById('latitude').value = lat;
+                    document.getElementById('longitude').value = long;
+                    if (statusElem) statusElem.innerHTML = `<span class="text-success"><i class="feather-check-circle me-1"></i>GPS Awal berhasil direkam! (${lat}, ${long})</span>`;
+                },
+                function(error) {
+                    if (statusElem) statusElem.innerHTML = `<span class="text-danger"><i class="feather-alert-triangle me-1"></i>Gagal mengambil GPS Awal: ${error.message}</span>`;
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        } else {
+            if (statusElem) statusElem.innerText = 'Browser Anda tidak mendukung geolokasi GPS.';
         }
     }
 
-    function lockIfFilled(inputElem, msgId, labelName) {
-        if (inputElem && inputElem.value.trim() !== '') {
-            lockInput(inputElem, msgId, labelName);
+    function getGpsAkhir() {
+        const statusElem = document.getElementById('gps_akhir_status');
+        if (statusElem) statusElem.innerText = 'Tunggu sebentar, merekam lokasi GPS Akhir...';
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    const lat = position.coords.latitude.toFixed(8);
+                    const long = position.coords.longitude.toFixed(8);
+                    document.getElementById('latitude_akhir').value = lat;
+                    document.getElementById('longitude_akhir').value = long;
+                    if (statusElem) statusElem.innerHTML = `<span class="text-success"><i class="feather-check-circle me-1"></i>GPS Akhir berhasil direkam! (${lat}, ${long})</span>`;
+                },
+                function(error) {
+                    if (statusElem) statusElem.innerHTML = `<span class="text-danger"><i class="feather-alert-triangle me-1"></i>Gagal mengambil GPS Akhir: ${error.message}</span>`;
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        } else {
+            if (statusElem) statusElem.innerText = 'Browser Anda tidak mendukung geolokasi GPS.';
         }
     }
 
@@ -332,9 +385,8 @@
 
                 img.src = e.target.result;
                 img.style.display = 'block';
-                placeholder.style.display = 'none';
+                if (placeholder) placeholder.style.display = 'none';
 
-                // Always take device/laptop current time when file is picked
                 const now = new Date();
                 const timeString = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
                 const timeHHMM = formatTimeToHHMM(now);
@@ -342,17 +394,16 @@
                 tsTag.innerText = timeString;
                 tsTag.style.display = 'block';
 
-                // Auto-fill HM input based on photo input type & LOCK IMMEDIATELY
                 if (input.id === 'foto_sebelum') {
                     const hmAwal = document.getElementById('hm_awal');
                     hmAwal.value = timeHHMM;
-                    lockInput(hmAwal, 'msg_hm_awal', 'HM Awal');
                     hitungHm();
+                    getGpsAwal();
                 } else if (input.id === 'foto_sesudah') {
                     const hmAkhir = document.getElementById('hm_akhir');
                     hmAkhir.value = timeHHMM;
-                    lockInput(hmAkhir, 'msg_hm_akhir', 'HM Akhir');
                     hitungHm();
+                    getGpsAkhir();
                 }
             }
 
@@ -360,37 +411,9 @@
         }
     }
 
-    function getGpsLocation() {
-        const status = document.getElementById('gps_status');
-        if (navigator.geolocation) {
-            status.innerText = "Mengambil koordinat GPS...";
-            navigator.geolocation.getCurrentPosition(
-                function(position) {
-                    document.getElementById('latitude').value = position.coords.latitude.toFixed(6);
-                    document.getElementById('longitude').value = position.coords.longitude.toFixed(6);
-                    status.innerHTML = `<span class="text-success"><i class="feather-check-circle me-1"></i>Lokasi GPS berhasil direkam!</span>`;
-                },
-                function(error) {
-                    status.innerHTML = `<span class="text-danger"><i class="feather-alert-circle me-1"></i>Gagal mengambil GPS: ${error.message}</span>`;
-                },
-                { enableHighAccuracy: true, timeout: 10000 }
-            );
-        } else {
-            status.innerText = "Browser tidak mendukung Geolocation.";
-        }
-    }
-
     document.addEventListener('DOMContentLoaded', function() {
         calcBedTotal();
         hitungHm();
-        const hmAwal = document.getElementById('hm_awal');
-        const hmAkhir = document.getElementById('hm_akhir');
-        if (hmAwal && hmAwal.value.trim() !== '') {
-            lockInput(hmAwal, 'msg_hm_awal', 'HM Awal');
-        }
-        if (hmAkhir && hmAkhir.value.trim() !== '') {
-            lockInput(hmAkhir, 'msg_hm_akhir', 'HM Akhir');
-        }
     });
 </script>
 @endsection

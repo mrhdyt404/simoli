@@ -134,6 +134,10 @@ class OperatorMonitoringController extends Controller
             'jumlah_bed' => 'nullable|integer|min:0',
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
+            'latitude_awal' => 'nullable|numeric|between:-90,90',
+            'longitude_awal' => 'nullable|numeric|between:-180,180',
+            'latitude_akhir' => 'nullable|numeric|between:-90,90',
+            'longitude_akhir' => 'nullable|numeric|between:-180,180',
             'hm_awal' => 'nullable',
             'hm_akhir' => 'nullable',
             'bbm_liter' => 'nullable|numeric|min:0',
@@ -142,6 +146,29 @@ class OperatorMonitoringController extends Controller
             'foto_sebelum' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
             'foto_sesudah' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
         ]);
+
+        // Jika operator mencoba menyelesaikan shift saat pembuatan (mengisi data akhir shift)
+        if ($request->filled('hm_akhir') || $request->hasFile('foto_sesudah')) {
+            $customErrors = [];
+            if (!$request->filled('lokasi_blok')) {
+                $customErrors['lokasi_blok'] = 'Lokasi / Blok Pekerjaan wajib diisi untuk menyelesaikan shift.';
+            }
+            if (!$request->filled('bbm_liter') && $request->bbm_liter !== '0') {
+                $customErrors['bbm_liter'] = 'Pengisian BBM (Liter) wajib diisi untuk menyelesaikan shift.';
+            }
+            if (!$request->filled('hm_awal') && !$request->hasFile('foto_sebelum')) {
+                $customErrors['hm_awal'] = 'HM / Jam Awal Kerja wajib diisi untuk menyelesaikan shift.';
+            }
+            if (!$request->hasFile('foto_sebelum')) {
+                $customErrors['foto_sebelum'] = 'Foto Sebelum Kerja wajib diunggah untuk menyelesaikan shift.';
+            }
+            if (!$request->hasFile('foto_sesudah')) {
+                $customErrors['foto_sesudah'] = 'Foto Sesudah Kerja wajib diunggah untuk menyelesaikan shift.';
+            }
+            if (!empty($customErrors)) {
+                return redirect()->back()->withErrors($customErrors)->withInput();
+            }
+        }
 
         $idPks = $user->id_pks;
         $uploadDir = public_path('gallery');
@@ -209,6 +236,11 @@ class OperatorMonitoringController extends Controller
             $totalHm = round($diffMinutes / 60, 2);
         }
 
+        $latAwal = $request->latitude_awal ?? $request->latitude;
+        $longAwal = $request->longitude_awal ?? $request->longitude;
+        $latAkhir = $request->latitude_akhir;
+        $longAkhir = $request->longitude_akhir;
+
         $log = MonitoringAlatBerat::create([
             'id_pks' => $idPks,
             'alat_berat_id' => $request->alat_berat_id,
@@ -219,8 +251,12 @@ class OperatorMonitoringController extends Controller
             'flat_bed' => $flatBed,
             'long_bed' => $longBed,
             'jumlah_bed' => $jumlahBed,
-            'latitude' => $request->latitude,
-            'longitude' => $request->longitude,
+            'latitude' => $latAwal,
+            'longitude' => $longAwal,
+            'latitude_awal' => $latAwal,
+            'longitude_awal' => $longAwal,
+            'latitude_akhir' => $latAkhir,
+            'longitude_akhir' => $longAkhir,
             'hm_awal' => $hmAwalTs,
             'hm_akhir' => $hmAkhirTs,
             'total_hm' => $totalHm,
@@ -321,29 +357,67 @@ class OperatorMonitoringController extends Controller
             'tanggal' => 'required|date',
             'operator' => 'required|string|max:100',
             'kegiatan' => 'required|string|max:150',
-            'lokasi_blok' => 'nullable|string|max:100',
+            'lokasi_blok' => 'required|string|max:100',
             'flat_bed' => 'nullable|integer|min:0',
             'long_bed' => 'nullable|integer|min:0',
             'jumlah_bed' => 'nullable|integer|min:0',
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
+            'latitude_awal' => 'nullable|numeric|between:-90,90',
+            'longitude_awal' => 'nullable|numeric|between:-180,180',
+            'latitude_akhir' => 'nullable|numeric|between:-90,90',
+            'longitude_akhir' => 'nullable|numeric|between:-180,180',
             'hm_awal' => 'nullable',
             'hm_akhir' => 'nullable',
-            'bbm_liter' => 'nullable|numeric|min:0',
+            'bbm_liter' => 'required|numeric|min:0',
             'kondisi_alat' => 'required|in:Normal,Perlu Perbaikan,Breakdown',
             'catatan' => 'nullable|string',
             'foto_sebelum' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
             'foto_sesudah' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+        ], [
+            'alat_berat_id.required' => 'Unit Alat Berat wajib dipilih.',
+            'tanggal.required' => 'Tanggal laporan wajib diisi.',
+            'operator.required' => 'Nama Operator wajib diisi.',
+            'kegiatan.required' => 'Jenis Kegiatan / Pekerjaan wajib diisi.',
+            'lokasi_blok.required' => 'Lokasi / Blok Pekerjaan wajib diisi untuk menyelesaikan shift.',
+            'bbm_liter.required' => 'Pengisian BBM (Liter) wajib diisi (masukkan 0 jika tidak ada pengisian).',
+            'kondisi_alat.required' => 'Kondisi Alat Berat wajib dipilih.',
         ]);
+
+        // Verifikasi kelengkapan seluruh data shift sebelum diselesaikan
+        $customErrors = [];
+        $hasHmAwal = $request->filled('hm_awal') || !empty($log->hm_awal) || $request->hasFile('foto_sebelum');
+        if (!$hasHmAwal) {
+            $customErrors['hm_awal'] = 'HM / Jam Awal Kerja wajib diisi untuk menyelesaikan shift.';
+        }
+
+        $hasHmAkhir = $request->filled('hm_akhir') || !empty($log->hm_akhir) || $request->hasFile('foto_sesudah');
+        if (!$hasHmAkhir) {
+            $customErrors['hm_akhir'] = 'HM / Jam Akhir Kerja wajib diisi untuk menyelesaikan shift.';
+        }
+
+        $hasFotoSebelum = !empty($log->foto_sebelum) || $request->hasFile('foto_sebelum');
+        if (!$hasFotoSebelum) {
+            $customErrors['foto_sebelum'] = 'Foto Sebelum Kerja wajib diunggah untuk menyelesaikan shift.';
+        }
+
+        $hasFotoSesudah = !empty($log->foto_sesudah) || $request->hasFile('foto_sesudah');
+        if (!$hasFotoSesudah) {
+            $customErrors['foto_sesudah'] = 'Foto Sesudah Kerja wajib diunggah untuk menyelesaikan shift.';
+        }
+
+        if (!empty($customErrors)) {
+            return redirect()->back()->withErrors($customErrors)->withInput();
+        }
 
         $uploadDir = public_path('gallery');
 
         $fotoSebelumName = $log->foto_sebelum;
         $fotoSebelumTs = null;
-        if ($request->hasFile('foto_sebelum')) {
-            if ($log->foto_sebelum && File::exists($uploadDir . '/' . $log->foto_sebelum)) {
-                File::delete($uploadDir . '/' . $log->foto_sebelum);
-            }
+        if (!empty($log->foto_sebelum)) {
+            // Foto Sebelum telah terisi -> dikunci untuk mencegah manipulasi data
+            $fotoSebelumName = $log->foto_sebelum;
+        } elseif ($request->hasFile('foto_sebelum')) {
             $file = $request->file('foto_sebelum');
             $fotoSebelumName = 'sebelum_' . time() . '_' . rand(1000, 9999) . '.' . $file->getClientOriginalExtension();
             $file->move($uploadDir, $fotoSebelumName);
@@ -405,6 +479,11 @@ class OperatorMonitoringController extends Controller
             $totalHm = round($diffMinutes / 60, 2);
         }
 
+        $latAwal = $request->latitude_awal ?? $log->latitude_awal ?? $request->latitude ?? $log->latitude;
+        $longAwal = $request->longitude_awal ?? $log->longitude_awal ?? $request->longitude ?? $log->longitude;
+        $latAkhir = $request->latitude_akhir ?? $log->latitude_akhir;
+        $longAkhir = $request->longitude_akhir ?? $log->longitude_akhir;
+
         $log->update([
             'alat_berat_id' => $request->alat_berat_id,
             'tanggal' => $request->tanggal,
@@ -414,8 +493,12 @@ class OperatorMonitoringController extends Controller
             'flat_bed' => $flatBed,
             'long_bed' => $longBed,
             'jumlah_bed' => $jumlahBed,
-            'latitude' => $request->latitude ?? $log->latitude,
-            'longitude' => $request->longitude ?? $log->longitude,
+            'latitude' => $latAwal,
+            'longitude' => $longAwal,
+            'latitude_awal' => $latAwal,
+            'longitude_awal' => $longAwal,
+            'latitude_akhir' => $latAkhir,
+            'longitude_akhir' => $longAkhir,
             'hm_awal' => $hmAwalTs,
             'hm_akhir' => $hmAkhirTs,
             'total_hm' => $totalHm,
@@ -439,11 +522,16 @@ class OperatorMonitoringController extends Controller
     }
 
     /**
-     * Heavy Equipment Management Index for Operator / Unit
+     * Heavy Equipment Management Index for Mandor / Unit
      */
     public function alatBeratIndex(Request $request)
     {
         $user = Auth::user();
+
+        if (!$user->canManageAlatBerat()) {
+            return redirect()->route('operator.index')->with('error', 'Akses Ditolak: Operator tidak memiliki hak akses untuk mengelola master & status alat berat. Fitur ini khusus untuk Mandor.');
+        }
+
         $query = AlatBerat::query();
 
         if ($user->id_pks) {
@@ -475,6 +563,10 @@ class OperatorMonitoringController extends Controller
     {
         $user = Auth::user();
 
+        if (!$user->canManageAlatBerat()) {
+            return redirect()->route('operator.index')->with('error', 'Akses Ditolak: Operator tidak memiliki hak akses untuk menambahkan alat berat.');
+        }
+
         $request->validate([
             'kode_alat' => 'required|string|max:30|unique:alat_berat,kode_alat',
             'nama_alat' => 'required|string|max:100',
@@ -505,6 +597,11 @@ class OperatorMonitoringController extends Controller
     public function alatBeratUpdate(Request $request, $id)
     {
         $user = Auth::user();
+
+        if (!$user->canManageAlatBerat()) {
+            return redirect()->route('operator.index')->with('error', 'Akses Ditolak: Operator tidak memiliki hak akses untuk mengubah data alat berat.');
+        }
+
         $alatBerat = AlatBerat::findOrFail($id);
 
         if ($user->id_pks && $alatBerat->id_pks != $user->id_pks) {
@@ -540,6 +637,11 @@ class OperatorMonitoringController extends Controller
     public function alatBeratUpdateStatus(Request $request, $id)
     {
         $user = Auth::user();
+
+        if (!$user->canManageAlatBerat()) {
+            return redirect()->back()->with('error', 'Akses Ditolak: Operator tidak memiliki hak akses untuk mengubah status alat berat.');
+        }
+
         $alatBerat = AlatBerat::findOrFail($id);
 
         if ($user->id_pks && $alatBerat->id_pks != $user->id_pks) {
@@ -561,6 +663,11 @@ class OperatorMonitoringController extends Controller
     public function alatBeratDestroy($id)
     {
         $user = Auth::user();
+
+        if (!$user->canManageAlatBerat()) {
+            return redirect()->route('operator.index')->with('error', 'Akses Ditolak: Operator tidak memiliki hak akses untuk menghapus alat berat.');
+        }
+
         $alatBerat = AlatBerat::findOrFail($id);
 
         if ($user->id_pks && $alatBerat->id_pks != $user->id_pks) {

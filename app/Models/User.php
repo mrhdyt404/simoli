@@ -81,11 +81,35 @@ class User extends Authenticatable
     }
 
     /**
+     * Check if user is mandor
+     */
+    public function isMandor(): bool
+    {
+        return $this->level_akses === 'mandor';
+    }
+
+    /**
      * Check if user is operator
      */
     public function isOperator(): bool
     {
         return $this->level_akses === 'operator';
+    }
+
+    /**
+     * Check if user is field user (operator or mandor)
+     */
+    public function isFieldUser(): bool
+    {
+        return $this->isOperator() || $this->isMandor();
+    }
+
+    /**
+     * Check if user can manage heavy equipment master data & status
+     */
+    public function canManageAlatBerat(): bool
+    {
+        return $this->isAdmin() || $this->isUnit() || $this->isMandor();
     }
 
     public function pks()

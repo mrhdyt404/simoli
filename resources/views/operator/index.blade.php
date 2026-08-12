@@ -7,9 +7,15 @@
 <div class="op-card p-3 mb-3 border-0 text-white" style="background: linear-gradient(135deg, #0F52BA 0%, #1E3C72 100%);">
     <div class="d-flex align-items-center justify-content-between">
         <div>
-            <span class="badge bg-white text-primary fw-bold mb-1" style="font-size: 0.7rem;">
-                <i class="feather-user me-1"></i>OPERATOR LAPANGAN
-            </span>
+            @if(Auth::user()->isMandor())
+                <span class="badge bg-warning text-dark fw-bold mb-1" style="font-size: 0.7rem;">
+                    <i class="feather-shield me-1"></i>MANDOR LAPANGAN
+                </span>
+            @else
+                <span class="badge bg-white text-primary fw-bold mb-1" style="font-size: 0.7rem;">
+                    <i class="feather-user me-1"></i>OPERATOR LAPANGAN
+                </span>
+            @endif
             <h5 class="fw-bold m-0 mb-1 text-white">{{ Auth::user()->username }}</h5>
             <small class="opacity-75" style="font-size: 0.78rem;">
                 <i class="feather-map-pin me-1"></i>PKS {{ Auth::user()->pks ? Auth::user()->pks->nama : 'Unit' }}
@@ -66,9 +72,15 @@
 <div class="op-card mb-3">
     <div class="op-card-header d-flex justify-content-between align-items-center">
         <span><i class="feather-truck me-2 text-primary"></i>Unit Alat Berat PKS</span>
-        <a href="{{ route('operator.alat-berat.index') }}" class="btn btn-sm btn-outline-primary rounded-pill px-2 py-1 fs-11 fw-bold">
-            <i class="feather-settings me-1"></i>Kelola & Status
-        </a>
+        @if(Auth::user()->canManageAlatBerat())
+            <a href="{{ route('operator.alat-berat.index') }}" class="btn btn-sm btn-outline-primary rounded-pill px-2 py-1 fs-11 fw-bold">
+                <i class="feather-settings me-1"></i>Kelola & Status
+            </a>
+        @else
+            <span class="badge bg-light text-muted border fs-11">
+                <i class="feather-info me-1"></i>Status Readiness
+            </span>
+        @endif
     </div>
     <div class="op-card-body p-2">
         @forelse($alatBeratList as $ab)

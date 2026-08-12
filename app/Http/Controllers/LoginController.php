@@ -14,7 +14,7 @@ class LoginController extends Controller
     public function showLoginForm()
     {
         if (Auth::check()) {
-            return Auth::user()->isOperator() ? redirect('/operator') : redirect('/dashboard');
+            return Auth::user()->isFieldUser() ? redirect('/operator') : redirect('/dashboard');
         }
 
         return view('auth.login');
@@ -43,7 +43,7 @@ class LoginController extends Controller
             Auth::login($userByUsername, $request->filled('remember'));
             $request->session()->regenerate();
 
-            if ($userByUsername->isOperator()) {
+            if ($userByUsername->isFieldUser()) {
                 return redirect()->route('operator.index');
             }
 

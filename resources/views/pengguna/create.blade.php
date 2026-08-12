@@ -103,13 +103,21 @@
                                 <select name="level_akses" class="form-select @error('level_akses') is-invalid @enderror"
                                     required>
 
-                                    <option value="">Pilih</option>
+                                    <option value="">Pilih Level Akses</option>
                                     <option value="admin" {{ old('level_akses') == 'admin' ? 'selected' : '' }}>
-                                        Admin
+                                        Admin SIMOLII
                                     </option>
 
                                     <option value="unit" {{ old('level_akses') == 'unit' ? 'selected' : '' }}>
-                                        Unit
+                                        Unit PKS
+                                    </option>
+
+                                    <option value="mandor" {{ old('level_akses') == 'mandor' ? 'selected' : '' }}>
+                                        Mandor Lapangan (Akses Laporan & Kelola/Status Alat)
+                                    </option>
+
+                                    <option value="operator" {{ old('level_akses') == 'operator' ? 'selected' : '' }}>
+                                        Operator Lapangan (Khusus Laporan Kerja)
                                     </option>
 
                                 </select>

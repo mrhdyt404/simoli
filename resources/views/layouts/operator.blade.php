@@ -244,9 +244,15 @@
                 <i class="feather-truck"></i> SIMOLII OPERATOR
             </a>
             <div class="d-flex align-items-center gap-2">
-                <span class="unit-badge">
-                    <i class="feather-map-pin me-1"></i>{{ Auth::user()->pks ? Auth::user()->pks->akro : 'UNIT' }}
-                </span>
+                @if(Auth::user()->isMandor())
+                    <span class="unit-badge bg-warning text-dark fw-bold">
+                        <i class="feather-shield me-1"></i>MANDOR {{ Auth::user()->pks ? Auth::user()->pks->akro : '' }}
+                    </span>
+                @else
+                    <span class="unit-badge">
+                        <i class="feather-user me-1"></i>OPERATOR {{ Auth::user()->pks ? Auth::user()->pks->akro : '' }}
+                    </span>
+                @endif
                 <form action="{{ route('logout') }}" method="POST" class="d-inline">
                     @csrf
                     <button type="submit" class="btn btn-sm btn-outline-light rounded-circle px-2 py-1" title="Keluar">
@@ -278,18 +284,20 @@
 
     <!-- Bottom Navigation for Mobile -->
     <nav class="operator-bottom-nav">
-        <a href="{{ route('operator.index') }}" class="nav-item-link {{ Route::is('operator.index') ? 'active' : '' }}">
+        <a href="{{ route('operator.index') }}" class="nav-item-link {{ Route::is('operator.index') ? 'active' : '' }}" style="{{ !Auth::user()->canManageAlatBerat() ? 'width: 50%;' : '' }}">
             <i class="feather-home"></i>
             <span>Beranda</span>
         </a>
-        <a href="{{ route('operator.create') }}" class="nav-item-link {{ Route::is('operator.create') ? 'active' : '' }}">
+        <a href="{{ route('operator.create') }}" class="nav-item-link {{ Route::is('operator.create') ? 'active' : '' }}" style="{{ !Auth::user()->canManageAlatBerat() ? 'width: 50%;' : '' }}">
             <i class="feather-file-plus"></i>
             <span>Input Laporan</span>
         </a>
-        <a href="{{ route('operator.alat-berat.index') }}" class="nav-item-link {{ Route::is('operator.alat-berat.*') ? 'active' : '' }}">
-            <i class="feather-truck"></i>
-            <span>Kelola Alat</span>
-        </a>
+        @if(Auth::user()->canManageAlatBerat())
+            <a href="{{ route('operator.alat-berat.index') }}" class="nav-item-link {{ Route::is('operator.alat-berat.*') ? 'active' : '' }}">
+                <i class="feather-settings"></i>
+                <span>Kelola Alat</span>
+            </a>
+        @endif
     </nav>
 
     <!-- Scripts -->

@@ -73,36 +73,47 @@
 
 @section('content')
     <div class="row g-3 mb-4">
-        <div class="col-12 col-md-4">
+        <div class="col-6 col-md-3">
             <div class="card user-stat-card">
-                <div class="card-body d-flex align-items-center justify-content-between">
+                <div class="card-body d-flex align-items-center justify-content-between p-3">
                     <div>
                         <div class="text-muted fs-12 mb-1">Total Pengguna</div>
-                        <h3 class="mb-0 fw-bold">{{ $totalUsers }}</h3>
+                        <h4 class="mb-0 fw-bold">{{ $totalUsers }}</h4>
                     </div>
                     <div class="stat-icon bg-primary-soft text-primary"><i class="feather-users"></i></div>
                 </div>
             </div>
         </div>
-        <div class="col-12 col-md-4">
+        <div class="col-6 col-md-3">
             <div class="card user-stat-card">
-                <div class="card-body d-flex align-items-center justify-content-between">
+                <div class="card-body d-flex align-items-center justify-content-between p-3">
                     <div>
                         <div class="text-muted fs-12 mb-1">Admin</div>
-                        <h3 class="mb-0 fw-bold">{{ $totalAdmin }}</h3>
+                        <h4 class="mb-0 fw-bold">{{ $totalAdmin }}</h4>
                     </div>
                     <div class="stat-icon bg-warning-soft text-warning"><i class="feather-shield"></i></div>
                 </div>
             </div>
         </div>
-        <div class="col-12 col-md-4">
+        <div class="col-6 col-md-3">
             <div class="card user-stat-card">
-                <div class="card-body d-flex align-items-center justify-content-between">
+                <div class="card-body d-flex align-items-center justify-content-between p-3">
                     <div>
-                        <div class="text-muted fs-12 mb-1">Unit</div>
-                        <h3 class="mb-0 fw-bold">{{ $totalUnit }}</h3>
+                        <div class="text-muted fs-12 mb-1">Mandor</div>
+                        <h4 class="mb-0 fw-bold">{{ $totalMandor ?? 0 }}</h4>
                     </div>
-                    <div class="stat-icon bg-success-soft text-success"><i class="feather-home"></i></div>
+                    <div class="stat-icon bg-indigo-soft text-indigo"><i class="feather-award"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card user-stat-card">
+                <div class="card-body d-flex align-items-center justify-content-between p-3">
+                    <div>
+                        <div class="text-muted fs-12 mb-1">Operator</div>
+                        <h4 class="mb-0 fw-bold">{{ $totalOperator ?? 0 }}</h4>
+                    </div>
+                    <div class="stat-icon bg-info-soft text-info"><i class="feather-user-check"></i></div>
                 </div>
             </div>
         </div>
@@ -119,9 +130,11 @@
                 <div class="col-12 col-md-3">
                     <label class="form-label fw-semibold">Level Akses</label>
                     <select name="level_akses" class="form-select">
-                        <option value="">Semua</option>
+                        <option value="">Semua Level</option>
                         <option value="admin" {{ request('level_akses') === 'admin' ? 'selected' : '' }}>Admin</option>
                         <option value="unit" {{ request('level_akses') === 'unit' ? 'selected' : '' }}>Unit</option>
+                        <option value="mandor" {{ request('level_akses') === 'mandor' ? 'selected' : '' }}>Mandor</option>
+                        <option value="operator" {{ request('level_akses') === 'operator' ? 'selected' : '' }}>Operator</option>
                     </select>
                 </div>
                 <div class="col-12 col-md-4 d-flex gap-2">
@@ -178,6 +191,14 @@
                                     @if($item->level_akses == 'admin')
                                         <span class="badge bg-soft-warning text-warning user-badge">
                                             Admin
+                                        </span>
+                                    @elseif($item->level_akses == 'mandor')
+                                        <span class="badge bg-soft-primary text-primary user-badge">
+                                            Mandor
+                                        </span>
+                                    @elseif($item->level_akses == 'operator')
+                                        <span class="badge bg-soft-info text-info user-badge">
+                                            Operator
                                         </span>
                                     @else
                                         <span class="badge bg-soft-success text-success user-badge">

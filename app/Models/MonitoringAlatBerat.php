@@ -20,6 +20,10 @@ class MonitoringAlatBerat extends Model
         'jumlah_bed',
         'latitude',
         'longitude',
+        'latitude_awal',
+        'longitude_awal',
+        'latitude_akhir',
+        'longitude_akhir',
         'hm_awal',
         'hm_akhir',
         'total_hm',
@@ -38,6 +42,10 @@ class MonitoringAlatBerat extends Model
         'jumlah_bed' => 'integer',
         'latitude' => 'float',
         'longitude' => 'float',
+        'latitude_awal' => 'float',
+        'longitude_awal' => 'float',
+        'latitude_akhir' => 'float',
+        'longitude_akhir' => 'float',
         'hm_awal' => 'datetime',
         'hm_akhir' => 'datetime',
         'total_hm' => 'float',
@@ -61,8 +69,30 @@ class MonitoringAlatBerat extends Model
      */
     public function getGoogleMapsUrlAttribute()
     {
-        if ($this->latitude && $this->longitude) {
-            return "https://www.google.com/maps?q={$this->latitude},{$this->longitude}";
+        $lat = $this->latitude_awal ?? $this->latitude;
+        $long = $this->longitude_awal ?? $this->longitude;
+        if ($lat && $long) {
+            return "https://www.google.com/maps?q={$lat},{$long}";
+        }
+        return null;
+    }
+
+    public function getGoogleMapsUrlAwalAttribute()
+    {
+        $lat = $this->latitude_awal ?? $this->latitude;
+        $long = $this->longitude_awal ?? $this->longitude;
+        if ($lat && $long) {
+            return "https://www.google.com/maps?q={$lat},{$long}";
+        }
+        return null;
+    }
+
+    public function getGoogleMapsUrlAkhirAttribute()
+    {
+        $lat = $this->latitude_akhir ?? $this->latitude;
+        $long = $this->longitude_akhir ?? $this->longitude;
+        if ($lat && $long) {
+            return "https://www.google.com/maps?q={$lat},{$long}";
         }
         return null;
     }
@@ -208,10 +238,20 @@ class MonitoringAlatBerat extends Model
 
     /**
      * Check if work shift report is completed.
-     * Report is completed if hm_akhir or foto_sesudah is set, or total_hm > 0.
+     * Report is completed only when all mandatory shift fields are populated.
      */
     public function isCompleted(): bool
     {
-        return !empty($this->hm_akhir) || !empty($this->foto_sesudah) || ((float)$this->total_hm > 0);
+        return !empty($this->alat_berat_id)
+            && !empty($this->tanggal)
+            && !empty($this->operator)
+            && !empty($this->kegiatan)
+            && !empty($this->lokasi_blok)
+            && !empty($this->hm_awal)
+            && !empty($this->hm_akhir)
+            && !is_null($this->bbm_liter)
+            && !empty($this->kondisi_alat)
+            && !empty($this->foto_sebelum)
+            && !empty($this->foto_sesudah);
     }
 }

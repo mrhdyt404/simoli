@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.0
+-- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
--- Host: localhost:3306
--- Generation Time: Aug 03, 2026 at 11:43 AM
--- Server version: 8.0.30
--- PHP Version: 8.2.30
+-- Host: 127.0.0.1
+-- Generation Time: Aug 12, 2026 at 04:03 AM
+-- Server version: 10.4.32-MariaDB
+-- PHP Version: 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -24,13 +24,45 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `alat_berat`
+--
+
+CREATE TABLE `alat_berat` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `id_pks` int(11) DEFAULT NULL COMMENT 'FK ke tabel pks',
+  `kode_alat` varchar(30) NOT NULL,
+  `nama_alat` varchar(100) NOT NULL,
+  `jenis_alat` enum('Excavator','Wheel Loader','Bulldozer','Dump Truck','Compactor','Lainnya') NOT NULL DEFAULT 'Excavator',
+  `merk_tipe` varchar(100) DEFAULT NULL,
+  `tahun_pengadaan` year(4) DEFAULT NULL,
+  `status` enum('Operational','Maintenance','Breakdown','Standby','Rolling') NOT NULL DEFAULT 'Operational',
+  `keterangan` text DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `alat_berat`
+--
+
+INSERT INTO `alat_berat` (`id`, `id_pks`, `kode_alat`, `nama_alat`, `jenis_alat`, `merk_tipe`, `tahun_pengadaan`, `status`, `keterangan`, `created_at`, `updated_at`) VALUES
+(1, 9, 'EX-01', 'Excavator Komatsu PC200 Pengolahan Sludge', 'Excavator', 'Komatsu PC200-8', '2022', 'Standby', 'Unit utama pengerukan kolam anaerob dan pembersihan sedimentasi sludge.', '2026-08-05 18:08:45', '2026-08-11 02:52:36'),
+(2, 9, 'WL-01', 'Wheel Loader CAT 924K Land Application', 'Wheel Loader', 'Caterpillar 924K', '2021', 'Rolling', 'Unit loading solid tankos & pendistribusian limbah ke lahan perkebunan.', '2026-08-05 18:08:45', '2026-08-11 01:59:08'),
+(3, 9, 'DT-05', 'Dump Truck Hino 500 Transport Sludge', 'Dump Truck', 'Hino FM 260 TI', '2020', 'Breakdown', 'Perbaikan sistem hidrolik dump bak.', '2026-08-05 18:08:45', '2026-08-11 01:46:22'),
+(4, 8, 'BL-01', 'Bulldozer Shantui SD16 Perbaikan Tanggul', 'Bulldozer', 'Shantui SD16', '2023', 'Operational', 'Perataan pematang kolam limbah.', '2026-08-05 18:08:45', '2026-08-05 18:08:45'),
+(5, 9, 'CM-01', 'Compactor', 'Compactor', 'Compactor', '2024', 'Maintenance', NULL, '2026-08-10 00:47:22', '2026-08-11 01:57:03'),
+(10, 9, 'EX-02', 'Excavator Sany SY215C Pengerukan Kolam 4', 'Excavator', 'Sany SY215C', '2024', 'Operational', 'Unit tambahan pengerukan dan perawatan tanggul kolam anaerob.', '2026-08-11 02:51:50', '2026-08-11 02:51:50');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `bulan`
 --
 
 CREATE TABLE `bulan` (
-  `id_bulan` int NOT NULL,
+  `id_bulan` int(11) NOT NULL,
   `nama_bulan` varchar(25) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=COMPACT;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=COMPACT;
 
 --
 -- Dumping data for table `bulan`
@@ -53,25 +85,110 @@ INSERT INTO `bulan` (`id_bulan`, `nama_bulan`) VALUES
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `migrations`
+--
+
+CREATE TABLE `migrations` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `migration` varchar(255) NOT NULL,
+  `batch` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `migrations`
+--
+
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
+(5, '2026_08_05_000001_create_alat_berat_table', 1),
+(6, '2026_08_05_000002_create_monitoring_alat_berat_table', 2),
+(7, '2026_08_07_000001_add_coordinates_and_photos_to_monitoring_alat_berat_table', 3),
+(8, '2026_08_07_000002_change_hm_awal_hm_akhir_to_timestamp_in_monitoring_alat_berat_table', 4),
+(9, '2026_08_10_000001_add_jumlah_bed_to_monitoring_alat_berat_table', 5),
+(10, '2026_08_11_000001_add_flat_bed_long_bed_to_monitoring_alat_berat_table', 6),
+(11, '2026_08_11_000002_add_rolling_to_alat_berat_status_enum', 7),
+(12, '2026_08_12_000001_add_start_end_coordinates_to_monitoring_alat_berat_table', 8);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `monitoring_alat_berat`
+--
+
+CREATE TABLE `monitoring_alat_berat` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `id_pks` int(11) DEFAULT NULL COMMENT 'FK ke tabel pks',
+  `alat_berat_id` bigint(20) UNSIGNED NOT NULL,
+  `tanggal` date NOT NULL,
+  `operator` varchar(100) NOT NULL,
+  `kegiatan` varchar(150) NOT NULL COMMENT 'Jenis kegiatan misal Pembersihan Kolam Limbah, Land Application, dll',
+  `lokasi_blok` varchar(100) DEFAULT NULL,
+  `flat_bed` int(11) NOT NULL DEFAULT 0 COMMENT 'Jumlah flat bed yang dikerjakan',
+  `long_bed` int(11) NOT NULL DEFAULT 0 COMMENT 'Jumlah long bed yang dikerjakan',
+  `jumlah_bed` int(11) NOT NULL DEFAULT 0 COMMENT 'Jumlah bed yang dikerjakan',
+  `latitude` decimal(10,8) DEFAULT NULL,
+  `longitude` decimal(11,8) DEFAULT NULL,
+  `latitude_awal` decimal(10,8) DEFAULT NULL,
+  `longitude_awal` decimal(11,8) DEFAULT NULL,
+  `latitude_akhir` decimal(10,8) DEFAULT NULL,
+  `longitude_akhir` decimal(11,8) DEFAULT NULL,
+  `hm_awal` timestamp NULL DEFAULT NULL,
+  `hm_akhir` timestamp NULL DEFAULT NULL,
+  `total_hm` decimal(8,2) NOT NULL DEFAULT 0.00,
+  `bbm_liter` decimal(8,2) NOT NULL DEFAULT 0.00 COMMENT 'Konsumsi solar dalam Liter',
+  `kondisi_alat` enum('Normal','Perlu Perbaikan','Breakdown') NOT NULL DEFAULT 'Normal',
+  `foto_sebelum` varchar(255) DEFAULT NULL,
+  `foto_sesudah` varchar(255) DEFAULT NULL,
+  `foto` varchar(255) DEFAULT NULL,
+  `catatan` text DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `monitoring_alat_berat`
+--
+
+INSERT INTO `monitoring_alat_berat` (`id`, `id_pks`, `alat_berat_id`, `tanggal`, `operator`, `kegiatan`, `lokasi_blok`, `flat_bed`, `long_bed`, `jumlah_bed`, `latitude`, `longitude`, `latitude_awal`, `longitude_awal`, `latitude_akhir`, `longitude_akhir`, `hm_awal`, `hm_akhir`, `total_hm`, `bbm_liter`, `kondisi_alat`, `foto_sebelum`, `foto_sesudah`, `foto`, `catatan`, `created_at`, `updated_at`) VALUES
+(8, 9, 3, '2026-08-07', 'budi', 'Pengadukan Kolam Limbah / Anaerob', 'blok g', 0, 0, 0, 0.47015254, 101.42563785, NULL, NULL, NULL, NULL, '2026-08-07 03:22:00', '2026-08-07 03:23:00', 0.02, 90.00, 'Normal', '1786072978_sebelum_poster.jpeg', '1786072995_sesudah_poster.png', '1786072978_sebelum_poster.jpeg', NULL, '2026-08-07 03:22:58', '2026-08-10 01:56:59'),
+(9, 9, 5, '2026-08-10', 'budi', 'Pembersihan & Pengerukan Kolam Limbah', 'blok g', 10, 20, 30, 0.47012046, 101.42583924, NULL, NULL, NULL, NULL, '2026-08-10 00:56:00', '2026-08-10 01:49:02', 0.88, 90.00, 'Normal', '1786323413_sebelum_poster.png', '1786326543_sesudah_poster.jpeg', '1786323413_sebelum_poster.png', NULL, '2026-08-10 00:56:53', '2026-08-11 02:00:08'),
+(23, 9, 1, '2026-08-11', 'opt_terantam', 'Korek flatbed', 'B2', 0, 0, 0, 0.46998500, 101.42569400, NULL, NULL, NULL, NULL, '2026-08-11 09:45:00', '2026-08-11 09:58:00', 0.22, 75.00, 'Normal', 'sebelum_1786441558_4974.jpg', 'sesudah_1786442307_9904.png', NULL, NULL, '2026-08-11 09:45:58', '2026-08-11 09:58:27'),
+(25, 9, 1, '2026-08-12', 'opt_terantam', 'Pembersihan & Pengerukan Kolam Limbah', 'blok g', 0, 0, 0, 0.47009800, 101.42582100, 0.47009800, 101.42582100, 0.47011832, 101.42585679, '2026-08-12 01:24:00', '2026-08-12 01:49:00', 0.42, 75.00, 'Normal', 'sebelum_1786497899_1524.jpg', '1786499399_sesudah_nv-app-gaming-overalay-790x376-v2[1].jpg', 'sebelum_1786497899_1524.jpg', NULL, '2026-08-12 01:24:59', '2026-08-12 01:49:59'),
+(26, 9, 1, '2026-08-12', 'opt_terantam', 'gali', 'Blok g', 0, 0, 0, 0.47010467, 101.42586094, 0.47010467, 101.42586094, NULL, NULL, '2026-08-12 01:32:00', NULL, 0.00, 75.00, 'Normal', 'sebelum_1786498405_8408.jpg', NULL, NULL, NULL, '2026-08-12 01:33:25', '2026-08-12 01:33:25');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `password_reset_tokens`
+--
+
+CREATE TABLE `password_reset_tokens` (
+  `email` varchar(255) NOT NULL,
+  `token` varchar(255) NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `pemeliharaan`
 --
 
 CREATE TABLE `pemeliharaan` (
-  `id` int NOT NULL,
-  `id_pks` int DEFAULT NULL,
+  `id` int(11) NOT NULL,
+  `id_pks` int(11) DEFAULT NULL,
   `tanggal` date DEFAULT NULL,
-  `blok` varchar(25) CHARACTER SET latin1 COLLATE latin1_swedish_ci DEFAULT NULL,
-  `no_bak` varchar(20) CHARACTER SET latin1 COLLATE latin1_swedish_ci DEFAULT NULL,
-  `flat_bed` int DEFAULT NULL,
-  `long_bed` int DEFAULT NULL,
-  `sebelum` varchar(50) CHARACTER SET latin1 COLLATE latin1_swedish_ci DEFAULT NULL,
-  `sesudah` varchar(50) CHARACTER SET latin1 COLLATE latin1_swedish_ci DEFAULT NULL,
-  `jumlah_hk` varchar(10) CHARACTER SET latin1 COLLATE latin1_swedish_ci DEFAULT NULL,
-  `keterangan` varchar(30) CHARACTER SET latin1 COLLATE latin1_swedish_ci DEFAULT NULL,
+  `blok` varchar(25) DEFAULT NULL,
+  `no_bak` varchar(20) DEFAULT NULL,
+  `flat_bed` int(11) DEFAULT NULL,
+  `long_bed` int(11) DEFAULT NULL,
+  `sebelum` varchar(50) DEFAULT NULL,
+  `sesudah` varchar(50) DEFAULT NULL,
+  `jumlah_hk` varchar(10) DEFAULT NULL,
+  `keterangan` varchar(30) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `jenis_pemeliharaan` varchar(10) CHARACTER SET latin1 COLLATE latin1_swedish_ci DEFAULT NULL COMMENT 'Pemeliharaan Mekanis=1 Pemeliharaan Manual=2'
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 ROW_FORMAT=COMPACT;
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `jenis_pemeliharaan` varchar(10) DEFAULT NULL COMMENT 'Pemeliharaan Mekanis=1 Pemeliharaan Manual=2'
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci ROW_FORMAT=COMPACT;
 
 --
 -- Dumping data for table `pemeliharaan`
@@ -102,7 +219,8 @@ INSERT INTO `pemeliharaan` (`id`, `id_pks`, `tanggal`, `blok`, `no_bak`, `flat_b
 (22, 9, '2026-01-15', 'A20', '8', 24, 0, '-', '-', '4', '-', '2026-01-19 01:35:52', '2026-06-27 02:16:51', '2'),
 (23, 9, '2026-01-16', 'A20', '10', 26, 0, '-', '-', '4', '-', '2026-01-19 01:36:41', '2026-06-27 02:16:46', '2'),
 (27, 9, '2026-07-08', 'C6', '5', 123, 456, '02a7c0c61af9ab7ef2bbdbc0e47144a1.png', '385fbb6fa401a174c4ef71e72f4cdbed.png', '5', 'Test', '2026-07-07 21:50:38', '2026-07-07 21:56:23', '2'),
-(28, 9, '2026-07-18', 'C8', '5', 2, 5, '1fff2a676d374954b42e363bea2c5f5f.jpg', 'b35d6c8486207c90a25983f41af87e26.png', '1', 'TESTING', '2026-07-18 04:14:23', '2026-07-18 04:14:23', '1');
+(28, 9, '2026-07-18', 'C8', '5', 2, 5, '1fff2a676d374954b42e363bea2c5f5f.jpg', 'b35d6c8486207c90a25983f41af87e26.png', '1', 'TESTING', '2026-07-18 04:14:23', '2026-07-18 04:14:23', '1'),
+(29, 9, '2026-08-10', 'c5', '5', 5, 5, '64eeb92210a9e1a21b37294165294dca.png', '3538bed69201b56e38eaef0348e351f6.jpeg', '1', NULL, '2026-08-10 07:04:26', '2026-08-10 07:04:26', '2');
 
 -- --------------------------------------------------------
 
@@ -111,24 +229,24 @@ INSERT INTO `pemeliharaan` (`id`, `id_pks`, `tanggal`, `blok`, `no_bak`, `flat_b
 --
 
 CREATE TABLE `pengaliran` (
-  `id_pengaliran` int NOT NULL,
+  `id_pengaliran` int(11) NOT NULL,
   `tanggal` date DEFAULT NULL,
   `jam_mulai` time DEFAULT NULL,
   `jam_selesai` time DEFAULT NULL,
-  `no_bak` varchar(25) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT NULL,
-  `blok` varchar(20) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT NULL,
+  `no_bak` varchar(25) DEFAULT NULL,
+  `blok` varchar(20) DEFAULT NULL,
   `flat_bed` varchar(25) DEFAULT NULL,
-  `vol_limbah_dihasilkan` int DEFAULT NULL,
-  `vol_limbah_dialirkan` int DEFAULT NULL,
-  `luas_area` int DEFAULT NULL,
-  `rotasi` varchar(25) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT NULL,
-  `keterangan` varchar(30) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT NULL,
-  `id_pks` int DEFAULT NULL,
+  `vol_limbah_dihasilkan` int(11) DEFAULT NULL,
+  `vol_limbah_dialirkan` int(11) DEFAULT NULL,
+  `luas_area` int(11) DEFAULT NULL,
+  `rotasi` varchar(25) DEFAULT NULL,
+  `keterangan` varchar(30) DEFAULT NULL,
+  `id_pks` int(11) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `tags` varchar(25) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT NULL,
-  `foto` varchar(25) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 ROW_FORMAT=COMPACT;
+  `tags` varchar(25) DEFAULT NULL,
+  `foto` varchar(25) DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci ROW_FORMAT=COMPACT;
 
 --
 -- Dumping data for table `pengaliran`
@@ -175,7 +293,8 @@ INSERT INTO `pengaliran` (`id_pengaliran`, `tanggal`, `jam_mulai`, `jam_selesai`
 (38, '2026-06-13', '07:00:00', '19:00:00', '4/5', 'D22', '619', 709, 500, 7, '1', '-', 9, NULL, NULL, NULL, '2026-07-15 23:44:52'),
 (39, '2026-06-14', '07:00:00', '19:00:00', '6/7', 'C20', '625', 309, 598, 7, '1', '-', 9, NULL, NULL, NULL, '2026-07-15 23:44:52'),
 (40, '2026-07-18', '07:00:00', '18:00:00', '6', 'C8', '9', 4, 3, 7, '5', 'TESTING', 9, '2026-07-18 04:06:11', NULL, '1784372771_3x4 Pebrio.png', '2026-07-20 17:03:10'),
-(41, '2026-07-21', '07:00:00', '18:00:00', '6', 'C8', '1', 2, 3, 4, '1', 'Testing', 9, '2026-07-20 17:04:18', NULL, '1784592258_3x4 Pebrio.png', '2026-07-20 17:04:18');
+(41, '2026-07-21', '07:00:00', '18:00:00', '6', 'C8', '1', 2, 3, 4, '1', 'Testing', 9, '2026-07-20 17:04:18', NULL, '1784592258_3x4 Pebrio.png', '2026-07-20 17:04:18'),
+(42, '2026-08-10', '07:00:00', '18:00:00', '5', 'c5', '5', 5, 5, 1, '7 hari', NULL, 9, '2026-08-10 07:03:18', NULL, '1786345398_poster.png', '2026-08-10 07:03:18');
 
 -- --------------------------------------------------------
 
@@ -184,12 +303,12 @@ INSERT INTO `pengaliran` (`id_pengaliran`, `tanggal`, `jam_mulai`, `jam_selesai`
 --
 
 CREATE TABLE `pks` (
-  `id_pks` int NOT NULL,
+  `id_pks` int(11) NOT NULL,
   `kode` varchar(10) NOT NULL,
-  `nama` varchar(25) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-  `akro` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `nama` varchar(25) NOT NULL,
+  `akro` varchar(10) NOT NULL,
   `manager` varchar(25) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `pks`
@@ -209,8 +328,8 @@ INSERT INTO `pks` (`id_pks`, `kode`, `nama`, `akro`, `manager`) VALUES
 (11, '05.PKS.SRO', 'SEI ROKAN', 'SRO', 'Eisyen Firdausman ST.'),
 (12, '05.PKS.SIN', 'SEI INTAN', 'SIN', 'Aswar Batubara'),
 (13, '05.TEKPOL', 'TEKNIK DAN PENGOLAHAN', 'TEP', '-'),
-(14, '05.DTM', 'DISTRIK TIMUR', 'DTM', '-'),
-(15, '05.DBR', 'DISTRIK BARAT', 'DBR', '-');
+(14, '05.DTM', 'DISTRICT TIMUR', 'DTM', '-'),
+(15, '05.DBR', 'DISTRICT BARAT', 'DBR', '-');
 
 -- --------------------------------------------------------
 
@@ -219,21 +338,21 @@ INSERT INTO `pks` (`id_pks`, `kode`, `nama`, `akro`, `manager`) VALUES
 --
 
 CREATE TABLE `rencana` (
-  `id` int NOT NULL,
-  `id_pks` int DEFAULT NULL,
-  `flat_bed` int DEFAULT NULL,
-  `long_bed` int DEFAULT NULL,
-  `tahun` year DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  `id` int(11) NOT NULL,
+  `id_pks` int(11) DEFAULT NULL,
+  `flat_bed` int(11) DEFAULT NULL,
+  `long_bed` int(11) DEFAULT NULL,
+  `tahun` year(4) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `rencana`
 --
 
 INSERT INTO `rencana` (`id`, `id_pks`, `flat_bed`, `long_bed`, `tahun`) VALUES
-(1, 9, 123, 456, 2025),
-(2, 9, 234, 567, 2027),
-(3, 9, 987, 543, 2026);
+(1, 9, 123, 456, '2025'),
+(2, 9, 234, 567, '2027'),
+(3, 9, 987, 543, '2026');
 
 -- --------------------------------------------------------
 
@@ -242,12 +361,12 @@ INSERT INTO `rencana` (`id`, `id_pks`, `flat_bed`, `long_bed`, `tahun`) VALUES
 --
 
 CREATE TABLE `sessions` (
-  `id` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `user_id` bigint UNSIGNED DEFAULT NULL,
-  `ip_address` varchar(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `user_agent` text COLLATE utf8mb4_unicode_ci,
-  `payload` longtext COLLATE utf8mb4_unicode_ci NOT NULL,
-  `last_activity` int NOT NULL
+  `id` varchar(255) NOT NULL,
+  `user_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `ip_address` varchar(45) DEFAULT NULL,
+  `user_agent` text DEFAULT NULL,
+  `payload` longtext NOT NULL,
+  `last_activity` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -255,8 +374,9 @@ CREATE TABLE `sessions` (
 --
 
 INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, `last_activity`) VALUES
-('37DBuzw2Hmsarng5eUhXi9Lx5d6LoAAx4aiHs3V0', 9, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36', 'YTo1OntzOjY6Il90b2tlbiI7czo0MDoiTUJWQWJUNWN6akpqRFlvMTN4T0Z2d0xQbFRxS0VqdFdMQkZOTjJFRiI7czozOiJ1cmwiO2E6MDp7fXM6OToiX3ByZXZpb3VzIjthOjI6e3M6MzoidXJsIjtzOjU1OiJodHRwOi8vc2ltb2xpLnRlc3QvZGFzaGJvYXJkP2J1bGFuPTEmamVuaXM9YmxvayZuaWxhaT0tIjtzOjU6InJvdXRlIjtzOjk6ImRhc2hib2FyZCI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fXM6NTA6ImxvZ2luX3dlYl81OWJhMzZhZGRjMmIyZjk0MDE1ODBmMDE0YzdmNThlYTRlMzA5ODlkIjtpOjk7fQ==', 1784864749),
-('nrbqgUsaMLHvUDBrLrigwNtK9Zzn3KaLt9xuwo7m', 9, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36', 'YTo1OntzOjY6Il90b2tlbiI7czo0MDoibnNBcWFCNEJXVFBHR1h4TnlYSVFCYUVZS1JqUllSUkYycGRSQUZJSSI7czozOiJ1cmwiO2E6MDp7fXM6OToiX3ByZXZpb3VzIjthOjI6e3M6MzoidXJsIjtzOjU1OiJodHRwOi8vc2ltb2xpLnRlc3QvZGFzaGJvYXJkP2J1bGFuPTEmamVuaXM9YmxvayZuaWxhaT0tIjtzOjU6InJvdXRlIjtzOjk6ImRhc2hib2FyZCI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fXM6NTA6ImxvZ2luX3dlYl81OWJhMzZhZGRjMmIyZjk0MDE1ODBmMDE0YzdmNThlYTRlMzA5ODlkIjtpOjk7fQ==', 1784876425);
+('cgDQAJuKeYnrDjvGty0c9Cc0IsA9V5u9pgEJ784r', 13, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36', 'YTo1OntzOjY6Il90b2tlbiI7czo0MDoiQTBQWEVpaVFmSXJXODJRZ1dXS1c3NTFmdlZObldJUkR4ZmNBdndvcSI7czozOiJ1cmwiO2E6MDp7fXM6OToiX3ByZXZpb3VzIjthOjI6e3M6MzoidXJsIjtzOjQwOiJodHRwOi8vbG9jYWxob3N0L3NpbW9saWkvcHVibGljL3BlbmdndW5hIjtzOjU6InJvdXRlIjtzOjE0OiJwZW5nZ3VuYS5pbmRleCI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fXM6NTA6ImxvZ2luX3dlYl81OWJhMzZhZGRjMmIyZjk0MDE1ODBmMDE0YzdmNThlYTRlMzA5ODlkIjtpOjEzO30=', 1786500086),
+('Ojfxfc28Tugt8cZpfeY3tOholFPVVweOzaArN95h', 9, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36', 'YTo1OntzOjY6Il90b2tlbiI7czo0MDoid25WQzc5VEtYWmJLWWZ5VEl6SDNPc0ZudUVFbmVMeVJQVXhSZzR5QiI7czozOiJ1cmwiO2E6MDp7fXM6OToiX3ByZXZpb3VzIjthOjI6e3M6MzoidXJsIjtzOjQzOiJodHRwOi8vMTI3LjAuMC4xOjgwMDAvbW9uaXRvcmluZy1hbGF0LWJlcmF0IjtzOjU6InJvdXRlIjtzOjI3OiJtb25pdG9yaW5nLWFsYXQtYmVyYXQuaW5kZXgiO31zOjY6Il9mbGFzaCI7YToyOntzOjM6Im9sZCI7YTowOnt9czozOiJuZXciO2E6MDp7fX1zOjUwOiJsb2dpbl93ZWJfNTliYTM2YWRkYzJiMmY5NDAxNTgwZjAxNGM3ZjU4ZWE0ZTMwOTg5ZCI7aTo5O30=', 1786499399),
+('RhoHKl2necVfNHLBStTOYCeWtH8umOXXcKYKLKFO', 20, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoianZEY1U4VTFaUkV0b05TU1BxalJtUU9QSUNoTDdZekNJUk1mWTlXSCI7czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6NDA6Imh0dHA6Ly9sb2NhbGhvc3Qvc2ltb2xpaS9wdWJsaWMvb3BlcmF0b3IiO3M6NToicm91dGUiO3M6MTQ6Im9wZXJhdG9yLmluZGV4Ijt9czo1MDoibG9naW5fd2ViXzU5YmEzNmFkZGMyYjJmOTQwMTU4MGYwMTRjN2Y1OGVhNGUzMDk4OWQiO2k6MjA7fQ==', 1786500172);
 
 -- --------------------------------------------------------
 
@@ -265,12 +385,12 @@ INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, 
 --
 
 CREATE TABLE `user` (
-  `ID` int NOT NULL,
+  `ID` int(11) NOT NULL,
   `username` varchar(25) NOT NULL,
-  `password` varchar(5) CHARACTER SET latin1 COLLATE latin1_swedish_ci DEFAULT NULL,
-  `level_akses` varchar(10) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,
-  `id_pks` int DEFAULT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=latin1 ROW_FORMAT=DYNAMIC;
+  `password` varchar(5) DEFAULT NULL,
+  `level_akses` varchar(10) NOT NULL,
+  `id_pks` int(11) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci ROW_FORMAT=DYNAMIC;
 
 --
 -- Dumping data for table `user`
@@ -291,17 +411,62 @@ INSERT INTO `user` (`ID`, `username`, `password`, `level_akses`, `id_pks`) VALUE
 (12, 'sin', 'sin', 'unit', 12),
 (13, 'tep', 'tep', 'admin', 13),
 (15, 'dbr', 'dbr', 'unit', 15),
-(14, 'dtm', 'dtm', 'unit', 14);
+(14, 'dtm', 'dtm', 'unit', 14),
+(18, 'opt_terantam', '12345', 'operator', 9),
+(19, 'opt_tpu', '12345', 'operator', 1),
+(20, 'mandor_ter', '12345', 'mandor', 9);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `users`
+--
+
+CREATE TABLE `users` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `email_verified_at` timestamp NULL DEFAULT NULL,
+  `password` varchar(255) NOT NULL,
+  `remember_token` varchar(100) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Indexes for dumped tables
 --
 
 --
+-- Indexes for table `alat_berat`
+--
+ALTER TABLE `alat_berat`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `bulan`
 --
 ALTER TABLE `bulan`
   ADD PRIMARY KEY (`id_bulan`) USING BTREE;
+
+--
+-- Indexes for table `migrations`
+--
+ALTER TABLE `migrations`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `monitoring_alat_berat`
+--
+ALTER TABLE `monitoring_alat_berat`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `monitoring_alat_berat_alat_berat_id_foreign` (`alat_berat_id`);
+
+--
+-- Indexes for table `password_reset_tokens`
+--
+ALTER TABLE `password_reset_tokens`
+  ADD PRIMARY KEY (`email`);
 
 --
 -- Indexes for table `pemeliharaan`
@@ -343,38 +508,79 @@ ALTER TABLE `user`
   ADD KEY `fk_user_pks` (`id_pks`);
 
 --
+-- Indexes for table `users`
+--
+ALTER TABLE `users`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `users_email_unique` (`email`);
+
+--
 -- AUTO_INCREMENT for dumped tables
 --
+
+--
+-- AUTO_INCREMENT for table `alat_berat`
+--
+ALTER TABLE `alat_berat`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `bulan`
 --
 ALTER TABLE `bulan`
-  MODIFY `id_bulan` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id_bulan` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+
+--
+-- AUTO_INCREMENT for table `migrations`
+--
+ALTER TABLE `migrations`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+
+--
+-- AUTO_INCREMENT for table `monitoring_alat_berat`
+--
+ALTER TABLE `monitoring_alat_berat`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
 
 --
 -- AUTO_INCREMENT for table `pemeliharaan`
 --
 ALTER TABLE `pemeliharaan`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
 
 --
 -- AUTO_INCREMENT for table `pengaliran`
 --
 ALTER TABLE `pengaliran`
-  MODIFY `id_pengaliran` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
+  MODIFY `id_pengaliran` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=43;
 
 --
 -- AUTO_INCREMENT for table `rencana`
 --
 ALTER TABLE `rencana`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `user`
 --
 ALTER TABLE `user`
-  MODIFY `ID` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+
+--
+-- AUTO_INCREMENT for table `users`
+--
+ALTER TABLE `users`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- Constraints for dumped tables
+--
+
+--
+-- Constraints for table `monitoring_alat_berat`
+--
+ALTER TABLE `monitoring_alat_berat`
+  ADD CONSTRAINT `monitoring_alat_berat_alat_berat_id_foreign` FOREIGN KEY (`alat_berat_id`) REFERENCES `alat_berat` (`id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
