@@ -1,0 +1,24 @@
+{
+  "name": "SIMOLI - Monitoring Lapangan",
+  "short_name": "SIMOLI",
+  "description": "Sistem Informasi Monitoring Lapangan Alat Berat & Limbah Sawit (Offline-First PWA)",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0F52BA",
+  "theme_color": "#0F52BA",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/logo/Icon%20SIMOLI.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}
