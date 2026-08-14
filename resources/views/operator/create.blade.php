@@ -4,8 +4,11 @@
 
 @section('content')
 <div class="d-flex align-items-center justify-content-between mb-3">
-    <h5 class="fw-bold m-0"><i class="feather-plus-circle me-2 text-primary"></i>Input Laporan Kerja Alat Berat</h5>
-    <a href="{{ route('operator.index') }}" class="btn btn-sm btn-outline-secondary rounded-pill">
+    <div>
+        <h5 class="fw-bold m-0 text-dark fs-17"><i class="feather-plus-circle me-1.5 text-primary"></i>Input Laporan Kerja</h5>
+        <div class="text-muted fs-12">Lengkapi data pekerjaan alat berat</div>
+    </div>
+    <a href="{{ route('operator.index') }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3 fs-12 fw-semibold">
         <i class="feather-arrow-left me-1"></i>Kembali
     </a>
 </div>
@@ -13,10 +16,13 @@
 <form action="{{ route('operator.store') }}" method="POST" enctype="multipart/form-data" id="formOperatorReport">
     @csrf
 
-    <!-- Card 1: Unit & Detail Pekerjaan -->
+    <!-- Card 1: Unit & Pekerjaan -->
     <div class="op-card mb-3">
         <div class="op-card-header">
-            <span><i class="feather-truck me-2 text-primary"></i>1. Informasi Unit & Pekerjaan</span>
+            <span class="d-flex align-items-center">
+                <span class="step-badge">1</span>
+                <span>Unit Alat & Pekerjaan</span>
+            </span>
         </div>
         <div class="op-card-body">
             <div class="mb-3">
@@ -32,14 +38,14 @@
                 @error('alat_berat_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
             </div>
 
-            <div class="row">
-                <div class="col-6 mb-3">
+            <div class="row g-2 mb-3">
+                <div class="col-6">
                     <label class="form-label">Tanggal <span class="text-danger">*</span></label>
                     <input type="date" name="tanggal" class="form-control @error('tanggal') is-invalid @enderror" value="{{ old('tanggal', date('Y-m-d')) }}" required>
                     @error('tanggal') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
-                <div class="col-6 mb-3">
-                    <label class="form-label">Operator <span class="text-danger">*</span></label>
+                <div class="col-6">
+                    <label class="form-label">Nama Operator <span class="text-danger">*</span></label>
                     <input type="text" name="operator" class="form-control @error('operator') is-invalid @enderror" value="{{ old('operator', Auth::user()->username) }}" required placeholder="Nama Operator">
                     @error('operator') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
@@ -47,7 +53,7 @@
 
             <div class="mb-3">
                 <label class="form-label">Jenis Kegiatan / Pekerjaan <span class="text-danger">*</span></label>
-                <input type="text" name="kegiatan" class="form-control @error('kegiatan') is-invalid @enderror" value="{{ old('kegiatan') }}" required placeholder="Contoh: Pengerukan kolam anaerob / Aplikasi Lahan">
+                <input type="text" name="kegiatan" class="form-control @error('kegiatan') is-invalid @enderror" value="{{ old('kegiatan') }}" required placeholder="Contoh: Pengerukan kolam / Aplikasi Lahan">
                 @error('kegiatan') <div class="invalid-feedback">{{ $message }}</div> @enderror
             </div>
 
@@ -59,167 +65,177 @@
         </div>
     </div>
 
-    <!-- Card 2: Lokasi GPS Kerja (Koordinat Awal & Akhir Kerja) - POSISI DI ATAS -->
+    <!-- Card 2: Foto Dokumentasi Kerja (Sebelum & Sesudah) -->
     <div class="op-card mb-3">
         <div class="op-card-header">
-            <span><i class="feather-map-pin me-2 text-primary"></i>2. Lokasi GPS Kerja (Koordinat Awal & Akhir)</span>
+            <span class="d-flex align-items-center">
+                <span class="step-badge">2</span>
+                <span>Foto Dokumentasi & Jam Kerja Otomatis</span>
+            </span>
         </div>
         <div class="op-card-body">
             <div class="row g-3">
-                <!-- GPS Awal -->
-                <div class="col-md-6 border-end-md pb-2">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <label class="form-label fw-bold mb-0 text-primary fs-12"><i class="feather-navigation me-1"></i>Koordinat Awal Kerja</label>
-                        <button type="button" class="btn btn-xs btn-outline-primary rounded-pill px-2.5 py-0.5 fs-11" onclick="getGpsAwal()">
-                            <i class="feather-crosshair me-1"></i>GPS Awal
-                        </button>
-                    </div>
-                    <div class="row g-2">
-                        <div class="col-6">
-                            <input type="text" name="latitude_awal" id="latitude_awal" class="form-control form-control-sm bg-light" readonly placeholder="Lat Awal" value="{{ old('latitude_awal') }}">
-                            <input type="hidden" name="latitude" id="latitude" value="{{ old('latitude') }}">
+                <!-- Foto Sebelum -->
+                <div class="col-12 col-sm-6">
+                    <label class="form-label text-dark fw-bold mb-1">
+                        Foto Sebelum Kerja (Awal Shift) <span class="text-danger">*</span>
+                    </label>
+                    <div class="photo-preview-box mb-2" onclick="document.getElementById('foto_sebelum').click()">
+                        <div id="preview_sebelum_placeholder" class="text-center p-3">
+                            <i class="feather-camera fs-2 text-primary d-block mb-1"></i>
+                            <span class="fs-13 text-dark fw-bold d-block">Ambil Foto Sebelum</span>
+                            <small class="text-muted fs-11">Ketuk untuk buka kamera / galeri</small>
                         </div>
-                        <div class="col-6">
-                            <input type="text" name="longitude_awal" id="longitude_awal" class="form-control form-control-sm bg-light" readonly placeholder="Long Awal" value="{{ old('longitude_awal') }}">
-                            <input type="hidden" name="longitude" id="longitude" value="{{ old('longitude') }}">
-                        </div>
-                    </div>
-                    <small id="gps_awal_status" class="fs-11 text-muted mt-1 d-block">Terisi otomatis saat Foto Sebelum dipilih/diambil.</small>
-                </div>
-
-                <!-- GPS Akhir -->
-                <div class="col-md-6 pt-2 pt-md-0">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <label class="form-label fw-bold mb-0 text-success fs-12"><i class="feather-navigation me-1"></i>Koordinat Akhir Kerja</label>
-                        <button type="button" class="btn btn-xs btn-outline-success rounded-pill px-2.5 py-0.5 fs-11" onclick="getGpsAkhir()">
-                            <i class="feather-crosshair me-1"></i>GPS Akhir
-                        </button>
-                    </div>
-                    <div class="row g-2">
-                        <div class="col-6">
-                            <input type="text" name="latitude_akhir" id="latitude_akhir" class="form-control form-control-sm bg-light" readonly placeholder="Lat Akhir" value="{{ old('latitude_akhir') }}">
-                        </div>
-                        <div class="col-6">
-                            <input type="text" name="longitude_akhir" id="longitude_akhir" class="form-control form-control-sm bg-light" readonly placeholder="Long Akhir" value="{{ old('longitude_akhir') }}">
-                        </div>
-                    </div>
-                    <small id="gps_akhir_status" class="fs-11 text-muted mt-1 d-block">Terisi otomatis saat Foto Sesudah dipilih/diambil.</small>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Card 3: Foto Dokumentasi Kerja - GAMBAR DI ATAS JAM -->
-    <div class="op-card mb-3">
-        <div class="op-card-header">
-            <span><i class="feather-camera me-2 text-primary"></i>3. Foto Dokumentasi Kerja</span>
-        </div>
-        <div class="op-card-body">
-            <div class="row g-3">
-                <div class="col-6">
-                    <label class="form-label text-center d-block">Foto Sebelum Kerja <span class="text-danger">*</span></label>
-                    <div class="photo-preview-box" onclick="document.getElementById('foto_sebelum').click()" style="cursor: pointer;">
-                        <div id="preview_sebelum_placeholder" class="text-center p-2">
-                            <i class="feather-camera fs-3 text-muted d-block mb-1"></i>
-                            <span class="fs-12 text-muted fw-semibold">Pilih / Ambil Foto</span>
-                        </div>
-                        <img id="img_sebelum_preview" src="" style="display: none;">
+                        <img id="img_sebelum_preview" src="" style="display: none;" alt="Preview Foto Sebelum">
                         <span id="ts_sebelum_tag" class="timestamp-tag" style="display: none;"></span>
                     </div>
-                    <input type="file" name="foto_sebelum" id="foto_sebelum" accept="image/*" style="display: none;" onchange="handlePhotoSelect(this, 'img_sebelum_preview', 'preview_sebelum_placeholder', 'ts_sebelum_tag')">
+                    <input type="file" name="foto_sebelum" id="foto_sebelum" accept="image/*" capture="environment" style="display: none;" onchange="handlePhotoSelect(this, 'img_sebelum_preview', 'preview_sebelum_placeholder', 'ts_sebelum_tag')">
+                    
+                    <div class="p-2 bg-light rounded-3 border">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fs-11 fw-bold text-primary"><i class="feather-navigation me-1"></i>GPS Awal:</span>
+                            <button type="button" class="btn btn-xs btn-outline-primary rounded-pill px-2 py-0.5 fs-11" onclick="getGpsAwal()">
+                                <i class="feather-crosshair me-1"></i>Ulang GPS
+                            </button>
+                        </div>
+                        <div class="row g-1">
+                            <div class="col-6">
+                                <input type="text" name="latitude_awal" id="latitude_awal" class="form-control form-control-sm bg-white" readonly placeholder="Lat Awal" value="{{ old('latitude_awal') }}">
+                                <input type="hidden" name="latitude" id="latitude" value="{{ old('latitude') }}">
+                            </div>
+                            <div class="col-6">
+                                <input type="text" name="longitude_awal" id="longitude_awal" class="form-control form-control-sm bg-white" readonly placeholder="Long Awal" value="{{ old('longitude_awal') }}">
+                                <input type="hidden" name="longitude" id="longitude" value="{{ old('longitude') }}">
+                            </div>
+                        </div>
+                        <small id="gps_awal_status" class="fs-11 text-muted mt-1 d-block">Otomatis tersimpan saat foto diambil.</small>
+                    </div>
                     @error('foto_sebelum') <small class="text-danger d-block mt-1 fs-11">{{ $message }}</small> @enderror
                 </div>
 
-                <div class="col-6">
-                    <label class="form-label text-center d-block">Foto Sesudah Kerja</label>
-                    <div class="photo-preview-box" onclick="document.getElementById('foto_sesudah').click()" style="cursor: pointer;">
-                        <div id="preview_sesudah_placeholder" class="text-center p-2">
-                            <i class="feather-camera fs-3 text-muted d-block mb-1"></i>
-                            <span class="fs-12 text-muted fw-semibold">Pilih / Ambil Foto</span>
+                <!-- Foto Sesudah -->
+                <div class="col-12 col-sm-6">
+                    <label class="form-label text-dark fw-bold mb-1">
+                        Foto Sesudah Kerja (Akhir Shift)
+                        <span class="badge bg-secondary-subtle text-secondary fs-11 fw-normal ms-1">Bisa diisi nanti</span>
+                    </label>
+                    <div class="photo-preview-box mb-2" onclick="document.getElementById('foto_sesudah').click()">
+                        <div id="preview_sesudah_placeholder" class="text-center p-3">
+                            <i class="feather-camera fs-2 text-success d-block mb-1"></i>
+                            <span class="fs-13 text-dark fw-bold d-block">Ambil Foto Sesudah</span>
+                            <small class="text-muted fs-11">Diisi saat selesai shift kerja</small>
                         </div>
-                        <img id="img_sesudah_preview" src="" style="display: none;">
+                        <img id="img_sesudah_preview" src="" style="display: none;" alt="Preview Foto Sesudah">
                         <span id="ts_sesudah_tag" class="timestamp-tag" style="display: none;"></span>
                     </div>
-                    <input type="file" name="foto_sesudah" id="foto_sesudah" accept="image/*" style="display: none;" onchange="handlePhotoSelect(this, 'img_sesudah_preview', 'preview_sesudah_placeholder', 'ts_sesudah_tag')">
+                    <input type="file" name="foto_sesudah" id="foto_sesudah" accept="image/*" capture="environment" style="display: none;" onchange="handlePhotoSelect(this, 'img_sesudah_preview', 'preview_sesudah_placeholder', 'ts_sesudah_tag')">
+                    
+                    <div class="p-2 bg-light rounded-3 border">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fs-11 fw-bold text-success"><i class="feather-navigation me-1"></i>GPS Akhir:</span>
+                            <button type="button" class="btn btn-xs btn-outline-success rounded-pill px-2 py-0.5 fs-11" onclick="getGpsAkhir()">
+                                <i class="feather-crosshair me-1"></i>Ulang GPS
+                            </button>
+                        </div>
+                        <div class="row g-1">
+                            <div class="col-6">
+                                <input type="text" name="latitude_akhir" id="latitude_akhir" class="form-control form-control-sm bg-white" readonly placeholder="Lat Akhir" value="{{ old('latitude_akhir') }}">
+                            </div>
+                            <div class="col-6">
+                                <input type="text" name="longitude_akhir" id="longitude_akhir" class="form-control form-control-sm bg-white" readonly placeholder="Long Akhir" value="{{ old('longitude_akhir') }}">
+                            </div>
+                        </div>
+                        <small id="gps_akhir_status" class="fs-11 text-muted mt-1 d-block">Otomatis tersimpan saat foto diambil.</small>
+                    </div>
                     @error('foto_sesudah') <small class="text-danger d-block mt-1 fs-11">{{ $message }}</small> @enderror
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Card 4: Hour Meter (HM) & Jam Kerja - JAM TIDAK BOLEH INPUT MANUAL -->
+    <!-- Card 3: Hour Meter (HM) & Jam Kerja -->
     <div class="op-card mb-3">
         <div class="op-card-header">
-            <span><i class="feather-clock me-2 text-primary"></i>4. Hour Meter (HM) & Jam Kerja</span>
+            <span class="d-flex align-items-center">
+                <span class="step-badge">3</span>
+                <span>Jam Kerja & Hour Meter (HM)</span>
+            </span>
         </div>
         <div class="op-card-body">
-            <div class="row">
-                <div class="col-6 mb-3">
-                    <label class="form-label">HM / Jam Awal Kerja <span class="text-danger">*</span></label>
+            <div class="row g-2">
+                <div class="col-6 mb-2">
+                    <label class="form-label">Jam Awal Kerja <span class="text-danger">*</span></label>
                     <input type="text" name="hm_awal" id="hm_awal" 
                         class="form-control bg-light @error('hm_awal') is-invalid @enderror" 
-                        value="{{ old('hm_awal') }}" placeholder="HH:MM (Otomatis dari Foto)" 
+                        value="{{ old('hm_awal') }}" placeholder="HH:MM (Dari Foto)" 
                         readonly oninput="hitungHm()">
-                    <small id="msg_hm_awal" class="fs-11 d-block mt-1 text-danger">
-                        <i class="feather-lock me-1"></i>Jam Awal terisi otomatis dari foto & tidak dapat diisi manual.
+                    <small id="msg_hm_awal" class="fs-11 d-block mt-1 text-muted">
+                        <i class="feather-lock me-1 text-primary"></i>Otomatis dari foto sebelum.
                     </small>
                     @error('hm_awal') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
-                <div class="col-6 mb-3">
-                    <label class="form-label">HM / Jam Akhir Kerja</label>
+                <div class="col-6 mb-2">
+                    <label class="form-label">Jam Akhir Kerja</label>
                     <input type="text" name="hm_akhir" id="hm_akhir" 
                         class="form-control bg-light @error('hm_akhir') is-invalid @enderror" 
-                        value="{{ old('hm_akhir') }}" placeholder="HH:MM (Otomatis dari Foto)" 
+                        value="{{ old('hm_akhir') }}" placeholder="HH:MM (Dari Foto)" 
                         readonly oninput="hitungHm()">
-                    <small id="msg_hm_akhir" class="fs-11 d-block mt-1 text-danger">
-                        <i class="feather-lock me-1"></i>Jam Akhir terisi otomatis dari foto & tidak dapat diisi manual.
+                    <small id="msg_hm_akhir" class="fs-11 d-block mt-1 text-muted">
+                        <i class="feather-lock me-1 text-success"></i>Otomatis dari foto sesudah.
                     </small>
                     @error('hm_akhir') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
             </div>
 
-            <div class="p-2 bg-light rounded-3 text-center border">
-                <span class="text-muted fs-12 fw-semibold">Total Jam Kerja (HM):</span>
-                <span id="total_hm_display" class="fw-bold fs-5 text-success ms-2">00:00 Jam</span>
+            <div class="p-3 bg-soft-success rounded-3 text-center border border-success-subtle mt-2">
+                <div class="text-muted fs-12 fw-semibold">Total Durasi Jam Kerja (HM):</div>
+                <div id="total_hm_display" class="fw-bolder fs-4 text-success my-1">00:00 Jam</div>
+                <small class="text-muted fs-11">Dihitung otomatis dari selisih Jam Awal & Jam Akhir.</small>
             </div>
         </div>
     </div>
 
-    <!-- Card 5: Hasil Aplikasi Bed -->
+    <!-- Card 4: Hasil Aplikasi Bed (Jika Ada) -->
     <div class="op-card mb-3">
         <div class="op-card-header">
-            <span><i class="feather-grid me-2 text-primary"></i>5. Hasil Aplikasi Bed (Aplikasi Lahan)</span>
+            <span class="d-flex align-items-center">
+                <span class="step-badge">4</span>
+                <span>Hasil Aplikasi Bed (Aplikasi Lahan)</span>
+            </span>
         </div>
         <div class="op-card-body">
-            <div class="row">
-                <div class="col-6 mb-3">
+            <div class="row g-2 mb-2">
+                <div class="col-6">
                     <label class="form-label">Flat Bed (Jumlah)</label>
                     <input type="number" name="flat_bed" id="flat_bed" class="form-control @error('flat_bed') is-invalid @enderror" value="{{ old('flat_bed', 0) }}" min="0" oninput="calcBedTotal()">
                     @error('flat_bed') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
-                <div class="col-6 mb-3">
+                <div class="col-6">
                     <label class="form-label">Long Bed (Jumlah)</label>
                     <input type="number" name="long_bed" id="long_bed" class="form-control @error('long_bed') is-invalid @enderror" value="{{ old('long_bed', 0) }}" min="0" oninput="calcBedTotal()">
                     @error('long_bed') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
             </div>
 
-            <div class="p-2 bg-light rounded-3 text-center border">
+            <div class="p-2.5 bg-soft-primary rounded-3 text-center border border-primary-subtle">
                 <span class="text-muted fs-12 fw-semibold">Total Bed Dikerjakan:</span>
-                <span id="total_bed_display" class="fw-bold fs-5 text-primary ms-2">0</span> Bed
+                <span id="total_bed_display" class="fw-bold fs-5 text-primary ms-1">0</span> Bed
                 <input type="hidden" name="jumlah_bed" id="jumlah_bed" value="{{ old('jumlah_bed', 0) }}">
             </div>
         </div>
     </div>
 
-    <!-- Card 6: BBM & Kondisi Alat -->
+    <!-- Card 5: BBM & Kondisi Alat -->
     <div class="op-card mb-3">
         <div class="op-card-header">
-            <span><i class="feather-check-square me-2 text-primary"></i>6. Konsumsi BBM & Kondisi Alat</span>
+            <span class="d-flex align-items-center">
+                <span class="step-badge">5</span>
+                <span>Konsumsi BBM & Kondisi Alat</span>
+            </span>
         </div>
         <div class="op-card-body">
             <div class="mb-3">
-                <label class="form-label">Pengisian BBM (Liter)</label>
+                <label class="form-label">Pengisian BBM Solar (Liter)</label>
                 <input type="number" step="0.1" name="bbm_liter" class="form-control @error('bbm_liter') is-invalid @enderror" value="{{ old('bbm_liter', 0) }}" placeholder="Contoh: 75.0" min="0">
                 @error('bbm_liter') <div class="invalid-feedback">{{ $message }}</div> @enderror
             </div>
@@ -227,7 +243,7 @@
             <div class="mb-3">
                 <label class="form-label">Kondisi Alat Berat <span class="text-danger">*</span></label>
                 <select name="kondisi_alat" class="form-select @error('kondisi_alat') is-invalid @enderror" required>
-                    <option value="Normal" {{ old('kondisi_alat') == 'Normal' ? 'selected' : '' }}>Normal / Baik</option>
+                    <option value="Normal" {{ old('kondisi_alat') == 'Normal' ? 'selected' : '' }}>Normal / Baik (Siap Kerja)</option>
                     <option value="Perlu Perbaikan" {{ old('kondisi_alat') == 'Perlu Perbaikan' ? 'selected' : '' }}>Perlu Perbaikan (Maintenance)</option>
                     <option value="Breakdown" {{ old('kondisi_alat') == 'Breakdown' ? 'selected' : '' }}>Breakdown (Rusak)</option>
                 </select>
@@ -235,8 +251,8 @@
             </div>
 
             <div class="mb-0">
-                <label class="form-label">Catatan / Kendala Operasional</label>
-                <textarea name="catatan" class="form-control" rows="2" placeholder="Catatan kondisi alat atau kendala di lapangan...">{{ old('catatan') }}</textarea>
+                <label class="form-label">Catatan / Kendala di Lapangan</label>
+                <textarea name="catatan" class="form-control" rows="2" placeholder="Tuliskan catatan kondisi cuaca, kendala alat, atau rincian pekerjaan...">{{ old('catatan') }}</textarea>
             </div>
         </div>
     </div>
@@ -244,7 +260,8 @@
     <!-- Submit Button -->
     <div class="mb-4">
         <button type="submit" class="btn btn-op-primary shadow-lg py-3">
-            <i class="feather-save me-2"></i>SIMPAN LAPORAN KERJA
+            <i class="feather-check-circle me-2 fs-5"></i>
+            <span>SIMPAN LAPORAN KERJA</span>
         </button>
     </div>
 </form>
@@ -325,52 +342,79 @@
         totalHmDisplay.innerText = minutesToTime(finalDiff);
     }
 
+    // --- Smart 3-Tier Offline Satellite GPS Engine ---
+    function captureSmartLocation(onSuccess, statusElem) {
+        if (!navigator.geolocation) {
+            if (statusElem) statusElem.innerHTML = '<span class="text-danger"><i class="feather-alert-triangle me-1"></i>Browser ini tidak mendukung GPS.</span>';
+            return;
+        }
+
+        if (statusElem) {
+            statusElem.innerHTML = '<span class="text-primary"><span class="spinner-border spinner-border-sm me-1" style="width: 10px; height: 10px;"></span>Mengunci sinyal satelit GPS... Harap di area terbuka.</span>';
+        }
+
+        function handleSuccess(pos, source) {
+            const lat = pos.coords.latitude.toFixed(8);
+            const long = pos.coords.longitude.toFixed(8);
+            const accuracy = Math.round(pos.coords.accuracy || 0);
+            onSuccess(lat, long, accuracy);
+            if (statusElem) {
+                statusElem.innerHTML = `<span class="text-success fw-semibold"><i class="feather-check-circle me-1"></i>GPS Terkunci (${source})! Akurasi: ±${accuracy}m</span>`;
+            }
+        }
+
+        function handleFinalError(err) {
+            let msg = 'Gagal mengunci sinyal GPS.';
+            if (err.code === 1) {
+                msg = 'Izin lokasi (GPS) ditolak. Aktifkan izin lokasi pada browser/HP.';
+            } else if (err.code === 2) {
+                msg = 'Sinyal satelit belum terdeteksi. Pastikan tombol Lokasi/GPS di HP aktif.';
+            } else if (err.code === 3) {
+                msg = 'Waktu pencarian satelit habis (Timeout). Pastikan berada di bawah langit terbuka.';
+            }
+            if (statusElem) {
+                statusElem.innerHTML = `<span class="text-danger fs-11"><i class="feather-alert-triangle me-1"></i>${msg}</span>`;
+            }
+        }
+
+        // Tier 1: Try Fast Cached Position (last 5 minutes)
+        navigator.geolocation.getCurrentPosition(
+            (pos) => handleSuccess(pos, 'Cache GPS'),
+            (err1) => {
+                // Tier 2: Real-Time Satellite Fix with 25s timeout
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => handleSuccess(pos, 'Satelit HP'),
+                    (err2) => {
+                        // Tier 3: Low-Accuracy Device Fallback
+                        navigator.geolocation.getCurrentPosition(
+                            (pos) => handleSuccess(pos, 'Perkiraan Perangkat'),
+                            (err3) => handleFinalError(err3),
+                            { enableHighAccuracy: false, timeout: 20000, maximumAge: 600000 }
+                        );
+                    },
+                    { enableHighAccuracy: true, timeout: 25000, maximumAge: 120000 }
+                );
+            },
+            { enableHighAccuracy: false, timeout: 4000, maximumAge: 300000 }
+        );
+    }
+
     function getGpsAwal() {
         const statusElem = document.getElementById('gps_awal_status');
-        if (statusElem) statusElem.innerText = 'Tunggu sebentar, merekam lokasi GPS Awal...';
-
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                function(position) {
-                    const lat = position.coords.latitude.toFixed(8);
-                    const long = position.coords.longitude.toFixed(8);
-                    document.getElementById('latitude_awal').value = lat;
-                    document.getElementById('longitude_awal').value = long;
-                    document.getElementById('latitude').value = lat;
-                    document.getElementById('longitude').value = long;
-                    if (statusElem) statusElem.innerHTML = `<span class="text-success"><i class="feather-check-circle me-1"></i>GPS Awal berhasil direkam! (${lat}, ${long})</span>`;
-                },
-                function(error) {
-                    if (statusElem) statusElem.innerHTML = `<span class="text-danger"><i class="feather-alert-triangle me-1"></i>Gagal mengambil GPS Awal: ${error.message}</span>`;
-                },
-                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-            );
-        } else {
-            if (statusElem) statusElem.innerText = 'Browser Anda tidak mendukung geolokasi GPS.';
-        }
+        captureSmartLocation(function(lat, long, accuracy) {
+            document.getElementById('latitude_awal').value = lat;
+            document.getElementById('longitude_awal').value = long;
+            document.getElementById('latitude').value = lat;
+            document.getElementById('longitude').value = long;
+        }, statusElem);
     }
 
     function getGpsAkhir() {
         const statusElem = document.getElementById('gps_akhir_status');
-        if (statusElem) statusElem.innerText = 'Tunggu sebentar, merekam lokasi GPS Akhir...';
-
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                function(position) {
-                    const lat = position.coords.latitude.toFixed(8);
-                    const long = position.coords.longitude.toFixed(8);
-                    document.getElementById('latitude_akhir').value = lat;
-                    document.getElementById('longitude_akhir').value = long;
-                    if (statusElem) statusElem.innerHTML = `<span class="text-success"><i class="feather-check-circle me-1"></i>GPS Akhir berhasil direkam! (${lat}, ${long})</span>`;
-                },
-                function(error) {
-                    if (statusElem) statusElem.innerHTML = `<span class="text-danger"><i class="feather-alert-triangle me-1"></i>Gagal mengambil GPS Akhir: ${error.message}</span>`;
-                },
-                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-            );
-        } else {
-            if (statusElem) statusElem.innerText = 'Browser Anda tidak mendukung geolokasi GPS.';
-        }
+        captureSmartLocation(function(lat, long, accuracy) {
+            document.getElementById('latitude_akhir').value = lat;
+            document.getElementById('longitude_akhir').value = long;
+        }, statusElem);
     }
 
     function handlePhotoSelect(input, imgId, placeholderId, tsTagId) {
@@ -414,6 +458,61 @@
     document.addEventListener('DOMContentLoaded', function() {
         calcBedTotal();
         hitungHm();
+
+        // 1. Fallback: populate alat berat from IndexedDB if offline or empty
+        const selectAlat = document.querySelector('select[name="alat_berat_id"]');
+        if (selectAlat && selectAlat.options.length <= 1) {
+            SimoliDB.getMasterAlatBerat().then((list) => {
+                if (list && list.length > 0) {
+                    list.forEach(ab => {
+                        const opt = document.createElement('option');
+                        opt.value = ab.id;
+                        opt.textContent = `[${ab.kode_alat}] ${ab.nama_alat} (${ab.jenis_alat || 'Unit'})`;
+                        selectAlat.appendChild(opt);
+                    });
+                }
+            });
+        }
+
+        // 2. Intercept Form Submission for 100% Offline-First Reliability
+        const form = document.getElementById('formOperatorReport');
+        if (form) {
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const submitBtn = form.querySelector('button[type="submit"]');
+                const originalBtnHtml = submitBtn ? submitBtn.innerHTML : 'Simpan Laporan Kerja';
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Menyimpan ke Memori HP...';
+                }
+
+                try {
+                    const report = await SimoliSync.saveReportFromForm(form);
+                    
+                    if (navigator.onLine) {
+                        if (window.showToastNotification) {
+                            showToastNotification('✓ Laporan berhasil disimpan & disinkronkan!', 'success');
+                        }
+                    } else {
+                        if (window.showToastNotification) {
+                            showToastNotification('✓ Laporan berhasil disimpan di HP (Mode Offline Lapangan). Otomatis disinkronkan saat ada sinyal.', 'warning');
+                        }
+                    }
+                    
+                    setTimeout(() => {
+                        window.location.href = "{{ route('operator.index') }}";
+                    }, 1000);
+                } catch (err) {
+                    console.error('[SIMOLI] Offline save error:', err);
+                    alert('Gagal menyimpan laporan: ' + err.message);
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalBtnHtml;
+                    }
+                }
+            });
+        }
     });
 </script>
 @endsection

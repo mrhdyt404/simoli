@@ -6,11 +6,22 @@
     <meta http-equiv="x-ua-compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="theme-color" content="#0F52BA">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SIMOLI">
+    <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
     <title>SIMOLI || Login</title>
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('logo/Icon%20SIMOLI.png') }}">
     <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('logo/Icon%20SIMOLI.png') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="{{ asset('duraluxadmin/assets/css/bootstrap.min.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ asset('duraluxadmin/assets/vendors/css/vendors.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ asset('duraluxadmin/assets/vendors/css/feather.min.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" type="text/css" href="{{ asset('duraluxadmin/assets/css/theme.min.css') }}">
     <style>
         .login-alert {
@@ -79,21 +90,25 @@
     </style>
 </head>
 
-<body>
+<body class="bg-light">
     <main class="auth-minimal-wrapper">
         <div class="auth-minimal-inner">
             <div class="minimal-card-wrapper">
                 <div class="card mb-4 mt-5 mx-4 mx-sm-0 position-relative">
-                    <div
-                        class="wd-80 bg-white p-2 rounded-circle shadow-lg position-absolute translate-middle top-0 start-50">
-                        <img src="{{ asset('logo/Icon%20SIMOLI.png') }}" alt="SIMOLI" width="96" height="96"
-                            class="img-fluid" />
-                    </div>
                     <div class="card-body p-sm-5">
-                        <h2 class="fs-20 fw-bolder mb-4">SIMOLI Login</h2>
-                        <h4 class="fs-13 fw-bold mb-2">Sistem Monitoring Limbah</h4>
-                        <p class="fs-12 fw-medium text-muted">Silahkan login untuk mengakses <strong>SIMOLI</strong> -
-                            PT. Perkebunan Nusantara IV Regional 3</p>
+                        <div class="text-center mb-4">
+                            <img src="{{ asset('logo/Logo%20SIMOLI.png') }}" alt="Logo SIMOLI"
+                                style="max-height: 85px; width: auto; object-fit: contain;">
+                            <h4 class="fs-20 fw-bolder mt-3 mb-1">Sistem Informasi Monitoring Limbah & Oli</h4>
+                            <p class="fs-12 fw-medium text-muted">Silahkan masukkan username dan password Anda</p>
+                        </div>
+
+                        @if(session('success'))
+                            <div class="alert alert-success d-flex align-items-center mb-4" role="alert">
+                                <i class="feather-check-circle me-2"></i>
+                                <div>{{ session('success') }}</div>
+                            </div>
+                        @endif
 
                         @if ($errors->has('login'))
                             <div class="login-alert">
@@ -162,6 +177,19 @@
     <script src="{{ asset('duraluxadmin/assets/vendors/js/vendors.min.js') }}"></script>
     <script src="{{ asset('duraluxadmin/assets/js/common-init.min.js') }}"></script>
     <script src="{{ asset('duraluxadmin/assets/js/theme-customizer-init.min.js') }}"></script>
+    
+    <!-- PWA Offline-First Scripts -->
+    <script src="{{ asset('js/simoli-offline-db.js') }}"></script>
+    <script src="{{ asset('js/simoli-sync-manager.js') }}"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then((reg) => console.log('[PWA] Service Worker registered in scope:', reg.scope))
+                    .catch((err) => console.warn('[PWA] Service Worker registration failed:', err));
+            });
+        }
+    </script>
 </body>
 
 </html>

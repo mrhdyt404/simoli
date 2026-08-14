@@ -9,6 +9,7 @@ class MonitoringAlatBerat extends Model
     protected $table = 'monitoring_alat_berat';
 
     protected $fillable = [
+        'uuid',
         'id_pks',
         'alat_berat_id',
         'tanggal',
@@ -33,6 +34,10 @@ class MonitoringAlatBerat extends Model
         'foto_sebelum',
         'foto_sesudah',
         'catatan',
+        'sync_version',
+        'client_created_at',
+        'synced_at',
+        'device_id',
     ];
 
     protected $casts = [
@@ -50,6 +55,9 @@ class MonitoringAlatBerat extends Model
         'hm_akhir' => 'datetime',
         'total_hm' => 'float',
         'bbm_liter' => 'float',
+        'sync_version' => 'integer',
+        'client_created_at' => 'datetime',
+        'synced_at' => 'datetime',
     ];
 
     /**

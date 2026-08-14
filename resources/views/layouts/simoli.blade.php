@@ -6,14 +6,23 @@
     <meta http-equiv="x-ua-compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="csrf-token" content="{{ csrf_token() }}" />
+    <meta name="theme-color" content="#0F52BA">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SIMOLI">
+    <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
     <title>SIMOLI || @yield('title', 'Dashboard')</title>
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('logo/Icon%20SIMOLI.png') }}" />
     <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('logo/Icon%20SIMOLI.png') }}" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="{{ asset('duraluxadmin/assets/css/bootstrap.min.css') }}" />
     <link rel="stylesheet" type="text/css" href="{{ asset('duraluxadmin/assets/vendors/css/vendors.min.css') }}" />
+    <link rel="stylesheet" type="text/css" href="{{ asset('duraluxadmin/assets/vendors/css/feather.min.css') }}" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" type="text/css" href="{{ asset('duraluxadmin/assets/vendors/css/daterangepicker.min.css') }}" />
     <link rel="stylesheet" type="text/css" href="{{ asset('duraluxadmin/assets/css/theme.min.css') }}" />
     @yield('styles')
@@ -608,6 +617,29 @@
     @yield('scripts')
     <script src="{{ asset('duraluxadmin/assets/js/theme-customizer-init.min.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- PWA Offline-First Scripts -->
+    <script src="{{ asset('js/simoli-offline-db.js') }}"></script>
+    <script src="{{ asset('js/simoli-sync-manager.js') }}"></script>
+    <script>
+        // Cache Session Info into IndexedDB for Offline Sync
+        @if(Auth::check())
+            SimoliDB.init().then(() => {
+                SimoliDB.setConfig('user_id', '{{ Auth::user()->ID }}');
+                SimoliDB.setConfig('username', '{{ Auth::user()->username }}');
+                SimoliDB.setConfig('user_pks_id', '{{ Auth::user()->id_pks }}');
+                SimoliDB.setConfig('auth_token', '{{ base64_encode(Auth::user()->ID . ":" . Auth::user()->username) }}');
+            });
+        @endif
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then((reg) => console.log('[PWA] Service Worker registered in scope:', reg.scope))
+                    .catch((err) => console.warn('[PWA] Service Worker registration failed:', err));
+            });
+        }
+    </script>
 </body>
 
 </html>
