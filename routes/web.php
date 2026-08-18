@@ -1,0 +1,52 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\LoginController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\PengaliranController;
+use App\Http\Controllers\PemeliharaanController;
+use App\Http\Controllers\RencanaController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\LaporanHarianController;
+use App\Http\Controllers\ReportPengaliranController;
+use App\Http\Controllers\ReportPemeliharaanController;
+
+// Login Routes
+Route::get('/', fn() => redirect('/login'));
+Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
+Route::post('login', [LoginController::class, 'login']);
+Route::post('logout', [LoginController::class, 'logout'])->name('logout');
+
+// Protected Routes (harus login)
+Route::middleware('auth')->group(function () {
+    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Pengaliran CRUD
+    Route::resource('pengaliran', PengaliranController::class);
+    Route::get('/pengaliran/{id}', [PengaliranController::class, 'show'])
+        ->name('pengaliran.show');
+
+    // Pemeliharaan CRUD
+    Route::resource('pemeliharaan', PemeliharaanController::class);
+    Route::get('/pemeliharaan/{id}', [PemeliharaanController::class, 'show'])
+        ->name('pemeliharaan.show');
+
+    // Rencana Pengaliran & Pemeliharaan CRUD
+    Route::resource('rencana', RencanaController::class);
+    Route::get('report-rencana', [RencanaController::class, 'report'])->name('report-rencana');
+
+    // Data Pengguna (Admin)
+    Route::resource('pengguna', UserController::class);
+
+    // Report
+    Route::get('laporan-harian', [LaporanHarianController::class, 'index'])->name('laporan-harian');
+    Route::get('report-pengaliran', [ReportPengaliranController::class, 'index'])->name('report-pengaliran');
+    Route::get('report-pemeliharaan', [ReportPemeliharaanController::class, 'index'])->name('report-pemeliharaan');
+
+    Route::get('/dashboard/grafik-volume', [DashboardController::class, 'grafikVolume'])
+        ->name('dashboard.grafik-volume');
+
+    Route::get('/dashboard/pilihan-filter', [DashboardController::class, 'pilihanFilter'])
+        ->name('dashboard.pilihan-filter');
+
+});
