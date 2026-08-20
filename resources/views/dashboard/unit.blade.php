@@ -1,892 +1,950 @@
 @extends('layouts.simoli')
-@section('title', 'Dashboard')
+@section('title', 'Dashboard Unit — ' . (Auth::user()->pks->nama ?? ''))
+@section('page-title', 'Dashboard Unit ' . (Auth::user()->pks->akro ?? ''))
+@section('page-description', 'Monitoring Harian & Statistik Bulanan — ' . (Auth::user()->pks->nama ?? 'PKS'))
+
+@section('breadcrumb')
+    <li>PKS {{ Auth::user()->pks->akro ?? '' }}</li>
+    <li class="separator">/</li>
+    <li>Dashboard</li>
+@endsection
+
 @php
     $namaBulan = [
-        1 => 'Januari',
-        2 => 'Februari',
-        3 => 'Maret',
-        4 => 'April',
-        5 => 'Mei',
-        6 => 'Juni',
-        7 => 'Juli',
-        8 => 'Agustus',
-        9 => 'September',
-        10 => 'Oktober',
-        11 => 'November',
-        12 => 'Desember',
+        1 => 'Januari', 2 => 'Februari', 3 => 'Maret',
+        4 => 'April',   5 => 'Mei',       6 => 'Juni',
+        7 => 'Juli',    8 => 'Agustus',   9 => 'September',
+        10 => 'Oktober',11 => 'November', 12 => 'Desember',
     ];
+    $isComplete = $hasPengaliran && $hasPemeliharaan;
+    $pctPengaliran   = $daysInMonth > 0 ? round(($monthlyPengaliran / $daysInMonth) * 100) : 0;
+    $pctPemeliharaan = $daysInMonth > 0 ? round(($monthlyPemeliharaan / $daysInMonth) * 100) : 0;
 @endphp
 
 @section('styles')
-    <style>
-        .status-card {
-            border-radius: 16px;
-            border: none;
-            transition: transform 0.2s;
-        }
+<style>
+    /* ================================================================
+       UNIT DASHBOARD — PTPN GREEN THEME
+       ================================================================ */
 
-        .status-card:hover {
-            transform: translateY(-2px);
-        }
+    @keyframes fadeUpCard {
+        from { opacity: 0; transform: translateY(16px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
 
-        .status-card.success {
-            background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
-            border-left: 4px solid #10b981;
-        }
+    @keyframes livePulse {
+        0%   { box-shadow: 0 0 0 0 rgba(34,197,94,.7); transform: scale(.95); }
+        70%  { box-shadow: 0 0 0 8px rgba(34,197,94,0); transform: scale(1.05); }
+        100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); transform: scale(.95); }
+    }
 
-        .status-card.danger {
-            background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%);
-            border-left: 4px solid #ef4444;
-        }
+    /* Disable default hero strip */
+    .page-hero-strip { display: none; }
 
-        .status-icon {
-            width: 56px;
-            height: 56px;
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-        }
+    /* === COMPLIANCE HERO CARD === */
+    .unit-hero {
+        border-radius: 20px;
+        border: 1px solid transparent;
+        box-shadow: 0 8px 30px rgba(0,0,0,.1);
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 24px;
+        animation: fadeUpCard .4s ease-out;
+    }
 
-        .quick-action {
-            border-radius: 12px;
-            padding: 16px;
-            text-align: center;
-            transition: all 0.2s;
-            border: 2px dashed #e5e7eb;
-            text-decoration: none;
-            display: block;
-        }
+    .unit-hero-ok {
+        background: linear-gradient(135deg, #030d07 0%, #0a2317 40%, #166534 80%, #16a34a 100%);
+        border-color: rgba(34,197,94,.25);
+    }
 
-        .quick-action:hover {
-            border-color: #4f46e5;
-            background: #f5f3ff;
-            transform: translateY(-2px);
-        }
+    .unit-hero-warn {
+        background: linear-gradient(135deg, #1a0a00 0%, #3b1600 50%, #92400e 100%);
+        border-color: rgba(251,146,60,.3);
+    }
 
-        .quick-action i {
-            font-size: 28px;
-            color: #4f46e5;
-            display: block;
-            margin-bottom: 8px;
-        }
+    .unit-hero-danger {
+        background: linear-gradient(135deg, #1a0000 0%, #450a0a 50%, #991b1b 100%);
+        border-color: rgba(248,113,113,.3);
+    }
 
-        .quick-action span {
-            font-size: 12px;
-            font-weight: 600;
-            color: #374151;
-        }
+    .unit-hero-inner {
+        position: relative;
+        z-index: 2;
+        padding: clamp(22px, 3vw + 12px, 40px);
+    }
 
-        .month-progress {
-            background: #f9fafb;
-            border-radius: 12px;
-            padding: 16px;
-        }
+    .unit-hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 5px 13px;
+        border-radius: 50px;
+        font-size: 10.5px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.7px;
+        margin-bottom: 14px;
+    }
 
-        .section-divider {
-            font-size: 16px;
-            font-weight: 700;
-            margin-bottom: 0;
-            margin-top: 8px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+    .badge-ok     { background: rgba(34,197,94,.15); border: 1px solid rgba(34,197,94,.3); color: #86efac; }
+    .badge-warn   { background: rgba(251,146,60,.15); border: 1px solid rgba(251,146,60,.3); color: #fed7aa; }
+    .badge-danger { background: rgba(248,113,113,.15); border: 1px solid rgba(248,113,113,.3); color: #fca5a5; }
 
-        .section-divider i {
-            font-size: 20px;
-        }
+    .live-dot-sm {
+        width: 7px; height: 7px;
+        border-radius: 50%;
+        display: inline-block;
+        animation: livePulse 2s ease-in-out infinite;
+    }
 
-        .stat-mini {
-            text-align: center;
-            padding: 16px 8px;
-            border-radius: 12px;
-            transition: transform 0.2s;
-        }
+    .dot-green  { background: #4ade80; }
+    .dot-orange { background: #fb923c; }
+    .dot-red    { background: #f87171; }
 
-        .bg-soft-success {
-            background: #ecfdf5;
-        }
+    .unit-hero-title {
+        font-family: 'Outfit', sans-serif;
+        font-size: clamp(20px, 2.5vw + 10px, 30px);
+        font-weight: 900;
+        color: #ffffff;
+        line-height: 1.15;
+        letter-spacing: -0.5px;
+        margin-bottom: 6px;
+    }
 
-        .bg-soft-warning {
-            background: #fffbeb;
-        }
+    .unit-hero-sub {
+        font-size: 13px;
+        color: rgba(209,250,229,.7);
+        margin-bottom: 20px;
+    }
 
-        .bg-soft-primary {
-            background: #eff6ff;
-        }
+    /* Status Message Banner */
+    .status-banner {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 16px;
+        border-radius: 12px;
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 20px;
+    }
 
-        .bg-soft-info {
-            background: #ecfeff;
-        }
+    .status-banner-ok     { background: rgba(34,197,94,.12); border: 1px solid rgba(34,197,94,.25); color: #bbf7d0; }
+    .status-banner-warn   { background: rgba(251,146,60,.12); border: 1px solid rgba(251,146,60,.25); color: #fed7aa; }
+    .status-banner-danger { background: rgba(248,113,113,.12); border: 1px solid rgba(248,113,113,.25); color: #fca5a5; }
 
-        .bg-soft-danger {
-            background: #fef2f2;
-        }
+    /* Compliance Module Tiles */
+    .module-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+    }
 
-        .stat-mini:hover {
-            transform: translateY(-2px);
-        }
+    .module-tile {
+        border-radius: 14px;
+        padding: 16px;
+        border: 1px solid transparent;
+        transition: all .2s ease;
+    }
 
-        .stat-mini .stat-mini-value {
-            font-size: 22px;
-            font-weight: 800;
-            line-height: 1.2;
-        }
+    .module-tile-ok {
+        background: rgba(34,197,94,.1);
+        border-color: rgba(34,197,94,.25);
+    }
 
-        .stat-mini .stat-mini-label {
-            font-size: 11px;
-            font-weight: 600;
-            color: #6b7280;
-            margin-top: 4px;
-        }
+    .module-tile-err {
+        background: rgba(248,113,113,.12);
+        border-color: rgba(248,113,113,.3);
+    }
 
-        .stat-mini .stat-mini-icon {
-            font-size: 28px;
-            margin-bottom: 6px;
-        }
+    .module-tile-neutral {
+        background: rgba(255,255,255,.07);
+        border-color: rgba(255,255,255,.12);
+    }
 
-        .timeline .avatar-text {
-            width: 40px;
-            height: 40px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+    .module-tile-title {
+        font-size: 11px;
+        font-weight: 700;
+        color: rgba(209,250,229,.7);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+    }
 
-        .progress.ht-8 {
-            height: 8px;
-            border-radius: 10px;
-        }
-    </style>
-@endsection
+    .module-tile-status {
+        font-size: 13px;
+        font-weight: 800;
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
 
-@section('page-title', 'Dashboard')
+    .module-tile-action {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        margin-top: 10px;
+        padding: 5px 12px;
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 700;
+        background: rgba(255,255,255,.15);
+        color: #ffffff;
+        text-decoration: none;
+        transition: all .2s ease;
+        border: 1px solid rgba(255,255,255,.2);
+    }
 
-@section('breadcrumb')
-    <li class="breadcrumb-item">{{ Auth::user()->pks->akro }}</li>
+    .module-tile-action:hover {
+        background: rgba(255,255,255,.25);
+        color: #ffffff;
+        transform: translateY(-1px);
+    }
+
+    .module-tile-action-danger {
+        background: rgba(239,68,68,.25);
+        border-color: rgba(239,68,68,.4);
+    }
+
+    /* === STAT CARDS === */
+    .stat-card {
+        background: #ffffff;
+        border-radius: 16px;
+        border: 1px solid rgba(22,163,74,.1);
+        box-shadow: 0 2px 12px rgba(22,163,74,.06);
+        padding: 18px 20px;
+        height: 100%;
+        transition: all .2s ease;
+        animation: fadeUpCard .4s ease-out;
+    }
+
+    .stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(22,163,74,.1); }
+
+    .stat-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid rgba(22,163,74,.08);
+    }
+
+    .stat-card-title {
+        font-family: 'Outfit', sans-serif;
+        font-size: 14px;
+        font-weight: 800;
+        color: #14532d;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin: 0;
+    }
+
+    .stat-mini-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 14px 10px;
+        border-radius: 12px;
+        transition: all .2s ease;
+    }
+
+    .stat-mini-item:hover { transform: translateY(-2px); }
+
+    .stat-mini-val {
+        font-family: 'Outfit', sans-serif;
+        font-size: clamp(18px, 2vw + 10px, 22px);
+        font-weight: 900;
+        line-height: 1.1;
+        margin-bottom: 4px;
+    }
+
+    .stat-mini-lbl {
+        font-size: 10.5px;
+        font-weight: 700;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+    }
+
+    .bg-g50  { background: #f0fdf4; } .text-g  { color: #16a34a; }
+    .bg-b50  { background: #eff6ff; } .text-b  { color: #1d4ed8; }
+    .bg-cy50 { background: #ecfeff; } .text-cy { color: #0e7490; }
+    .bg-a50  { background: #fffbeb; } .text-a  { color: #b45309; }
+    .bg-r50  { background: #fef2f2; } .text-r  { color: #dc2626; }
+    .bg-p50  { background: #faf5ff; } .text-p  { color: #7c3aed; }
+
+    /* === PROGRESS BARS === */
+    .progress-simoli {
+        height: 8px;
+        border-radius: 10px;
+        background: rgba(22,163,74,.1);
+        overflow: hidden;
+    }
+
+    .progress-bar-simoli {
+        height: 100%;
+        border-radius: 10px;
+        background: linear-gradient(90deg, #16a34a, #4ade80);
+        transition: width 1s ease;
+    }
+
+    .progress-bar-warning {
+        background: linear-gradient(90deg, #d97706, #fbbf24);
+    }
+
+    /* === ACTIVITY TIMELINE === */
+    .activity-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 10px 0;
+        border-bottom: 1px solid rgba(22,163,74,.07);
+    }
+
+    .activity-item:last-child { border-bottom: none; }
+
+    .activity-icon {
+        width: 36px; height: 36px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        flex-shrink: 0;
+    }
+
+    .activity-text { font-size: 13px; font-weight: 600; color: #374151; }
+    .activity-meta { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+
+    /* === ALAT BERAT STATUS === */
+    .alatberat-stat {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 16px 12px;
+        border-radius: 14px;
+    }
+
+    .alatberat-val {
+        font-family: 'Outfit', sans-serif;
+        font-size: 26px;
+        font-weight: 900;
+        line-height: 1;
+        margin-bottom: 4px;
+    }
+
+    .alatberat-lbl {
+        font-size: 11px;
+        color: #6b7280;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+    }
+
+    /* === CHART CARD === */
+    .chart-card-unit {
+        background: #ffffff;
+        border-radius: 16px;
+        border: 1px solid rgba(22,163,74,.1);
+        box-shadow: 0 2px 12px rgba(22,163,74,.06);
+        overflow: hidden;
+        animation: fadeUpCard .4s ease-out .15s both;
+    }
+
+    .chart-card-unit-header {
+        padding: 16px 20px;
+        border-bottom: 1px solid rgba(22,163,74,.08);
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .chart-card-unit-title {
+        font-family: 'Outfit', sans-serif;
+        font-size: 14px;
+        font-weight: 800;
+        color: #14532d;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin: 0 0 2px;
+    }
+
+    /* === SECTION HEADER === */
+    .unit-section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 16px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid rgba(22,163,74,.1);
+    }
+
+    .unit-section-title {
+        font-family: 'Outfit', sans-serif;
+        font-size: clamp(14px, 1vw + 10px, 16px);
+        font-weight: 800;
+        color: #14532d;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0;
+    }
+
+    .unit-section-dot {
+        width: 8px; height: 8px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #16a34a, #4ade80);
+        box-shadow: 0 0 6px rgba(34,197,94,.5);
+    }
+
+    /* === DARK MODE === */
+    html.app-skin-dark .stat-card,
+    html.app-skin-dark .chart-card-unit {
+        background: #0a2317 !important;
+        border-color: rgba(34,197,94,.15) !important;
+    }
+
+    html.app-skin-dark .stat-card-title,
+    html.app-skin-dark .chart-card-unit-title,
+    html.app-skin-dark .unit-section-title { color: #d1fae5 !important; }
+
+    html.app-skin-dark .activity-text { color: #d1fae5; }
+    html.app-skin-dark .unit-section-header { border-color: rgba(34,197,94,.1) !important; }
+
+    /* Responsive */
+    @media (max-width: 767.98px) {
+        .module-grid { grid-template-columns: 1fr; gap: 8px; }
+    }
+
+    @media (max-width: 575.98px) {
+        .unit-hero-inner { padding: 18px; }
+    }
+</style>
 @endsection
 
 @section('content')
+<article class="unit-dashboard">
+
+    {{-- ================================================================
+         1. COMPLIANCE HERO BANNER — Status Monitoring Hari Ini
+         ================================================================ --}}
     @php
-        $isComplete = $hasPengaliran && $hasPemeliharaan;
-        $pctMonthPengaliran = $daysInMonth > 0 ? round(($monthlyPengaliran / $daysInMonth) * 100) : 0;
-        $pctMonthPemeliharaan = $daysInMonth > 0 ? round(($monthlyPemeliharaan / $daysInMonth) * 100) : 0;
+        $heroClass  = $isComplete ? 'unit-hero-ok'   : ($hasPengaliran || $hasPemeliharaan ? 'unit-hero-warn' : 'unit-hero-danger');
+        $badgeClass = $isComplete ? 'badge-ok'        : ($hasPengaliran || $hasPemeliharaan ? 'badge-warn' : 'badge-danger');
+        $dotClass   = $isComplete ? 'dot-green'       : ($hasPengaliran || $hasPemeliharaan ? 'dot-orange' : 'dot-red');
+        $bannerClass= $isComplete ? 'status-banner-ok': ($hasPengaliran || $hasPemeliharaan ? 'status-banner-warn' : 'status-banner-danger');
+        $statusIcon = $isComplete ? 'feather-check-circle' : ($hasPengaliran || $hasPemeliharaan ? 'feather-clock' : 'feather-alert-triangle');
     @endphp
 
-    <div class="row">
-        {{-- Monitoring Hari Ini --}}
-        <div class="col-12 mb-4">
-            <div class="card border-0 shadow-sm" style="border-radius:16px;">
-                <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
-                        <div>
-                            <h3 class="fw-bold mb-1">
-                                Halo, {{ Auth::user()->pks->nama }}
-                            </h3>
-                            <span class="text-muted">
-                                {{ \Carbon\Carbon::parse($tanggal)->locale('id')->translatedFormat('l, d F Y') }}
-                            </span>
-                        </div>
-                        <div>
-                            <span class="badge bg-{{ $simoliColor }} fs-13 px-3 py-2">
-                                <i class="feather-{{ $simoliIcon }} me-1"></i>
-                                {{ $simoliStatus }}
-                            </span>
-                        </div>
+    <section class="unit-hero {{ $heroClass }}" aria-label="Status Monitoring Hari Ini">
+        <div class="unit-hero-inner">
+            <div class="unit-hero-badge {{ $badgeClass }}">
+                <span class="live-dot-sm {{ $dotClass }}"></span>
+                Status Monitoring Hari Ini
+            </div>
+
+            <div class="row align-items-start g-4">
+                <div class="col-lg-6">
+                    <h2 class="unit-hero-title">
+                        Halo, {{ Auth::user()->pks->nama ?? Auth::user()->username }}
+                    </h2>
+                    <p class="unit-hero-sub">
+                        {{ \Carbon\Carbon::parse($tanggal)->locale('id')->translatedFormat('l, d F Y') }}
+                    </p>
+
+                    <div class="status-banner {{ $bannerClass }}">
+                        <i class="{{ $statusIcon }}" style="font-size:18px;flex-shrink:0;"></i>
+                        <span>{{ $simoliMessage }}</span>
                     </div>
 
-                    {{-- STATUS SIMOLI COMPACT --}}
-                    <div class="alert alert-{{ $simoliColor }} d-flex align-items-center py-2 px-3 mb-4">
-                        <i class="feather-{{ $simoliIcon }} me-2 fs-18"></i>
-                        <span class="fs-13">
-                            {{ $simoliMessage }}
-                        </span>
-                    </div>
-
-                    <div class="row">
-                        {{-- Pengaliran --}}
-                        <div class="col-md-4">
-                            <div class="border rounded p-3 h-100">
-                                <div class="d-flex justify-content-between">
-                                    <strong>Pengaliran</strong>
-                                    @if($hasPengaliran)
-                                        <i class="feather-check-circle text-success"></i>
-                                    @else
-                                        <i class="feather-alert-circle text-danger"></i>
-                                    @endif
-                                </div>
-                                <small class="text-muted">
-                                    @if($hasPengaliran)
-                                        Sudah diinput
-                                    @else
-                                        Belum diinput
-                                    @endif
-                                </small>
-                                <div class="mt-2">
-                                    @if(!$hasPengaliran)
-                                        <a href="{{ route('pengaliran.create') }}" class="btn btn-sm btn-danger">
-                                            Input Sekarang
-                                        </a>
-                                    @endif
-                                </div>
+                    {{-- To-do list --}}
+                    <div style="margin-top:4px;">
+                        <div style="font-size:11px;font-weight:700;color:rgba(187,247,208,.6);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;">
+                            Yang Perlu Dilakukan:
+                        </div>
+                        @if($simoliStatus == 'NORMAL')
+                            <div style="color:#86efac;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;">
+                                <i class="feather-check-circle"></i> Semua pekerjaan monitoring hari ini telah selesai!
                             </div>
+                        @else
+                            @if(!$hasPengaliran)
+                                <div style="color:#fca5a5;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+                                    <i class="feather-circle"></i> Input data Pengaliran LA hari ini
+                                </div>
+                            @endif
+                            @if(!$hasPemeliharaan)
+                                <div style="color:#fde68a;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;">
+                                    <i class="feather-circle"></i> Input data Pemeliharaan Bed hari ini
+                                </div>
+                            @endif
+                        @endif
+                    </div>
+                </div>
+
+                {{-- Module Compliance Grid --}}
+                <div class="col-lg-6">
+                    <div class="module-grid">
+                        {{-- Pengaliran --}}
+                        <div class="module-tile {{ $hasPengaliran ? 'module-tile-ok' : 'module-tile-err' }}">
+                            <div class="module-tile-title">Pengaliran LA</div>
+                            <div class="module-tile-status">
+                                <i class="{{ $hasPengaliran ? 'feather-check-circle' : 'feather-x-circle' }}"
+                                   style="color:{{ $hasPengaliran ? '#86efac' : '#fca5a5' }};font-size:16px;"></i>
+                                {{ $hasPengaliran ? 'Sudah Input' : 'Belum Input' }}
+                            </div>
+                            @if(!$hasPengaliran)
+                                <a href="{{ route('pengaliran.create') }}" class="module-tile-action module-tile-action-danger">
+                                    <i class="feather-edit-2" style="font-size:12px;"></i> Input Sekarang
+                                </a>
+                            @else
+                                <a href="{{ route('pengaliran.index') }}" class="module-tile-action">
+                                    <i class="feather-eye" style="font-size:12px;"></i> Lihat Data
+                                </a>
+                            @endif
                         </div>
 
                         {{-- Pemeliharaan --}}
-                        <div class="col-md-4">
-                            <div class="border rounded p-3 h-100">
-                                <div class="d-flex justify-content-between">
-                                    <strong>Pemeliharaan</strong>
-                                    @if($hasPemeliharaan)
-                                        <i class="feather-check-circle text-success"></i>
-                                    @else
-                                        <i class="feather-alert-circle text-danger"></i>
-                                    @endif
-                                </div>
-                                <small class="text-muted">
-                                    @if($hasPemeliharaan)
-                                        Sudah diinput
-                                    @else
-                                        Belum diinput
-                                    @endif
-                                </small>
-                                <div class="mt-2">
-                                    @if(!$hasPemeliharaan)
-                                        <a href="{{ route('pemeliharaan.create') }}" class="btn btn-sm btn-danger">
-                                            Input Sekarang
-                                        </a>
-                                    @endif
-                                </div>
+                        <div class="module-tile {{ $hasPemeliharaan ? 'module-tile-ok' : 'module-tile-err' }}">
+                            <div class="module-tile-title">Pemeliharaan Bed</div>
+                            <div class="module-tile-status">
+                                <i class="{{ $hasPemeliharaan ? 'feather-check-circle' : 'feather-x-circle' }}"
+                                   style="color:{{ $hasPemeliharaan ? '#86efac' : '#fca5a5' }};font-size:16px;"></i>
+                                {{ $hasPemeliharaan ? 'Sudah Input' : 'Belum Input' }}
                             </div>
+                            @if(!$hasPemeliharaan)
+                                <a href="{{ route('pemeliharaan.create') }}" class="module-tile-action module-tile-action-danger">
+                                    <i class="feather-edit-2" style="font-size:12px;"></i> Input Sekarang
+                                </a>
+                            @else
+                                <a href="{{ route('pemeliharaan.index') }}" class="module-tile-action">
+                                    <i class="feather-eye" style="font-size:12px;"></i> Lihat Data
+                                </a>
+                            @endif
                         </div>
 
                         {{-- Rencana --}}
-                        <div class="col-md-4">
-                            <div class="border rounded p-3 h-100">
-                                <div class="d-flex justify-content-between">
-                                    <strong>Rencana</strong>
-                                    <i class="feather-calendar text-primary"></i>
-                                </div>
-                                <small class="text-muted">
-                                    Lihat atau kelola rencana tahunan.
-                                </small>
-                                <div class="mt-2">
-                                    <a href="{{ route('rencana.index') }}" class="btn btn-sm btn-primary">
-                                        Lihat Rencana
-                                    </a>
-                                </div>
+                        <div class="module-tile module-tile-neutral">
+                            <div class="module-tile-title">Rencana Tahunan</div>
+                            <div class="module-tile-status">
+                                <i class="feather-calendar" style="color:#86efac;font-size:16px;"></i>
+                                Lihat Rencana
                             </div>
+                            <a href="{{ route('rencana.index') }}" class="module-tile-action">
+                                <i class="feather-clipboard" style="font-size:12px;"></i> Kelola
+                            </a>
                         </div>
                     </div>
-                    <hr class="my-4">
-                    <h6 class="fw-bold mb-3">
-                        <i class="feather-alert-triangle text-warning me-2"></i>
-                        Yang Harus Dilakukan Hari Ini
-                    </h6>
-                    <ul class="list-group list-group-flush">
-                        @if($simoliStatus == 'NORMAL')
-                            <li class="list-group-item px-0 text-success">
-                                <i class="feather-check-circle me-2"></i>
-                                Seluruh pekerjaan monitoring hari ini telah selesai.
-                            </li>
-                        @elseif($simoliStatus == 'PERHATIAN')
-                            @if(!$hasPengaliran)
-                                <li class="list-group-item px-0 text-warning">
-                                    <i class="feather-alert-circle me-2"></i>
-                                    Lengkapi data Pengaliran hari ini.
-                                </li>
-                            @endif
-                            @if(!$hasPemeliharaan)
-                                <li class="list-group-item px-0 text-warning">
-                                    <i class="feather-alert-circle me-2"></i>
-                                    Lengkapi data Pemeliharaan hari ini.
-                                </li>
-                            @endif
-                        @else
-                            <li class="list-group-item px-0 text-danger">
-                                <i class="feather-x-circle me-2"></i>
-                                Belum ada data monitoring hari ini.
-                            </li>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {{-- ================================================================
+         2. ALAT BERAT STATUS ROW
+         ================================================================ --}}
+    <section aria-label="Status Alat Berat" class="mb-4">
+        <div class="unit-section-header">
+            <h3 class="unit-section-title">
+                <span class="unit-section-dot"></span>
+                Status Alat Berat Pengolahan Limbah
+            </h3>
+            <div class="d-flex gap-2">
+                <a href="{{ route('alat-berat.index') }}" class="btn-ptpn btn-ptpn-outline" style="padding:6px 14px;font-size:12px;">
+                    <i class="feather-list" style="font-size:13px;"></i> Master Alat
+                </a>
+                <a href="{{ route('monitoring-alat-berat.index') }}" class="btn-ptpn btn-ptpn-primary" style="padding:6px 14px;font-size:12px;">
+                    <i class="feather-activity" style="font-size:13px;"></i> Log Monitoring
+                </a>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="row g-3">
+                <div class="col-6 col-md-3">
+                    <div class="alatberat-stat" style="background:rgba(22,163,74,.06);border-radius:14px;">
+                        <div class="alatberat-val text-g">{{ $statAlatBerat['total_unit'] ?? 0 }}</div>
+                        <div class="alatberat-lbl">Total Unit</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="alatberat-stat" style="background:#f0fdf4;border-radius:14px;">
+                        <div class="alatberat-val" style="color:#16a34a;">{{ $statAlatBerat['ready'] ?? 0 }}</div>
+                        <div class="alatberat-lbl">Ready / Operational</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="alatberat-stat" style="background:#fffbeb;border-radius:14px;">
+                        <div class="alatberat-val" style="color:#d97706;">{{ $statAlatBerat['maintenance'] ?? 0 }}</div>
+                        <div class="alatberat-lbl">Dalam Perbaikan</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="alatberat-stat" style="background:#fef2f2;border-radius:14px;">
+                        <div class="alatberat-val" style="color:#dc2626;">{{ $statAlatBerat['breakdown'] ?? 0 }}</div>
+                        <div class="alatberat-lbl">Breakdown / Rusak</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {{-- ================================================================
+         3. VOLUME CHART — GRAFIK PENGALIRAN
+         ================================================================ --}}
+    <section aria-label="Grafik Volume Pengaliran" class="mb-4">
+        <div class="chart-card-unit">
+            <div class="chart-card-unit-header">
+                <div>
+                    <h3 class="chart-card-unit-title">
+                        <i class="feather-trending-up" style="color:#16a34a;"></i>
+                        Grafik Total Volume Pengaliran
+                    </h3>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">
+                        <span id="filterLabelBulan" class="mod-pill mod-pill-ok" style="font-size:10px;">
+                            {{ $namaBulan[(int)$bulan] }} {{ $tahun }}
+                        </span>
+                        <span id="filterLabelJenis" class="mod-pill mod-pill-info" style="background:#dbeafe;color:#1d4ed8;border:1px solid #bfdbfe;font-size:10px;">
+                            {{ $jenis == 'blok' ? 'Blok' : 'Flat Bed' }}
+                        </span>
+                        @if($nilai)
+                        <span id="filterLabelNilai" class="mod-pill mod-pill-muted" style="font-size:10px;">{{ $nilai }}</span>
                         @endif
-                    </ul>
+                    </div>
+                </div>
+
+                {{-- Filter Form --}}
+                <form id="filterGrafik" class="d-flex flex-wrap gap-2 align-items-center">
+                    <select name="tahun" id="tahun" class="form-select form-select-sm" style="width:85px;border-radius:10px;border-color:rgba(22,163,74,.3);font-size:12px;">
+                        @foreach($tahunList as $t)
+                            <option value="{{ $t }}" {{ $tahun == $t ? 'selected' : '' }}>{{ $t }}</option>
+                        @endforeach
+                    </select>
+                    <select name="bulan" id="bulan" class="form-select form-select-sm" style="width:110px;border-radius:10px;border-color:rgba(22,163,74,.3);font-size:12px;">
+                        @for($i = 1; $i <= 12; $i++)
+                            <option value="{{ $i }}" {{ $bulan == $i ? 'selected' : '' }}>
+                                {{ \Carbon\Carbon::create()->month($i)->translatedFormat('F') }}
+                            </option>
+                        @endfor
+                    </select>
+                    <select name="jenis" id="jenis" class="form-select form-select-sm" style="width:110px;border-radius:10px;border-color:rgba(22,163,74,.3);font-size:12px;">
+                        <option value="blok" {{ $jenis == 'blok' ? 'selected' : '' }}>Blok</option>
+                        <option value="flat_bed" {{ $jenis == 'flat_bed' ? 'selected' : '' }}>Nomor Bak</option>
+                    </select>
+                    <select name="nilai" id="nilai" class="form-select form-select-sm" style="width:120px;border-radius:10px;border-color:rgba(22,163,74,.3);font-size:12px;">
+                        <option value="">Semua</option>
+                        @foreach($pilihan as $item)
+                            <option value="{{ $item }}" {{ $nilai == $item ? 'selected' : '' }}>{{ $item }}</option>
+                        @endforeach
+                    </select>
+                    <button type="submit" class="btn-ptpn btn-ptpn-primary" style="padding:7px 14px;font-size:12px;">
+                        <i class="feather-filter" style="font-size:13px;"></i>
+                        <span class="d-none d-sm-inline">Filter</span>
+                    </button>
+                </form>
+            </div>
+            <div style="padding:20px;">
+                <div style="position:relative;height:320px;">
+                    <canvas id="volumeChart"></canvas>
                 </div>
             </div>
         </div>
+    </section>
 
-        <!-- Statistik Alat Berat Unit -->
-        <div class="col-12 mb-4">
-            <div class="card border-0 shadow-sm" style="border-radius:16px;">
-                <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="fw-bold mb-0">
-                            <i class="feather-truck text-primary me-2"></i>Status Alat Berat Pengolahan Limbah
-                        </h5>
-                        <div class="btn-group btn-group-sm">
-                            <a href="{{ route('alat-berat.index') }}" class="btn btn-outline-primary">Master Alat</a>
-                            <a href="{{ route('monitoring-alat-berat.index') }}" class="btn btn-primary">Log Monitoring</a>
-                        </div>
-                    </div>
-                    <div class="row g-3">
-                        <div class="col-md-3 col-6">
-                            <div class="p-3 rounded-3 bg-light text-center">
-                                <h4 class="fw-bold mb-0 text-dark">{{ $statAlatBerat['total_unit'] ?? 0 }} Unit</h4>
-                                <small class="text-muted">Total Alat Berat Unit</small>
-                            </div>
-                        </div>
-                        <div class="col-md-3 col-6">
-                            <div class="p-3 rounded-3 bg-soft-success text-center">
-                                <h4 class="fw-bold mb-0 text-success">{{ $statAlatBerat['ready'] ?? 0 }} Unit</h4>
-                                <small class="text-muted">Ready / Operational</small>
-                            </div>
-                        </div>
-                        <div class="col-md-3 col-6">
-                            <div class="p-3 rounded-3 bg-soft-warning text-center">
-                                <h4 class="fw-bold mb-0 text-warning">{{ $statAlatBerat['maintenance'] ?? 0 }} Unit</h4>
-                                <small class="text-muted">Dalam Perbaikan</small>
-                            </div>
-                        </div>
-                        <div class="col-md-3 col-6">
-                            <div class="p-3 rounded-3 bg-soft-danger text-center">
-                                <h4 class="fw-bold mb-0 text-danger">{{ $statAlatBerat['breakdown'] ?? 0 }} Unit</h4>
-                                <small class="text-muted">Breakdown / Rusak</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    {{-- ================================================================
+         4. STATS + MONITORING BULAN + AKTIVITAS
+         ================================================================ --}}
+    <section aria-label="Ringkasan Monitoring" class="mb-4">
+        <div class="unit-section-header">
+            <h3 class="unit-section-title">
+                <span class="unit-section-dot"></span>
+                Ringkasan Monitoring {{ \Carbon\Carbon::parse($tanggal)->translatedFormat('F Y') }}
+            </h3>
         </div>
 
-        <!-- Grafik Monitoring Bulanan -->
-        <div class="row mt-4">
-
-            <div class="col-lg-12">
-
-                <div class="card stretch stretch-full">
-
-                    <div class="card-header d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
-                        <div>
-                            <h5 class="card-title mb-1 fw-bold">
-                                <i class="feather-droplet text-success me-2"></i>
-                                Grafik Total Volume Pengaliran
-                            </h5>
-                            <div id="filterInfo" class="d-flex flex-wrap gap-1 mt-1">
-                                <span class="badge bg-soft-primary text-primary">
-                                    {{ $namaBulan[(int) $bulan] }} {{ $tahun }}
-                                </span>
-                                <span class="badge bg-soft-success text-success">
-                                    {{ $jenis == 'blok' ? 'Blok' : 'Flat Bed' }}
-                                </span>
-                                <span class="badge bg-soft-secondary text-secondary">
-                                    {{ $nilai }}
-                                </span>
-                            </div>
-                        </div>
-
-                        <form id="filterGrafik" class="d-flex flex-wrap flex-md-nowrap align-items-center gap-2 w-100 w-md-auto">
-                            {{-- Tahun --}}
-                            <select name="tahun" id="tahun" class="form-select form-select-sm flex-fill flex-md-grow-0" style="min-width: 90px;">
-                                @foreach($tahunList as $t)
-                                    <option value="{{ $t }}" {{ $tahun == $t ? 'selected' : '' }}>
-                                        {{ $t }}
-                                    </option>
-                                @endforeach
-                            </select>
-
-                            {{-- Bulan --}}
-                            <select name="bulan" id="bulan" class="form-select form-select-sm flex-fill flex-md-grow-0" style="min-width: 110px;">
-                                @for($i = 1; $i <= 12; $i++)
-                                    <option value="{{ $i }}" {{ $bulan == $i ? 'selected' : '' }}>
-                                        {{ \Carbon\Carbon::create()->month($i)->translatedFormat('F') }}
-                                    </option>
-                                @endfor
-                            </select>
-
-                            {{-- Jenis Filter --}}
-                            <select name="jenis" id="jenis" class="form-select form-select-sm flex-fill flex-md-grow-0" style="min-width: 110px;">
-                                <option value="blok" {{ $jenis == 'blok' ? 'selected' : '' }}>
-                                    Blok
-                                </option>
-                                <option value="flat_bed" {{ $jenis == 'flat_bed' ? 'selected' : '' }}>
-                                    Nomor Bak
-                                </option>
-                            </select>
-
-                            {{-- Nilai --}}
-                            <select name="nilai" id="nilai" class="form-select form-select-sm flex-fill flex-md-grow-0" style="min-width: 120px;">
-                                <option value="">
-                                    Semua {{ $jenis == 'blok' ? 'Blok' : 'Nomor Bak' }}
-                                </option>
-                                @foreach($pilihan as $item)
-                                    <option value="{{ $item }}" {{ $nilai == $item ? 'selected' : '' }}>
-                                        {{ $item }}
-                                    </option>
-                                @endforeach
-                            </select>
-
-                            <button type="submit" class="btn btn-primary btn-sm text-nowrap">
-                                <i class="feather-filter me-1"></i> Filter
-                            </button>
-                        </form>
+        <div class="row g-4">
+            {{-- Statistik Pengaliran --}}
+            <div class="col-md-6 col-lg-4">
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <h4 class="stat-card-title">
+                            <i class="feather-droplet" style="color:#16a34a;"></i>
+                            Statistik Pengaliran
+                        </h4>
+                        <span class="mod-pill mod-pill-success" style="font-size:10px;">Bulan Ini</span>
                     </div>
-
-                    <div class="card-body">
-                        <div class="position-relative" style="height:350px; width:100%;">
-                            <canvas id="volumeChart"></canvas>
-                        </div>
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-        {{-- ============ RINGKASAN MONITORING ============ --}}
-        <div class="col-12 mt-4">
-            <h5 class="section-divider">
-                <i class="feather-activity text-primary"></i>
-                Ringkasan Monitoring
-                {{ \Carbon\Carbon::parse($tanggal)->translatedFormat('F Y') }}
-            </h5> <br>
-        </div>
-
-        {{-- CARD PENGALIRAN --}}
-        <div class="col-md-6">
-            <div class="card stretch stretch-full">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="feather-droplet text-success me-2"></i>
-                        Statistik Pengaliran
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row g-3">
+                    <div class="row g-2">
                         <div class="col-6">
-                            <div class="stat-mini bg-soft-success">
-                                <div class="stat-mini-icon text-success">
-                                    <i class="feather-database"></i>
-                                </div>
-                                <div class="stat-mini-value text-success">
-                                    {{ number_format($statPengaliran['total_records']) }}
-                                </div>
-                                <div class="stat-mini-label">
-                                    Total Record
-                                </div>
+                            <div class="stat-mini-item bg-g50">
+                                <i class="feather-database" style="font-size:20px;color:#16a34a;margin-bottom:6px;"></i>
+                                <div class="stat-mini-val text-g">{{ number_format($statPengaliran['total_records']) }}</div>
+                                <div class="stat-mini-lbl">Total Record</div>
                             </div>
                         </div>
                         <div class="col-6">
-                            <div class="stat-mini bg-soft-primary">
-                                <div class="stat-mini-icon text-primary">
-                                    <i class="feather-trending-up"></i>
-                                </div>
-                                <div class="stat-mini-value text-primary">
-                                    {{ number_format($statPengaliran['vol_dihasilkan']) }}
-                                </div>
-                                <div class="stat-mini-label">
-                                    Volume Dihasilkan (m³)
-                                </div>
+                            <div class="stat-mini-item bg-b50">
+                                <i class="feather-trending-up" style="font-size:20px;color:#1d4ed8;margin-bottom:6px;"></i>
+                                <div class="stat-mini-val text-b">{{ number_format($statPengaliran['vol_dihasilkan']) }}</div>
+                                <div class="stat-mini-lbl">Vol. Dihasilkan m³</div>
                             </div>
                         </div>
                         <div class="col-6">
-                            <div class="stat-mini bg-soft-info">
-                                <div class="stat-mini-icon text-info">
-                                    <i class="feather-droplet"></i>
-                                </div>
-                                <div class="stat-mini-value text-info">
-                                    {{ number_format($statPengaliran['vol_dialirkan']) }}
-                                </div>
-                                <div class="stat-mini-label">
-                                    Volume Dialirkan (m³)
-                                </div>
+                            <div class="stat-mini-item bg-cy50">
+                                <i class="feather-droplet" style="font-size:20px;color:#0e7490;margin-bottom:6px;"></i>
+                                <div class="stat-mini-val text-cy">{{ number_format($statPengaliran['vol_dialirkan']) }}</div>
+                                <div class="stat-mini-lbl">Vol. Dialirkan m³</div>
                             </div>
                         </div>
                         <div class="col-6">
-                            <div class="stat-mini bg-soft-warning">
-                                <div class="stat-mini-icon text-warning">
-                                    <i class="feather-layers"></i>
-                                </div>
-                                <div class="stat-mini-value text-warning">
-                                    {{ number_format($statPengaliran['total_flat_bed']) }}
-                                </div>
-                                <div class="stat-mini-label">
-                                    Total Flat Bed
-                                </div>
+                            <div class="stat-mini-item bg-a50">
+                                <i class="feather-layers" style="font-size:20px;color:#b45309;margin-bottom:6px;"></i>
+                                <div class="stat-mini-val text-a">{{ number_format($statPengaliran['total_flat_bed']) }}</div>
+                                <div class="stat-mini-lbl">Total Flat Bed</div>
                             </div>
                         </div>
                         <div class="col-12">
-                            <div class="stat-mini bg-soft-danger">
-                                <div class="stat-mini-icon text-danger">
-                                    <i class="feather-map"></i>
-                                </div>
-                                <div class="stat-mini-value text-danger">
-                                    {{ number_format($statPengaliran['total_luas_area'], 1) }}
-                                </div>
-                                <div class="stat-mini-label">
-                                    Luas Area (Ha)
-                                </div>
+                            <div class="stat-mini-item bg-r50">
+                                <i class="feather-map" style="font-size:20px;color:#dc2626;margin-bottom:6px;"></i>
+                                <div class="stat-mini-val text-r">{{ number_format($statPengaliran['total_luas_area'], 1) }}</div>
+                                <div class="stat-mini-lbl">Luas Area (Ha)</div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        {{-- CARD PEMELIHARAAN --}}
-        <div class="col-md-6">
-            <div class="card stretch stretch-full">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="feather-tool text-warning me-2"></i>
-                        Statistik Pemeliharaan
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row g-3">
+            {{-- Statistik Pemeliharaan --}}
+            <div class="col-md-6 col-lg-4">
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <h4 class="stat-card-title">
+                            <i class="feather-tool" style="color:#d97706;"></i>
+                            Statistik Pemeliharaan
+                        </h4>
+                        <span class="mod-pill" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;font-size:10px;">Bulan Ini</span>
+                    </div>
+                    <div class="row g-2">
                         @php
-                            $maintenanceStats = [
-                                [
-                                    'icon' => 'database',
-                                    'value' => $statPemeliharaan['total_records'],
-                                    'label' => 'Total Record',
-                                    'color' => 'warning'
-                                ],
-                                [
-                                    'icon' => 'layers',
-                                    'value' => $statPemeliharaan['total_flat_bed'],
-                                    'label' => 'Flat Bed',
-                                    'color' => 'success'
-                                ],
-                                [
-                                    'icon' => 'maximize-2',
-                                    'value' => $statPemeliharaan['total_long_bed'],
-                                    'label' => 'Long Bed',
-                                    'color' => 'primary'
-                                ],
-                                [
-                                    'icon' => 'users',
-                                    'value' => $statPemeliharaan['total_hk'],
-                                    'label' => 'Total HK',
-                                    'color' => 'info'
-                                ],
-                                [
-                                    'icon' => 'settings',
-                                    'value' => $statPemeliharaan['total_mekanis'],
-                                    'label' => 'Mekanis',
-                                    'color' => 'primary'
-                                ],
-                                [
-                                    'icon' => 'user',
-                                    'value' => $statPemeliharaan['total_manual'],
-                                    'label' => 'Manual',
-                                    'color' => 'success'
-                                ]
+                            $maintStats = [
+                                ['icon'=>'database',   'val'=>$statPemeliharaan['total_records'],  'lbl'=>'Total Record', 'bg'=>'bg-a50','cl'=>'text-a'],
+                                ['icon'=>'layers',     'val'=>$statPemeliharaan['total_flat_bed'], 'lbl'=>'Flat Bed',     'bg'=>'bg-g50','cl'=>'text-g'],
+                                ['icon'=>'maximize-2', 'val'=>$statPemeliharaan['total_long_bed'], 'lbl'=>'Long Bed',     'bg'=>'bg-b50','cl'=>'text-b'],
+                                ['icon'=>'users',      'val'=>$statPemeliharaan['total_hk'],       'lbl'=>'Total HK',     'bg'=>'bg-cy50','cl'=>'text-cy'],
+                                ['icon'=>'settings',   'val'=>$statPemeliharaan['total_mekanis'],  'lbl'=>'Mekanis',      'bg'=>'bg-p50','cl'=>'text-p'],
+                                ['icon'=>'user',       'val'=>$statPemeliharaan['total_manual'],   'lbl'=>'Manual',       'bg'=>'bg-g50','cl'=>'text-g'],
                             ];
                         @endphp
-                        @foreach($maintenanceStats as $stat)
-                            <div class="col-6">
-                                <div class="stat-mini bg-soft-{{ $stat['color'] }}">
-                                    <div class="stat-mini-icon text-{{ $stat['color'] }}">
-                                        <i class="feather-{{ $stat['icon'] }}"></i>
-                                    </div>
-                                    <div class="stat-mini-value text-{{ $stat['color'] }}">
-                                        {{ number_format($stat['value']) }}
-                                    </div>
-                                    <div class="stat-mini-label">
-                                        {{ $stat['label'] }}
-                                    </div>
-                                </div>
+                        @foreach($maintStats as $s)
+                        <div class="col-6">
+                            <div class="stat-mini-item {{ $s['bg'] }}">
+                                <i class="feather-{{ $s['icon'] }}" style="font-size:18px;margin-bottom:5px;" class="{{ $s['cl'] }}"></i>
+                                <div class="stat-mini-val {{ $s['cl'] }}">{{ number_format($s['val']) }}</div>
+                                <div class="stat-mini-lbl">{{ $s['lbl'] }}</div>
                             </div>
+                        </div>
                         @endforeach
                     </div>
                 </div>
             </div>
-        </div>
 
-        {{-- MONITORING BULAN BERJALAN --}}
-        <div class="col-md-6">
-            <div class="card stretch stretch-full">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="feather-calendar text-primary me-2"></i>
-                        Monitoring Bulan Berjalan
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="month-progress mb-4">
-                        <div class="d-flex justify-content-between mb-2">
-                            <span class="fw-semibold">
-                                <i class="feather-droplet text-success me-2"></i>
-                                Pengaliran
-                            </span>
-                            <span class="fw-bold">
-                                {{ $pctMonthPengaliran }}%
-                            </span>
-                        </div>
-                        <div class="progress ht-8">
-                            <div class="progress-bar bg-success" style="width:{{ $pctMonthPengaliran }}%">
-                            </div>
-                        </div>
-                        <small class="text-muted">
-                            {{ $monthlyPengaliran }} dari {{ $daysInMonth }} hari
-                        </small>
+            {{-- Monitoring Bulan + Aktivitas Terakhir --}}
+            <div class="col-lg-4">
+                {{-- Progress Bulanan --}}
+                <div class="stat-card mb-4">
+                    <div class="stat-card-header">
+                        <h4 class="stat-card-title">
+                            <i class="feather-calendar" style="color:#16a34a;"></i>
+                            Monitoring Bulan Berjalan
+                        </h4>
                     </div>
-                    <div class="month-progress">
-                        <div class="d-flex justify-content-between mb-2">
-                            <span class="fw-semibold">
-                                <i class="feather-tool text-warning me-2"></i>
-                                Pemeliharaan
+                    <div class="mb-4">
+                        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                            <span style="font-size:12.5px;font-weight:700;color:#374151;">
+                                <i class="feather-droplet text-success me-1"></i> Pengaliran
                             </span>
-                            <span class="fw-bold">
-                                {{ $pctMonthPemeliharaan }}%
-                            </span>
+                            <span style="font-size:13px;font-weight:900;color:#16a34a;">{{ $pctPengaliran }}%</span>
                         </div>
-                        <div class="progress ht-8">
-                            <div class="progress-bar bg-warning" style="width:{{ $pctMonthPemeliharaan }}%">
-                            </div>
+                        <div class="progress-simoli mb-1">
+                            <div class="progress-bar-simoli" style="width:{{ $pctPengaliran }}%;"></div>
                         </div>
-                        <small class="text-muted">
-                            {{ $monthlyPemeliharaan }} dari {{ $daysInMonth }} hari
-                        </small>
+                        <small style="font-size:11px;color:#6b7280;">{{ $monthlyPengaliran }} dari {{ $daysInMonth }} hari</small>
                     </div>
-                    <hr>
-                    @if($pctMonthPengaliran >= 80 && $pctMonthPemeliharaan >= 80)
-                        <div class="alert alert-success mb-0">
-                            <i class="feather-check-circle me-2"></i>
-                            Monitoring bulan ini berjalan baik.
+                    <div class="mb-2">
+                        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                            <span style="font-size:12.5px;font-weight:700;color:#374151;">
+                                <i class="feather-tool text-warning me-1"></i> Pemeliharaan
+                            </span>
+                            <span style="font-size:13px;font-weight:900;color:#d97706;">{{ $pctPemeliharaan }}%</span>
+                        </div>
+                        <div class="progress-simoli mb-1">
+                            <div class="progress-bar-simoli progress-bar-warning" style="width:{{ $pctPemeliharaan }}%;"></div>
+                        </div>
+                        <small style="font-size:11px;color:#6b7280;">{{ $monthlyPemeliharaan }} dari {{ $daysInMonth }} hari</small>
+                    </div>
+                    @if($pctPengaliran >= 80 && $pctPemeliharaan >= 80)
+                        <div style="margin-top:14px;padding:10px 14px;border-radius:10px;background:#f0fdf4;border:1px solid #bbf7d0;font-size:12.5px;color:#15803d;font-weight:700;display:flex;align-items:center;gap:7px;">
+                            <i class="feather-check-circle"></i> Monitoring bulan ini berjalan sangat baik!
                         </div>
                     @else
-                        <div class="alert alert-warning mb-0">
-                            <i class="feather-alert-circle me-2"></i>
-                            Monitoring bulan ini masih perlu perhatian.
+                        <div style="margin-top:14px;padding:10px 14px;border-radius:10px;background:#fffbeb;border:1px solid #fde68a;font-size:12.5px;color:#92400e;font-weight:700;display:flex;align-items:center;gap:7px;">
+                            <i class="feather-alert-circle"></i> Masih perlu peningkatan konsistensi.
                         </div>
+                    @endif
+                </div>
+
+                {{-- Aktivitas Terakhir --}}
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <h4 class="stat-card-title">
+                            <i class="feather-clock" style="color:#16a34a;"></i>
+                            Aktivitas Terakhir
+                        </h4>
+                    </div>
+
+                    @forelse($recentPengaliran->take(3) as $item)
+                    <div class="activity-item">
+                        <div class="activity-icon" style="background:#f0fdf4;">
+                            <i class="feather-droplet" style="color:#16a34a;"></i>
+                        </div>
+                        <div>
+                            <div class="activity-text">Pengaliran {{ $item->blok }}</div>
+                            <div class="activity-meta">
+                                {{ $item->tanggal->format('d M Y') }} &bull; {{ number_format($item->vol_limbah_dialirkan ?? 0) }} m³
+                            </div>
+                        </div>
+                    </div>
+                    @empty
+                    @endforelse
+
+                    @forelse($recentPemeliharaan->take(2) as $item)
+                    <div class="activity-item">
+                        <div class="activity-icon" style="background:#fffbeb;">
+                            <i class="feather-tool" style="color:#d97706;"></i>
+                        </div>
+                        <div>
+                            <div class="activity-text">Pemeliharaan {{ $item->blok }}</div>
+                            <div class="activity-meta">{{ $item->tanggal->format('d M Y') }} &bull; {{ $item->jenis_label ?? '' }}</div>
+                        </div>
+                    </div>
+                    @empty
+                    @endforelse
+
+                    @if($recentPengaliran->isEmpty() && $recentPemeliharaan->isEmpty())
+                        <p style="color:#9ca3af;font-size:12.5px;text-align:center;padding:16px 0;">
+                            Belum ada aktivitas yang tercatat.
+                        </p>
                     @endif
                 </div>
             </div>
         </div>
+    </section>
 
-        {{-- AKTIVITAS TERAKHIR --}}
-        <div class="col-md-6">
-            <div class="card stretch stretch-full">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="feather-clock text-primary me-2"></i>
-                        Aktivitas Terakhir
-                    </h5>
-                </div>
-
-                <div class="card-body">
-                    <div class="timeline">
-                        @forelse($recentPengaliran->take(3) as $item)
-                            <div class="d-flex mb-4">
-                                <div class="me-3">
-                                    <div class="avatar-text avatar-md bg-soft-success">
-                                        <i class="feather-droplet text-success"></i>
-                                    </div>
-                                </div>
-                                <div>
-                                    <h6 class="mb-1">
-                                        Pengaliran {{ $item->blok }}
-                                    </h6>
-                                    <small class="text-muted">
-                                        {{ $item->tanggal->format('d M Y') }}-{{ number_format($item->vol_limbah_dialirkan ?? 0) }}
-                                        m³
-                                    </small>
-                                </div>
-                            </div>
-                        @empty
-                            <p class="text-muted">
-                                Belum ada aktivitas pengaliran
-                            </p>
-                        @endforelse
-                        @forelse($recentPemeliharaan->take(3) as $item)
-                            <div class="d-flex mb-4">
-                                <div class="me-3">
-                                    <div class="avatar-text avatar-md bg-soft-warning">
-                                        <i class="feather-tool text-warning"></i>
-                                    </div>
-                                </div>
-                                <div>
-                                    <h6 class="mb-1">
-                                        Pemeliharaan {{ $item->blok }}
-                                    </h6>
-                                    <small class="text-muted">
-                                        {{ $item->tanggal->format('d M Y') }}
-                                        {{ $item->jenis_label }}
-                                    </small>
-                                </div>
-                            </div>
-                        @empty
-                            <p class="text-muted">
-                                Belum ada aktivitas pemeliharaan
-                            </p>
-                        @endforelse
-                    </div>
-                </div>
-            </div>
-        </div>
+</article>
 @endsection
 
-    @section('scripts')
+@section('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var fontFam = "'Outfit','Plus Jakarta Sans',sans-serif";
+    var ctx     = document.getElementById('volumeChart');
+    if (!ctx) return;
 
-        <script>
-            const volumeCtx = document.getElementById('volumeChart');
-
-            const volumeChart = new Chart(volumeCtx, {
-
-                type: 'line',
-
-                data: {
-
-                    labels: @json($labelHari),
-
-                    datasets: [{
-
-                        label: 'Volume Limbah Dialirkan (m³)',
-
-                        data: @json($volumeGrafik),
-
-                        borderColor: '#2563eb',
-
-                        backgroundColor: 'rgba(37,99,235,.15)',
-
-                        fill: true,
-
-                        tension: .4,
-
-                        borderWidth: 3,
-
-                        pointRadius: 4,
-
-                        pointHoverRadius: 7
-
-                    }]
-
+    var volumeChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: @json($labelHari),
+            datasets: [{
+                label: 'Volume Limbah Dialirkan (m³)',
+                data: @json($volumeGrafik),
+                borderColor: '#16a34a',
+                backgroundColor: 'rgba(22,163,74,0.08)',
+                fill: true,
+                tension: 0.4,
+                borderWidth: 2.5,
+                pointRadius: 4,
+                pointBackgroundColor: '#16a34a',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
+                pointHoverRadius: 7
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: {
+                    labels: { font: { family: fontFam, size: 12, weight: '700' }, color: '#374151' }
                 },
-
-                options: {
-
-                    responsive: true,
-
-                    maintainAspectRatio: false,
-
-                    interaction: {
-                        mode: 'index',
-                        intersect: false
-                    },
-
-                    plugins: {
-
-                        legend: {
-                            display: true
-                        }
-
-                    },
-
-                    scales: {
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Tanggal'
-                            },
-                            ticks: {
-                                autoSkip: true,
-                                maxTicksLimit: 15,
-                                maxRotation: 45,
-                                minRotation: 0
-                            }
-                        },
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Volume (m³)'
-                            }
-                        }
-                    }
-
+                tooltip: {
+                    backgroundColor: '#052e16',
+                    titleFont: { family: fontFam, size: 12, weight: '700' },
+                    bodyFont: { family: fontFam, size: 11 },
+                    padding: 12,
+                    cornerRadius: 10
                 }
-
-            });
-
-            function loadGrafik() {
-
-                fetch(
-                    "{{ route('dashboard.grafik-volume') }}?tahun=" +
-                    document.getElementById('tahun').value +
-                    "&bulan=" +
-                    document.getElementById('bulan').value +
-                    "&jenis=" +
-                    document.getElementById('jenis').value +
-                    "&nilai=" +
-                    document.getElementById('nilai').value,
-                    {
-                        headers: {
-                            "X-Requested-With": "XMLHttpRequest"
-                        }
+            },
+            scales: {
+                x: {
+                    grid: { color: 'rgba(22,163,74,0.06)' },
+                    ticks: {
+                        autoSkip: true, maxTicksLimit: 15,
+                        font: { family: fontFam, size: 10 }, color: '#6b7280'
                     }
-                )
-                    .then(res => res.json())
-                    .then(data => {
-
-                        volumeChart.data.labels = data.labelHari;
-                        volumeChart.data.datasets[0].data = data.volumeGrafik;
-                        volumeChart.update();
-
-                        const tahunText = document.getElementById('tahun').value;
-
-                        const bulanText =
-                            document.getElementById('bulan').options[
-                                document.getElementById('bulan').selectedIndex
-                            ].text;
-
-                        const jenisText =
-                            document.getElementById('jenis').value == 'blok'
-                                ? 'Blok'
-                                : 'Flat Bed';
-
-                        const nilaiText =
-                            document.getElementById('nilai').value;
-
-                        document.getElementById('filterInfo').innerHTML =
-                            `
-            <span class="badge bg-soft-primary text-primary">
-                ${bulanText} ${tahunText}
-            </span>
-
-            <span class="badge bg-soft-success text-success">
-                ${jenisText}
-            </span>
-
-            <span class="badge bg-soft-secondary text-secondary">
-                ${nilaiText}
-            </span>
-            `;
-
-                        let select = document.getElementById('nilai');
-
-                        select.innerHTML = "";
-
-                        data.pilihan.forEach(function (item) {
-
-                            select.innerHTML +=
-                                `<option value="${item}">${item}</option>`;
-
-                        });
-
-                    });
-
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(22,163,74,0.06)' },
+                    ticks: { font: { family: fontFam, size: 10 }, color: '#6b7280' }
+                }
             }
+        }
+    });
 
-            document.getElementById('tahun').addEventListener('change', loadGrafik);
+    /* Filter AJAX reload */
+    var form = document.getElementById('filterGrafik');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            var params = new URLSearchParams({
+                tahun: document.getElementById('tahun').value,
+                bulan: document.getElementById('bulan').value,
+                jenis: document.getElementById('jenis').value,
+                nilai: document.getElementById('nilai').value
+            });
+            fetch("{{ route('dashboard.grafik-volume') }}?" + params.toString(), {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            }).then(r => r.json()).then(data => {
+                volumeChart.data.labels = data.labelHari;
+                volumeChart.data.datasets[0].data = data.volumeGrafik;
+                volumeChart.update();
 
-            document.getElementById('bulan').addEventListener('change', loadGrafik);
+                /* update filter badges */
+                var lblBulan  = document.getElementById('filterLabelBulan');
+                var lblJenis  = document.getElementById('filterLabelJenis');
+                var lblNilai  = document.getElementById('filterLabelNilai');
+                var bulanOpt  = document.getElementById('bulan');
+                if (lblBulan)  lblBulan.textContent  = bulanOpt.options[bulanOpt.selectedIndex].text + ' ' + params.get('tahun');
+                if (lblJenis)  lblJenis.textContent  = params.get('jenis') === 'blok' ? 'Blok' : 'Flat Bed';
+                if (lblNilai && params.get('nilai')) lblNilai.textContent = params.get('nilai');
 
-            document.getElementById('jenis').addEventListener('change', loadGrafik);
-
-            document.getElementById('nilai').addEventListener('change', loadGrafik);
-        </script>
-
-    @endsection
+                /* repopulate nilai options */
+                var nilaiSel = document.getElementById('nilai');
+                nilaiSel.innerHTML = '<option value="">Semua</option>';
+                (data.pilihan || []).forEach(function(item) {
+                    nilaiSel.innerHTML += '<option value="' + item + '">' + item + '</option>';
+                });
+            });
+        });
+    }
+});
+</script>
+@endsection

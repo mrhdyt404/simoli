@@ -17,7 +17,7 @@
     <i class="feather-info fs-3 me-2.5 text-info flex-shrink-0"></i>
     <div class="fs-12 text-dark">
         <strong class="d-block text-dark fw-bold mb-0.5">Ketentuan Menyelesaikan Shift:</strong>
-        Pastikan Foto Sesudah Kerja, HM Akhir, dan BBM telah diisi lengkap sebelum menyimpan laporan.
+        Pastikan Foto Sesudah Kerja, HM Akhir, Lokasi Blok, dan BBM telah diisi lengkap sebelum menyimpan laporan.
     </div>
 </div>
 
@@ -94,7 +94,7 @@
 
             <div class="mb-0">
                 <label class="form-label">Lokasi / Blok Pekerjaan <span class="text-danger">*</span></label>
-                <input type="text" name="lokasi_blok" class="form-control @error('lokasi_blok') is-invalid @enderror" value="{{ old('lokasi_blok', $log->lokasi_blok) }}" required placeholder="Contoh: Kolam 2 Anaerob / Blok C18">
+                <input type="text" name="lokasi_blok" id="lokasi_blok" class="form-control @error('lokasi_blok') is-invalid @enderror" value="{{ old('lokasi_blok', $log->lokasi_blok) }}" required placeholder="Contoh: Kolam 2 Anaerob / Blok C18">
                 @error('lokasi_blok') <div class="invalid-feedback">{{ $message }}</div> @enderror
             </div>
         </div>
@@ -262,12 +262,12 @@
         </div>
     </div>
 
-    <!-- Card 4: Hasil Aplikasi Bed -->
+    <!-- Card 4: Hasil Aplikasi Bed (Opsional) -->
     <div class="op-card mb-3">
         <div class="op-card-header">
             <span class="d-flex align-items-center">
                 <span class="step-badge">4</span>
-                <span>Hasil Aplikasi Bed (Aplikasi Lahan)</span>
+                <span>Hasil Aplikasi Bed (Opsional)</span>
             </span>
         </div>
         <div class="op-card-body">
@@ -318,16 +318,16 @@
             </div>
 
             <div class="mb-0">
-                <label class="form-label">Catatan / Kendala Operasional</label>
-                <textarea name="catatan" class="form-control" rows="2" placeholder="Catatan kondisi alat atau kendala di lapangan...">{{ old('catatan', $log->catatan) }}</textarea>
+                <label class="form-label">Catatan Lapangan / Kendala Operasional</label>
+                <textarea name="catatan" class="form-control" rows="2" placeholder="Tuliskan catatan kondisi lapangan, kendala teknis, atau komponen yang diperbaiki...">{{ old('catatan', $log->catatan) }}</textarea>
             </div>
         </div>
     </div>
 
     <!-- Submit Button -->
     <div class="mb-4">
-        <button type="submit" class="btn btn-warning text-dark fw-bold w-100 shadow-lg py-3 rounded-3 fs-15 border-0 d-inline-flex align-items-center justify-content-center gap-2">
-            <i class="feather-check-circle fs-5"></i>
+        <button type="submit" class="btn btn-op-primary shadow-lg py-3">
+            <i class="feather-check-circle me-2 fs-5"></i>
             <span>SIMPAN & SELESAIKAN SHIFT</span>
         </button>
     </div>
@@ -409,52 +409,76 @@
         totalHmDisplay.innerText = minutesToTime(finalDiff);
     }
 
+    // --- Smart 3-Tier Offline Satellite GPS Engine ---
+    function captureSmartLocation(onSuccess, statusElem) {
+        if (!navigator.geolocation) {
+            if (statusElem) statusElem.innerHTML = '<span class="text-danger"><i class="feather-alert-triangle me-1"></i>Browser ini tidak mendukung GPS.</span>';
+            return;
+        }
+
+        if (statusElem) {
+            statusElem.innerHTML = '<span class="text-primary"><span class="spinner-border spinner-border-sm me-1" style="width: 10px; height: 10px;"></span>Mengunci sinyal satelit GPS... Harap di area terbuka.</span>';
+        }
+
+        function handleSuccess(pos, source) {
+            const lat = pos.coords.latitude.toFixed(8);
+            const long = pos.coords.longitude.toFixed(8);
+            const accuracy = Math.round(pos.coords.accuracy || 0);
+            onSuccess(lat, long, accuracy);
+            if (statusElem) {
+                statusElem.innerHTML = `<span class="text-success fw-semibold"><i class="feather-check-circle me-1"></i>GPS Terkunci (${source})! Akurasi: ±${accuracy}m</span>`;
+            }
+        }
+
+        function handleFinalError(err) {
+            let msg = 'Gagal mengunci sinyal GPS.';
+            if (err.code === 1) {
+                msg = 'Izin lokasi (GPS) ditolak. Aktifkan izin lokasi pada browser/HP.';
+            } else if (err.code === 2) {
+                msg = 'Sinyal satelit belum terdeteksi. Pastikan tombol Lokasi/GPS di HP aktif.';
+            } else if (err.code === 3) {
+                msg = 'Waktu pencarian satelit habis (Timeout). Pastikan berada di bawah langit terbuka.';
+            }
+            if (statusElem) {
+                statusElem.innerHTML = `<span class="text-danger fs-11"><i class="feather-alert-triangle me-1"></i>${msg}</span>`;
+            }
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            (pos) => handleSuccess(pos, 'Cache GPS'),
+            (err1) => {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => handleSuccess(pos, 'Satelit HP'),
+                    (err2) => {
+                        navigator.geolocation.getCurrentPosition(
+                            (pos) => handleSuccess(pos, 'Perkiraan Perangkat'),
+                            (err3) => handleFinalError(err3),
+                            { enableHighAccuracy: false, timeout: 20000, maximumAge: 600000 }
+                        );
+                    },
+                    { enableHighAccuracy: true, timeout: 25000, maximumAge: 120000 }
+                );
+            },
+            { enableHighAccuracy: false, timeout: 4000, maximumAge: 300000 }
+        );
+    }
+
     function getGpsAwal() {
         const statusElem = document.getElementById('gps_awal_status');
-        if (statusElem) statusElem.innerText = 'Tunggu sebentar, merekam lokasi GPS Awal...';
-
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                function(position) {
-                    const lat = position.coords.latitude.toFixed(8);
-                    const long = position.coords.longitude.toFixed(8);
-                    document.getElementById('latitude_awal').value = lat;
-                    document.getElementById('longitude_awal').value = long;
-                    document.getElementById('latitude').value = lat;
-                    document.getElementById('longitude').value = long;
-                    if (statusElem) statusElem.innerHTML = `<span class="text-success"><i class="feather-check-circle me-1"></i>GPS Awal berhasil direkam! (${lat}, ${long})</span>`;
-                },
-                function(error) {
-                    if (statusElem) statusElem.innerHTML = `<span class="text-danger"><i class="feather-alert-triangle me-1"></i>Gagal mengambil GPS Awal: ${error.message}</span>`;
-                },
-                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-            );
-        } else {
-            if (statusElem) statusElem.innerText = 'Browser Anda tidak mendukung geolokasi GPS.';
-        }
+        captureSmartLocation(function(lat, long, accuracy) {
+            document.getElementById('latitude_awal').value = lat;
+            document.getElementById('longitude_awal').value = long;
+            document.getElementById('latitude').value = lat;
+            document.getElementById('longitude').value = long;
+        }, statusElem);
     }
 
     function getGpsAkhir() {
         const statusElem = document.getElementById('gps_akhir_status');
-        if (statusElem) statusElem.innerText = 'Tunggu sebentar, merekam lokasi GPS Akhir...';
-
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                function(position) {
-                    const lat = position.coords.latitude.toFixed(8);
-                    const long = position.coords.longitude.toFixed(8);
-                    document.getElementById('latitude_akhir').value = lat;
-                    document.getElementById('longitude_akhir').value = long;
-                    if (statusElem) statusElem.innerHTML = `<span class="text-success"><i class="feather-check-circle me-1"></i>GPS Akhir berhasil direkam! (${lat}, ${long})</span>`;
-                },
-                function(error) {
-                    if (statusElem) statusElem.innerHTML = `<span class="text-danger"><i class="feather-alert-triangle me-1"></i>Gagal mengambil GPS Akhir: ${error.message}</span>`;
-                },
-                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-            );
-        } else {
-            if (statusElem) statusElem.innerText = 'Browser Anda tidak mendukung geolokasi GPS.';
-        }
+        captureSmartLocation(function(lat, long, accuracy) {
+            document.getElementById('latitude_akhir').value = lat;
+            document.getElementById('longitude_akhir').value = long;
+        }, statusElem);
     }
 
     function handlePhotoSelect(input, imgId, placeholderId, tsTagId) {
@@ -499,123 +523,19 @@
         calcBedTotal();
         hitungHm();
 
+        // Validate on submit
         const form = document.getElementById('formEditOperatorReport');
         if (form) {
             form.addEventListener('submit', function(e) {
-                let missingFields = [];
+                const hmAkhir = document.getElementById('hm_akhir').value;
+                const hasFotoSesudah = document.getElementById('foto_sesudah').files.length > 0 || "{{ $log->foto_sesudah }}" !== "";
+                const lokasiBlok = document.getElementById('lokasi_blok').value;
 
-                // 1. Unit Alat Berat
-                const alatBerat = document.querySelector('select[name="alat_berat_id"]');
-                if (!alatBerat || !alatBerat.value) {
-                    missingFields.push('Unit Alat Berat');
-                    if (alatBerat) alatBerat.classList.add('is-invalid');
-                } else {
-                    if (alatBerat) alatBerat.classList.remove('is-invalid');
-                }
-
-                // 2. Operator
-                const operator = document.querySelector('input[name="operator"]');
-                if (!operator || !operator.value.trim()) {
-                    missingFields.push('Nama Operator');
-                    if (operator) operator.classList.add('is-invalid');
-                } else {
-                    if (operator) operator.classList.remove('is-invalid');
-                }
-
-                // 3. Kegiatan
-                const kegiatan = document.querySelector('input[name="kegiatan"]');
-                if (!kegiatan || !kegiatan.value.trim()) {
-                    missingFields.push('Jenis Kegiatan');
-                    if (kegiatan) kegiatan.classList.add('is-invalid');
-                } else {
-                    if (kegiatan) kegiatan.classList.remove('is-invalid');
-                }
-
-                // 4. Lokasi / Blok
-                const lokasiBlok = document.querySelector('input[name="lokasi_blok"]');
-                if (!lokasiBlok || !lokasiBlok.value.trim()) {
-                    missingFields.push('Lokasi / Blok Pekerjaan');
-                    if (lokasiBlok) lokasiBlok.classList.add('is-invalid');
-                } else {
-                    if (lokasiBlok) lokasiBlok.classList.remove('is-invalid');
-                }
-
-                // 5. HM Awal
-                const hmAwalInput = document.getElementById('hm_awal');
-                const hasHmAwal = (hmAwalInput && hmAwalInput.value.trim() !== '') || {{ !empty($log->hm_awal) ? 'true' : 'false' }};
-                if (!hasHmAwal) {
-                    missingFields.push('HM Awal Kerja');
-                    if (hmAwalInput) hmAwalInput.classList.add('is-invalid');
-                } else {
-                    if (hmAwalInput) hmAwalInput.classList.remove('is-invalid');
-                }
-
-                // 6. HM Akhir
-                const hmAkhirInput = document.getElementById('hm_akhir');
-                const hasHmAkhir = (hmAkhirInput && hmAkhirInput.value.trim() !== '') || {{ !empty($log->hm_akhir) ? 'true' : 'false' }};
-                if (!hasHmAkhir) {
-                    missingFields.push('HM Akhir Kerja');
-                    if (hmAkhirInput) hmAkhirInput.classList.add('is-invalid');
-                } else {
-                    if (hmAkhirInput) hmAkhirInput.classList.remove('is-invalid');
-                }
-
-                // 7. Pengisian BBM
-                const bbmLiter = document.querySelector('input[name="bbm_liter"]');
-                if (!bbmLiter || bbmLiter.value.trim() === '') {
-                    missingFields.push('Pengisian BBM (Liter)');
-                    if (bbmLiter) bbmLiter.classList.add('is-invalid');
-                } else {
-                    if (bbmLiter) bbmLiter.classList.remove('is-invalid');
-                }
-
-                // 8. Kondisi Alat
-                const kondisiAlat = document.querySelector('select[name="kondisi_alat"]');
-                if (!kondisiAlat || !kondisiAlat.value) {
-                    missingFields.push('Kondisi Alat Berat');
-                    if (kondisiAlat) kondisiAlat.classList.add('is-invalid');
-                } else {
-                    if (kondisiAlat) kondisiAlat.classList.remove('is-invalid');
-                }
-
-                // 9. Foto Sebelum
-                const fileSebelum = document.getElementById('foto_sebelum');
-                const imgSebelum = document.getElementById('img_sebelum_preview');
-                const hasFotoSebelum = (fileSebelum && fileSebelum.files && fileSebelum.files.length > 0) || 
-                                       (imgSebelum && imgSebelum.style.display !== 'none' && imgSebelum.getAttribute('src') !== '') ||
-                                       {{ !empty($log->foto_sebelum) ? 'true' : 'false' }};
-                if (!hasFotoSebelum) {
-                    missingFields.push('Foto Sebelum Kerja');
-                }
-
-                // 10. Foto Sesudah
-                const fileSesudah = document.getElementById('foto_sesudah');
-                const imgSesudah = document.getElementById('img_sesudah_preview');
-                const hasFotoSesudah = (fileSesudah && fileSesudah.files && fileSesudah.files.length > 0) || 
-                                       (imgSesudah && imgSesudah.style.display !== 'none' && imgSesudah.getAttribute('src') !== '') ||
-                                       {{ !empty($log->foto_sesudah) ? 'true' : 'false' }};
-                if (!hasFotoSesudah) {
-                    missingFields.push('Foto Sesudah Kerja');
-                }
-
-                if (missingFields.length > 0) {
+                if (!hmAkhir || !hasFotoSesudah || !lokasiBlok) {
                     e.preventDefault();
-                    const alertBox = document.getElementById('client_validation_alert');
-                    const alertMsg = document.getElementById('client_validation_message');
-                    
-                    if (alertBox && alertMsg) {
-                        alertMsg.innerHTML = 'Silakan lengkapi input berikut yang masih kosong:<br><strong class="text-danger">• ' + missingFields.join('<br>• ') + '</strong>';
-                        alertBox.style.display = 'block';
-                        alertBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    } else {
-                        alert('Gagal Menyelesaikan Shift!\nHarap lengkapi input yang kosong:\n- ' + missingFields.join('\n- '));
-                    }
-
-                    const firstInvalid = document.querySelector('.is-invalid');
-                    if (firstInvalid) {
-                        firstInvalid.focus();
-                    }
-                    return false;
+                    document.getElementById('client_validation_alert').style.display = 'block';
+                    document.getElementById('client_validation_message').innerText = 'Harap lengkapi Lokasi / Blok, Foto Sesudah, dan HM Akhir sebelum menyelesaikan shift.';
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                 }
             });
         }

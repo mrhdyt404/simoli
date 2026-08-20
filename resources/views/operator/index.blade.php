@@ -155,16 +155,23 @@
                 <div class="text-muted fs-12 mb-2">
                     <span class="d-inline-flex align-items-center me-2"><i class="feather-user me-1"></i>{{ $item->operator }}</span>
                     <span class="d-inline-flex align-items-center me-2"><i class="feather-activity me-1 text-primary"></i>{{ $item->kegiatan }}</span>
-                    @if($item->lokasi_blok)
-                        <span class="d-inline-flex align-items-center"><i class="feather-map-pin me-1 text-danger"></i>{{ $item->lokasi_blok }}</span>
-                    @endif
                 </div>
 
                 <div class="d-flex align-items-center justify-content-between pt-1 flex-wrap gap-2">
                     <div class="d-flex gap-1 flex-wrap">
-                        @if($item->flat_bed > 0 || $item->long_bed > 0)
-                            <span class="badge bg-soft-primary text-primary fs-11">
-                                Bed: {{ $item->flat_bed }} FB / {{ $item->long_bed }} LB (Total: {{ $item->jumlah_bed }})
+                        @if($item->lokasi_blok)
+                            <span class="badge bg-soft-success text-success fs-11 border border-success-subtle">
+                                <i class="feather-map-pin me-1"></i>Blok: {{ $item->lokasi_blok }}
+                            </span>
+                        @endif
+                        @if($item->no_bak)
+                            <span class="badge bg-soft-info text-info fs-11 border border-info-subtle">
+                                <i class="feather-layers me-1"></i>Bak: {{ $item->no_bak }}
+                            </span>
+                        @endif
+                        @if($item->flat_bed > 0 || $item->jumlah_bed > 0)
+                            <span class="badge bg-soft-primary text-primary fs-11 border border-primary-subtle fw-bold">
+                                Bed di alirkan: {{ number_format($item->flat_bed ?: $item->jumlah_bed, 0, ',', '.') }} Bed
                             </span>
                         @endif
                         @if($item->bbm_liter > 0)

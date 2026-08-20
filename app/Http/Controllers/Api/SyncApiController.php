@@ -183,6 +183,7 @@ class SyncApiController extends Controller
                         'operator' => $item['operator'],
                         'kegiatan' => $item['kegiatan'],
                         'lokasi_blok' => $item['lokasi_blok'] ?? null,
+                        'no_bak' => $item['no_bak'] ?? null,
                         'flat_bed' => $flatBed,
                         'long_bed' => $longBed,
                         'jumlah_bed' => $jumlahBed,

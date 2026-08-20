@@ -36,6 +36,6 @@ class Pengaliran extends Model
 
     public function pks()
     {
-        return $this->belongsTo(User::class, 'id_pks', 'id_pks');
+        return $this->belongsTo(Pks::class, 'id_pks', 'id_pks');
     }
 }

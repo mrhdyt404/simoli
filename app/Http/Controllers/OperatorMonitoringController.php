@@ -91,6 +91,117 @@ class OperatorMonitoringController extends Controller
     }
 
     /**
+     * Default baseline capacity (Total Bed) for the 12 PKS mills
+     */
+    private array $defaultTotalBeds = [
+        'TPU' => 15112,
+        'TME' => 6768,
+        'SGO' => 3382,
+        'SPA' => 7490,
+        'SGH' => 3460,
+        'SBT' => 15370,
+        'LDA' => 6985,
+        'TAN' => 10344,
+        'TER' => 5691,
+        'STA' => 8370,
+        'SRO' => 6297,
+        'SIN' => 4657,
+    ];
+
+    /**
+     * Helper to get PKS progress for Land Application matching the report table format
+     */
+    public function getPksProgress($idPks): object
+    {
+        $pks = Pks::find($idPks);
+        $akro = strtoupper($pks->akro ?? '');
+        $tahun = (int) date('Y');
+        $bulan = (int) date('n');
+
+        // Total Bed determination
+        $rencana = \App\Models\Rencana::where('id_pks', $idPks)->where('tahun', $tahun)->first();
+        if ($rencana && ($rencana->flat_bed > 0 || $rencana->long_bed > 0)) {
+            $totalBed = $rencana->flat_bed ?: ($rencana->flat_bed + $rencana->long_bed);
+        } else {
+            $totalBed = $this->defaultTotalBeds[$akro] ?? 0;
+        }
+
+        // Date ranges
+        $startOfMonth = Carbon::now('Asia/Jakarta')->startOfMonth();
+        $endOfMonth = Carbon::now('Asia/Jakarta')->endOfMonth();
+        $startOfWeek = Carbon::now('Asia/Jakarta')->startOfWeek();
+        $endOfWeek = Carbon::now('Asia/Jakarta')->endOfWeek();
+
+        // Month records from Pengaliran & Monitoring
+        $pengaliranMonth = \App\Models\Pengaliran::where('id_pks', $idPks)
+            ->whereYear('tanggal', $tahun)
+            ->whereMonth('tanggal', $bulan)
+            ->get();
+
+        $monitoringMonth = MonitoringAlatBerat::where('id_pks', $idPks)
+            ->whereYear('tanggal', $tahun)
+            ->whereMonth('tanggal', $bulan)
+            ->get();
+
+        // Week records
+        $pengaliranWeek = $pengaliranMonth->filter(fn($item) => Carbon::parse($item->tanggal)->betweenIncluded($startOfWeek, $endOfWeek));
+        $monitoringWeek = $monitoringMonth->filter(fn($item) => Carbon::parse($item->tanggal)->betweenIncluded($startOfWeek, $endOfWeek));
+
+        $formatList = function($items1, $field1, $items2 = null, $field2 = null) {
+            $collected = [];
+            foreach ($items1 as $item) {
+                $val = trim((string)($item->{$field1} ?? ''));
+                if ($val !== '' && $val !== '-') {
+                    $parts = preg_split('/[\/,\s]+/', $val, -1, PREG_SPLIT_NO_EMPTY);
+                    foreach ($parts as $p) {
+                        $p = trim($p);
+                        if ($p !== '' && $p !== '-' && !in_array($p, $collected)) $collected[] = $p;
+                    }
+                }
+            }
+            if ($items2 && $field2) {
+                foreach ($items2 as $item) {
+                    $val = trim((string)($item->{$field2} ?? ''));
+                    if ($val !== '' && $val !== '-') {
+                        $parts = preg_split('/[\/,\s]+/', $val, -1, PREG_SPLIT_NO_EMPTY);
+                        foreach ($parts as $p) {
+                            $p = trim($p);
+                            if ($p !== '' && $p !== '-' && !in_array($p, $collected)) $collected[] = $p;
+                        }
+                    }
+                }
+            }
+            return empty($collected) ? '-' : implode(', ', $collected);
+        };
+
+        $bedMinggu = (int)$pengaliranWeek->sum('flat_bed') + (int)$monitoringWeek->sum('flat_bed');
+        $blokMinggu = $formatList($pengaliranWeek, 'blok', $monitoringWeek, 'lokasi_blok');
+        $bakMinggu = $formatList($pengaliranWeek, 'no_bak', $monitoringWeek, 'no_bak');
+
+        $bedBulan = (int)$pengaliranMonth->sum('flat_bed') + (int)$monitoringMonth->sum('flat_bed');
+        $blokBulan = $formatList($pengaliranMonth, 'blok', $monitoringMonth, 'lokasi_blok');
+        $bakBulan = $formatList($pengaliranMonth, 'no_bak', $monitoringMonth, 'no_bak');
+
+        return (object) [
+            'pks' => $pks,
+            'akro' => $akro,
+            'nama' => $pks->nama ?? 'Unit PKS',
+            'total_bed' => $totalBed,
+            'minggu_ini' => (object) [
+                'bed_dialirkan' => $bedMinggu,
+                'blok' => $blokMinggu,
+                'bak' => $bakMinggu,
+            ],
+            'sd_bulan_ini' => (object) [
+                'bed_dialirkan' => $bedBulan,
+                'blok' => $blokBulan,
+                'bak' => $bakBulan,
+            ],
+            'keterangan' => 'Pengaliran Limbah lancar',
+        ];
+    }
+
+    /**
      * Show form to create new heavy equipment work report
      */
     public function create()
@@ -107,8 +218,9 @@ class OperatorMonitoringController extends Controller
             ->get();
 
         $pks = $user->pks ?? Pks::find($user->id_pks);
+        $pksProgress = $this->getPksProgress($user->id_pks);
 
-        return view('operator.create', compact('user', 'alatBeratList', 'pks'));
+        return view('operator.create', compact('user', 'alatBeratList', 'pks', 'pksProgress'));
     }
 
     /**
@@ -129,6 +241,7 @@ class OperatorMonitoringController extends Controller
             'operator' => 'required|string|max:100',
             'kegiatan' => 'required|string|max:150',
             'lokasi_blok' => 'nullable|string|max:100',
+            'no_bak' => 'nullable|string|max:100',
             'flat_bed' => 'nullable|integer|min:0',
             'long_bed' => 'nullable|integer|min:0',
             'jumlah_bed' => 'nullable|integer|min:0',
@@ -248,6 +361,7 @@ class OperatorMonitoringController extends Controller
             'operator' => $request->operator,
             'kegiatan' => $request->kegiatan,
             'lokasi_blok' => $request->lokasi_blok,
+            'no_bak' => $request->no_bak,
             'flat_bed' => $flatBed,
             'long_bed' => $longBed,
             'jumlah_bed' => $jumlahBed,
@@ -324,7 +438,9 @@ class OperatorMonitoringController extends Controller
         });
         $alatBeratList = $alatBeratQuery->orderBy('kode_alat')->get();
 
-        return view('operator.edit', compact('log', 'alatBeratList', 'user'));
+        $pksProgress = $this->getPksProgress($log->id_pks ?? $user->id_pks);
+
+        return view('operator.edit', compact('log', 'alatBeratList', 'user', 'pksProgress'));
     }
 
     /**
@@ -358,6 +474,7 @@ class OperatorMonitoringController extends Controller
             'operator' => 'required|string|max:100',
             'kegiatan' => 'required|string|max:150',
             'lokasi_blok' => 'required|string|max:100',
+            'no_bak' => 'nullable|string|max:100',
             'flat_bed' => 'nullable|integer|min:0',
             'long_bed' => 'nullable|integer|min:0',
             'jumlah_bed' => 'nullable|integer|min:0',
@@ -453,14 +570,12 @@ class OperatorMonitoringController extends Controller
             $hmAwalTs = $log->hm_awal;
         }
 
-        if (!empty($log->hm_akhir)) {
-            $hmAkhirTs = $log->hm_akhir;
-        } elseif ($request->filled('hm_akhir')) {
+        if ($request->filled('hm_akhir')) {
             $hmAkhirTs = MonitoringAlatBerat::parseTimestamp($request->hm_akhir, $request->tanggal);
         } elseif ($request->hasFile('foto_sesudah')) {
             $hmAkhirTs = Carbon::now('Asia/Jakarta')->format('Y-m-d H:i:s');
         } else {
-            $hmAkhirTs = null;
+            $hmAkhirTs = $log->hm_akhir;
         }
 
         $totalHm = $log->total_hm;
@@ -490,6 +605,7 @@ class OperatorMonitoringController extends Controller
             'operator' => $request->operator,
             'kegiatan' => $request->kegiatan,
             'lokasi_blok' => $request->lokasi_blok,
+            'no_bak' => $request->no_bak,
             'flat_bed' => $flatBed,
             'long_bed' => $longBed,
             'jumlah_bed' => $jumlahBed,

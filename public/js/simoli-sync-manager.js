@@ -278,6 +278,7 @@ const SimoliSync = (() => {
             operator: formData.get('operator') || username,
             kegiatan: formData.get('kegiatan') || 'Monitoring Alat Berat',
             lokasi_blok: formData.get('lokasi_blok') || '',
+            no_bak: formData.get('no_bak') || '',
             flat_bed: flatBed,
             long_bed: longBed,
             jumlah_bed: jumlahBed,

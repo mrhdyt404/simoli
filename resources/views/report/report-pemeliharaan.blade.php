@@ -1,11 +1,13 @@
 @extends('layouts.simoli')
 
-@section('title', 'Report Pemeliharaan')
+@section('title', 'Report Pemeliharaan Land Aplikasi')
 @section('page-title', 'Report Pemeliharaan')
+@section('page-description', 'Laporan Data Rekapitulasi Pemeliharaan Kolam & Bed Land Aplikasi')
 
 @section('breadcrumb')
-<li class="breadcrumb-item">Report</li>
-<li class="breadcrumb-item active">Report Pemeliharaan</li>
+    <li>Report</li>
+    <li class="separator">/</li>
+    <li>Report Pemeliharaan</li>
 @endsection
 
 @php
@@ -16,758 +18,478 @@
 <link rel="stylesheet" type="text/css" href="{{ asset('duraluxadmin/assets/vendors/css/select2.min.css') }}" />
 <link rel="stylesheet" type="text/css" href="{{ asset('duraluxadmin/assets/vendors/css/select2-theme.min.css') }}" />
 <style>
-    .print-only {
-        display: none;
+    /* ================================================================
+       REPORT PEMELIHARAAN — PTPN GREEN THEME
+       ================================================================ */
+    @keyframes fadeUpCard {
+        from { opacity:0; transform:translateY(12px); }
+        to   { opacity:1; transform:translateY(0); }
     }
+
+    .print-only { display: none; }
+
+    /* === HEADER CARD === */
     .report-header-card {
-        border: none;
-        border-radius: 12px;
-        background: linear-gradient(135deg, #7c2d12 0%, #ea580c 50%, #fb923c 100%);
-        color: #fff;
+        border-radius: 20px;
+        background: linear-gradient(135deg, #052e16 0%, #0a2317 40%, #166534 80%, #16a34a 100%);
+        border: 1px solid rgba(34,197,94,.25);
+        box-shadow: 0 10px 30px rgba(0,0,0,.12);
+        color: #ffffff;
+        padding: 24px 28px;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 24px;
+        animation: fadeUpCard .4s ease-out;
     }
-    .report-header-card h4, .report-header-card h4 i {
-        color: #ffffff !important;
+
+    .report-header-card::after {
+        content:'';position:absolute;top:-60px;right:-60px;
+        width:220px;height:220px;border-radius:50%;
+        background:radial-gradient(circle,rgba(34,197,94,.2) 0%,transparent 70%);
+        pointer-events:none;
     }
-    .report-header-card .text-muted-light { color: rgba(255, 255, 255, 0.9) !important; }
-    .stat-card { border: none; border-radius: 12px; transition: transform 0.2s ease, box-shadow 0.2s ease; }
-    .stat-card:hover { transform: translateY(-4px); box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1); }
-    .stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
-    .filter-card { border: 1px solid #e9ecef; border-radius: 12px; background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%); }
-    .section-card { border: none; border-radius: 12px; overflow: hidden; }
-    .pks-group-header {
-        background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
-        padding: 10px 24px;
-        font-weight: 700;
-        font-size: 13px;
-        color: #7c2d12;
-        border-top: 1px solid #fed7aa;
-        border-bottom: 1px solid #fed7aa;
+
+    /* === STAT CARDS === */
+    .rpm-kpi {
+        background: #ffffff;
+        border-radius: 18px;
+        border: 1px solid rgba(22,163,74,.1);
+        box-shadow: 0 2px 12px rgba(22,163,74,.06);
+        padding: 18px;
+        height: 100%;
+        transition: all .25s ease;
+        animation: fadeUpCard .4s ease-out;
     }
-    .table thead th {
-        background: #fff7ed;
-        border: none;
-        font-weight: 600;
-        font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        color: #5b6b8a;
-        white-space: nowrap;
-        padding: 10px 12px;
+    .rpm-kpi:hover { transform: translateY(-3px); box-shadow: 0 10px 26px rgba(22,163,74,.12); }
+
+    /* === FILTER CARD === */
+    .filter-card {
+        background: #ffffff;
+        border-radius: 16px;
+        border: 1px solid rgba(22,163,74,.15);
+        box-shadow: 0 2px 10px rgba(22,163,74,.05);
+        padding: 20px;
+        margin-bottom: 24px;
     }
-    .table tbody td { vertical-align: middle; font-size: 13px; border-bottom: 1px solid #f0f3f5; padding: 8px 12px; }
-    .table tbody tr:hover { background-color: #fff7ed; }
-    .table tfoot td { font-weight: 700; background: #ffedd5; border-top: 2px solid #fed7aa; font-size: 13px; }
-    .empty-report { padding: 50px 20px; text-align: center; }
-    .empty-report i { font-size: 56px; color: #d1d5db; margin-bottom: 12px; }
-    .badge-mekanis { background: #dbeafe; color: #1e40af; font-size: 11px; padding: 3px 8px; border-radius: 6px; font-weight: 600; }
-    .badge-manual { background: #fef3c7; color: #92400e; font-size: 11px; padding: 3px 8px; border-radius: 6px; font-weight: 600; }
-    
-    /* Filter form styling */
-    .filter-card .form-label {
-        font-size: 12px;
-        font-weight: 700;
-        color: #5b6b8a;
-        letter-spacing: 0.3px;
-        margin-bottom: 6px;
-        display: flex;
-        align-items: center;
-    }
+
     .filter-card .form-control,
     .filter-card .form-select {
+        border-radius: 12px;
+        border: 1.5px solid #e5e7eb;
         font-size: 13px;
-        font-weight: 500;
-        border: 1px solid #d1d9e6;
-        border-radius: 8px;
-        padding: 8px 12px;
-        height: 40px;
-        background-color: #ffffff;
-        color: #2b3e50;
-        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        padding: 9px 14px;
+        transition: all .2s ease;
+        background: #f9fafb;
     }
+
     .filter-card .form-control:focus,
     .filter-card .form-select:focus {
-        border-color: #ea580c;
-        box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.08);
-        color: #2b3e50;
+        border-color: rgba(22,163,74,.4);
+        background: #fff;
+        box-shadow: 0 0 0 3px rgba(34,197,94,.08);
     }
-    .filter-card .btn {
+
+    .filter-card label.form-label {
+        font-size: 11px;
+        font-weight: 700;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: .4px;
+        margin-bottom: 6px;
+        display: block;
+    }
+
+    .filter-card .select2-container--default .select2-selection--single {
+        height: 42px; border-radius: 12px; border: 1.5px solid #e5e7eb;
+        background: #f9fafb; padding: 6px 12px;
+    }
+    .filter-card .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 28px; font-size: 13px; }
+    .filter-card .select2-container--default .select2-selection--single .select2-selection__arrow { height: 40px; }
+
+    /* === DATA TABLE SECTION === */
+    .section-card {
+        background: #ffffff;
+        border-radius: 18px;
+        border: 1px solid rgba(22,163,74,.1);
+        box-shadow: 0 2px 12px rgba(22,163,74,.06);
+        overflow: hidden;
+    }
+
+    .pks-group-header {
+        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        padding: 12px 20px;
+        font-weight: 800;
         font-size: 13px;
-        font-weight: 600;
-        letter-spacing: 0.3px;
-        border-radius: 8px;
-        height: 40px;
-        transition: all 0.2s ease;
-    }
-    .filter-card .btn-primary {
-        background-color: #ea580c;
-        border-color: #ea580c;
-    }
-    .filter-card .btn-primary:hover {
-        background-color: #d04906;
-        border-color: #d04906;
-        box-shadow: 0 4px 12px rgba(234, 88, 12, 0.25);
-    }
-    .filter-card .btn-outline-secondary {
-        border-width: 1.5px;
-    }
-    .filter-card .btn-outline-secondary:hover {
-        background-color: #f3f4f6;
+        color: #166534;
+        border-top: 1px solid #bbf7d0;
+        border-bottom: 1px solid #bbf7d0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
     }
 
-    /* Dark mode overrides */
-    html.app-skin-dark .filter-card { border-color: #1b2436 !important; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important; }
-    html.app-skin-dark .filter-card .form-label { color: #cbd5e1 !important; }
+    .report-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: clamp(11.5px, .7vw+9px, 13px);
+    }
+
+    .report-table thead th {
+        background: #052e16;
+        color: #86efac;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .6px;
+        padding: 12px 16px;
+        border: none;
+        white-space: nowrap;
+    }
+
+    .report-table tbody td {
+        padding: 11px 16px;
+        border-bottom: 1px solid rgba(22,163,74,.07);
+        vertical-align: middle;
+    }
+
+    .report-table tbody tr:hover td { background: rgba(22,163,74,.03); }
+
+    .report-table tfoot td {
+        background: #f0fdf4;
+        border-top: 2px solid #bbf7d0;
+        font-weight: 800;
+        color: #14532d;
+        padding: 12px 16px;
+        font-size: 13px;
+    }
+
+    .empty-report { padding: 60px 20px; text-align: center; }
+    .empty-report i { font-size: 56px; color: #d1d5db; margin-bottom: 12px; }
+
+    /* Dark mode */
+    html.app-skin-dark .filter-card,
+    html.app-skin-dark .rpm-kpi,
+    html.app-skin-dark .section-card { background:#0a2317 !important; border-color:rgba(34,197,94,.15) !important; }
     html.app-skin-dark .filter-card .form-control,
-    html.app-skin-dark .filter-card .form-select {
-        background-color: #0f172a !important;
-        color: #e2e8f0 !important;
-        border-color: #334155 !important;
-    }
-    html.app-skin-dark .filter-card .form-control:focus,
-    html.app-skin-dark .filter-card .form-select:focus {
-        background-color: #0f172a !important;
-        color: #e2e8f0 !important;
-        border-color: #ea580c !important;
-        box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.15) !important;
-    }
-    html.app-skin-dark .filter-card .form-control::placeholder,
-    html.app-skin-dark .filter-card .form-select::placeholder {
-        color: #94a3b8 !important;
-    }
-    html.app-skin-dark .filter-card .btn-outline-secondary {
-        color: #cbd5e1;
-        border-color: #475569;
-    }
-    html.app-skin-dark .filter-card .btn-outline-secondary:hover {
-        background-color: #1e293b;
-        color: #e2e8f0;
-        border-color: #64748b;
-    }
-    html.app-skin-dark .pks-group-header { background: linear-gradient(135deg, #431407 0%, #7c2d12 100%) !important; color: #fdba74 !important; border-color: #7c2d12 !important; }
-    html.app-skin-dark .table thead th { background: #1e293b !important; color: #94a3b8 !important; }
-    html.app-skin-dark .table tbody td { border-color: #1b2436 !important; color: #e2e8f0 !important; }
-    html.app-skin-dark .table tbody tr:hover { background-color: rgba(234,88,12,0.08) !important; }
-    html.app-skin-dark .table tfoot td { background: #1c1207 !important; border-color: #7c2d12 !important; color: #fdba74 !important; }
-    html.app-skin-dark .section-card { border-color: #1b2436 !important; }
-    html.app-skin-dark .badge-mekanis { background: #1e3a5f !important; color: #93c5fd !important; }
-    html.app-skin-dark .badge-manual { background: #422006 !important; color: #fcd34d !important; }
+    html.app-skin-dark .filter-card .form-select { background:#0e3b26;border-color:rgba(34,197,94,.2);color:#d1fae5; }
+    html.app-skin-dark .pks-group-header { background:linear-gradient(135deg,#0e3b26,#052e16);border-color:rgba(34,197,94,.15);color:#86efac; }
+    html.app-skin-dark .report-table thead th { background:#021a0b !important; }
+    html.app-skin-dark .report-table tbody td { border-color:rgba(34,197,94,.07) !important; color:#d1fae5; }
+    html.app-skin-dark .report-table tfoot td { background:#0e3b26;border-color:rgba(34,197,94,.2);color:#86efac; }
 
+    /* === PRINT === */
     @media print {
-        @page {
-            size: A4 portrait;
-            margin: 6mm 12mm 12mm 12mm;
-        }
-
-        html, body {
-            width: 100%;
-            margin: 0 !important;
-            padding: 0 !important;
-            background: #fff !important;
-            color: #000 !important;
-            font-family: Arial, sans-serif;
-            font-size: 10px;
-            line-height: 1.35;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-        }
-
-        html.app-skin-dark,
-        html.app-skin-dark body,
-        html.app-skin-dark .nxl-container,
-        html.app-skin-dark .main-content,
-        html.app-skin-dark .nxl-content,
-        html.app-skin-dark .print-only,
-        html.app-skin-dark div {
-            background: #fff !important;
-            background-color: #fff !important;
-            color: #000 !important;
-        }
-
-        html.app-skin-dark * {
-            box-shadow: none !important;
-            text-shadow: none !important;
-        }
-
-        html.app-skin-dark .print-only,
-        html.app-skin-dark .print-only * {
-            color: #000 !important;
-        }
-
+        @page { size: A4 portrait; margin: 6mm 12mm 12mm 12mm; }
+        html, body { width:100% !important;margin:0 !important;padding:0 !important;background:#fff !important;color:#000 !important;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important; }
         .nxl-navigation, .nxl-header, .filter-card, .no-print,
-        .page-header, .page-header-left, .page-header-title, .page-header-breadcrumb,
-        .breadcrumb, .nxl-footer, .page-header-right-items,
-        .report-header-card, .stat-card, .summary-box-pengaliran,
-        .summary-box-pemeliharaan, .page-header-right-open-toggle,
-        .d-md-none.d-flex.align-items-center {
-            display: none !important;
-        }
-
-        .main-content > * {
-            display: none !important;
-        }
-
-        .main-content > .print-only {
-            display: block !important;
-        }
-
-        .print-only {
-            display: block !important;
-        }
-
-        .nxl-container {
-            top: 0 !important;
-            margin-left: 0 !important;
-            padding: 0 !important;
-            min-height: auto !important;
-        }
-
-        .main-content {
-            padding: 0 !important;
-        }
-
-        .nxl-content {
-            padding-top: 0 !important;
-            margin-top: 0 !important;
-        }
-
-        .nxl-container .page-header + .nxl-content {
-            padding-top: 0 !important;
-        }
-
-        .nxl-header,
-        .page-header {
-            display: none !important;
-            visibility: hidden !important;
-            height: 0 !important;
-            min-height: 0 !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            border: 0 !important;
-        }
-
-        .print-report-header {
-            padding: 0;
-            margin: 0 0 2px 0;
-            border-bottom: 1px solid #000;
-        }
-
-        .print-report-header-table {
-            width: 100%;
-            border-collapse: collapse;
-            border: none !important;
-            margin-bottom: 0;
-        }
-
-        .print-report-header-table td {
-            border: none !important;
-            vertical-align: middle;
-            padding: 0;
-        }
-
-        .print-header-logo-cell {
-            width: 72px;
-            text-align: left;
-        }
-
-        .print-header-logo {
-            width: 60px;
-            height: auto;
-        }
-
-        .print-header-text-cell {
-            text-align: center;
-        }
-
-        .print-header-title {
-            margin: 0;
-            font-size: 14px;
-            font-weight: 700;
-            line-height: 1.1;
-            text-transform: uppercase;
-        }
-
-        .print-header-subtitle {
-            margin: 0;
-            font-size: 10px;
-            font-weight: 700;
-            line-height: 1.1;
-        }
-
-        .print-header-meta-cell {
-            width: 72px;
-            text-align: right;
-            vertical-align: middle;
-            font-size: 9px;
-        }
-
-        .print-report-content {
-            margin-top: 0;
-            color: #000;
-        }
-
-        .print-report-content p {
-            margin: 8px 0;
-        }
-
-        .print-data-section {
-            margin-top: 16px;
-            margin-bottom: 22px;
-        }
-
-        .print-data-title {
-            margin: 0 0 8px;
-            font-size: 10px;
-            font-weight: 700;
-        }
-
-        .print-report-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 6px;
-            margin-bottom: 16px;
-        }
-
-        .print-report-table th,
-        .print-report-table td {
-            border: 1px solid #000 !important;
-            padding: 4px 5px;
-            font-size: 9px;
-            text-align: left;
-            vertical-align: top;
-        }
-
-        .print-report-table th {
-            font-weight: 700;
-            text-align: center;
-        }
-
-        .print-report-table thead {
-            display: table-header-group;
-        }
-
-        .print-report-table tfoot {
-            display: table-footer-group;
-        }
-
-        .print-report-table tr {
-            break-inside: avoid;
-            page-break-inside: avoid;
-        }
-
-        .print-report-table tbody tr,
-        .print-report-table tbody td,
-        .print-group-row,
-        .print-subtotal-row,
-        .print-total-row {
-            break-inside: avoid;
-            page-break-inside: avoid;
-            page-break-after: auto;
-            page-break-before: auto;
-        }
-
-        .print-group-row td {
-            background: #ffedd5;
-            font-weight: 700;
-            text-transform: uppercase;
-        }
-
-        .print-subtotal-row td,
-        .print-total-row td {
-            background: #f2f2f2;
-            font-weight: 700;
-        }
-
-        .print-data-section + .print-data-section {
-            margin-top: 24px;
-        }
-
-        .print-footer {
-            margin-top: 18px;
-            padding-top: 8px;
-            border-top: 1px solid #000;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 9px;
-        }
-
-        .print-footer-left {
-            font-weight: 700;
-        }
-
-        .print-footer-right {
-            text-align: right;
-        }
-
-        .table-responsive {
-            overflow: visible !important;
-        }
-
-        .table {
-            width: 100%;
-            margin: 0 !important;
-            font-size: 9px;
-            border-collapse: collapse;
-        }
-
-        .table thead {
-            display: table-header-group;
-        }
-
-        .table tfoot {
-            display: table-footer-group;
-        }
-
-        .table thead th {
-            background: #fff !important;
-            color: #000 !important;
-            border: 1px solid #000 !important;
-            padding: 5px 4px !important;
-            font-size: 8px !important;
-            font-weight: 700 !important;
-            text-transform: uppercase;
-            white-space: nowrap;
-        }
-
-        .table tbody td,
-        .table tfoot td {
-            border: 1px solid #000 !important;
-            padding: 3px 4px !important;
-            font-size: 8px !important;
-            color: #000 !important;
-        }
-
-        .pks-group-header {
-            background: #ffedd5 !important;
-            color: #7c2d12 !important;
-            border: 1px solid #000 !important;
-            padding: 3px 4px !important;
-            font-size: 8px !important;
-            font-weight: 700 !important;
-            text-transform: uppercase;
-        }
-
-        .summary-row {
-            background: #ffedd5 !important;
-        }
-
-        .summary-row td {
-            color: #000 !important;
-            font-weight: 700 !important;
-            border: 1px solid #000 !important;
-        }
-
-        .badge,
-        .badge-mekanis,
-        .badge-manual {
-            border: none !important;
-            background: transparent !important;
-            color: #000 !important;
-            font-size: 8px !important;
-            padding: 0 !important;
-        }
-
-        .empty-report {
-            padding: 20px;
-            text-align: center;
-        }
+        .page-hero-strip, .page-header, .breadcrumb, .nxl-footer,
+        .report-header-card, .rpm-kpi, .btn, .btn-ptpn { display:none !important; }
+        .main-content, .nxl-container, .nxl-content { padding:0 !important;margin:0 !important; }
+        .print-only { display:block !important; }
+        .print-report-header { border-bottom:1px solid #000;margin-bottom:12px;padding-bottom:6px; }
+        .print-report-header-table { width:100%;border-collapse:collapse; }
+        .print-report-header-table td { border:none !important;vertical-align:middle; }
+        .print-report-table { width:100%;border-collapse:collapse;margin-top:8px; }
+        .print-report-table th, .print-report-table td { border:1px solid #000 !important;padding:4px 6px;font-size:9px; }
+        .print-report-table th { background:#f2f2f2 !important;font-weight:bold;text-align:center; }
+        .print-subtotal-row td { background:#f9f9f9 !important;font-weight:bold; }
     }
 </style>
 @endsection
 
 @section('content')
 
+{{-- Print Only Header --}}
 <div class="print-only print-report-header">
     <table class="print-report-header-table">
         <tr>
-            <td class="print-header-logo-cell">
-                <img class="print-header-logo" src="{{ asset('logo/Icon%20SIMOLI.png') }}" alt="SIMOLI">
+            <td style="width:70px;">
+                <img src="{{ asset('logo/Icon%20SIMOLI.png') }}" style="width:55px;height:auto;" alt="SIMOLI">
             </td>
-            <td class="print-header-text-cell">
-                <div class="print-header-title">Report Pemeliharaan SIMOLI</div>
-                <div class="print-header-subtitle">PT. Perkebunan Nusantara V</div>
-                <div class="print-header-subtitle">Sistem Monitoring Limbah</div>
+            <td style="text-align:center;">
+                <h3 style="margin:0;font-size:15px;font-weight:800;text-transform:uppercase;">Report Pemeliharaan SIMOLI</h3>
+                <div style="font-size:11px;font-weight:700;">PT. Perkebunan Nusantara IV Regional III</div>
+                <div style="font-size:10px;">Sistem Monitoring Limbah Land Aplikasi</div>
             </td>
-            <td class="print-header-meta-cell">
-                <div><strong>Periode</strong></div>
+            <td style="width:100px;text-align:right;font-size:10px;">
+                <div><strong>Periode:</strong></div>
                 <div>{{ $namaBulan[(int)$bulan] }} {{ $tahun }}</div>
             </td>
         </tr>
     </table>
 </div>
 
-<div class="print-only print-report-content">
-    <p>Berikut report pemeliharaan SIMOLI untuk bulan {{ $namaBulan[(int)$bulan] }} {{ $tahun }}, yang memuat data per PKS:</p>
-
+<div class="print-only">
     @if($data->count() > 0)
-    @foreach($dataByPks as $pksName => $items)
-    <div class="print-data-section">
-        <div class="print-data-title">PKS {{ $pksName }}</div>
-        <table class="print-report-table">
-            <thead>
-                <tr>
-                    <th>No</th>
-                    <th>Tanggal</th>
-                    <th>Blok</th>
-                    <th>No Bak</th>
-                    <th>Jenis</th>
-                    <th>Flat Bed</th>
-                    <th>Long Bed</th>
-                    <th>Jumlah HK</th>
-                    <th>Keterangan</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($items as $j => $item)
-                <tr>
-                    <td style="text-align:center;">{{ $j + 1 }}</td>
-                    <td>{{ $item->tanggal->format('d/m/Y') }}</td>
-                    <td>{{ $item->blok ?? '-' }}</td>
-                    <td>{{ $item->no_bak ?? '-' }}</td>
-                    <td>
-                        @if($item->jenis_pemeliharaan == '1')
-                            Mekanis
-                        @elseif($item->jenis_pemeliharaan == '2')
-                            Manual
-                        @else
-                            -
-                        @endif
-                    </td>
-                    <td style="text-align:right;">{{ number_format($item->flat_bed, 2) }}</td>
-                    <td style="text-align:right;">{{ number_format($item->long_bed, 2) }}</td>
-                    <td style="text-align:right;">{{ $item->jumlah_hk }}</td>
-                    <td>{{ $item->keterangan ?? '-' }}</td>
-                </tr>
-                @endforeach
-            </tbody>
-            <tfoot>
-                @php
-                    $subtotalFlatBed = $items->sum(function ($row) {
-                        return is_numeric($row->flat_bed) ? $row->flat_bed + 0 : (float) preg_replace('/[^0-9.-]/', '', (string) $row->flat_bed);
-                    });
-                    $subtotalLongBed = $items->sum(function ($row) {
-                        return is_numeric($row->long_bed) ? $row->long_bed + 0 : (float) preg_replace('/[^0-9.-]/', '', (string) $row->long_bed);
-                    });
-                    $subtotalJumlahHk = $items->sum(function ($row) {
-                        return is_numeric($row->jumlah_hk) ? $row->jumlah_hk + 0 : (float) preg_replace('/[^0-9.-]/', '', (string) $row->jumlah_hk);
-                    });
-                @endphp
-                <tr class="print-subtotal-row">
-                    <td colspan="5" class="text-end">Subtotal {{ $pksName }}</td>
-                    <td style="text-align:right;">{{ number_format($subtotalFlatBed, 2) }}</td>
-                    <td style="text-align:right;">{{ number_format($subtotalLongBed, 2) }}</td>
-                    <td style="text-align:right;">{{ $subtotalJumlahHk }}</td>
-                    <td></td>
-                </tr>
-            </tfoot>
-        </table>
-    </div>
-    @endforeach
-
-    <div class="print-footer">
-        <div class="print-footer-left">Dokumen internal SIMOLI - PT. Perkebunan Nusantara V</div>
-        <div class="print-footer-right">Dicetak: {{ now()->translatedFormat('d F Y H:i') }}</div>
-    </div>
-    @else
-    <div class="print-data-section">
-        <div class="print-empty-state">Tidak ada data pemeliharaan pada periode ini.</div>
-    </div>
-    @endif
-</div>
-
-{{-- Header --}}
-<div class="card report-header-card shadow-sm mb-4">
-    <div class="card-body p-4">
-        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
-            <div>
-                <h4 class="fw-bold mb-1 text-white"><i class="feather-tool me-2 text-white"></i>Report Pemeliharaan</h4>
-                <p class="text-white opacity-90 mb-0 fs-13">
-                    Laporan data pemeliharaan bulan {{ $namaBulan[(int)$bulan] }} {{ $tahun }}
-                </p>
-            </div>
-            <div class="no-print">
-                <button onclick="window.print()" class="btn btn-light btn-sm fw-semibold">
-                    <i class="feather-printer me-1"></i> Print
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-{{-- Stats --}}
-<div class="row mb-4 no-print">
-    <div class="col-md-3">
-        <div class="card stat-card shadow-sm">
-            <div class="card-body p-3">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="stat-icon bg-soft-primary text-primary"><i class="feather-file-text"></i></div>
-                    <div>
-                        <h3 class="fw-bold mb-0">{{ $summary['count'] }}</h3>
-                        <span class="fs-12 text-muted">Total Records</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card stat-card shadow-sm">
-            <div class="card-body p-3">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="stat-icon bg-soft-success text-success"><i class="feather-layers"></i></div>
-                    <div>
-                        <h3 class="fw-bold mb-0">{{ number_format($summary['flat_bed'], 2) }}</h3>
-                        <span class="fs-12 text-muted">Total Flat Bed</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card stat-card shadow-sm">
-            <div class="card-body p-3">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="stat-icon bg-soft-info text-info"><i class="feather-maximize-2"></i></div>
-                    <div>
-                        <h3 class="fw-bold mb-0">{{ number_format($summary['long_bed'], 2) }}</h3>
-                        <span class="fs-12 text-muted">Total Long Bed</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card stat-card shadow-sm">
-            <div class="card-body p-3">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="stat-icon bg-soft-warning text-warning"><i class="feather-users"></i></div>
-                    <div>
-                        <h3 class="fw-bold mb-0">{{ $summary['jumlah_hk'] }}</h3>
-                        <span class="fs-12 text-muted">Total HK</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-{{-- Filter --}}
-<div class="card filter-card shadow-sm mb-4 no-print">
-    <div class="card-body p-4">
-        <form action="{{ route('report-pemeliharaan') }}" method="GET">
-            <div class="row g-3 align-items-end">
-                @if(Auth::user()->isAdmin())
-                <div class="col-md-3 col-lg-2">
-                    <label class="form-label"><i class="feather-home me-1"></i>Unit PKS</label>
-                    <select name="id_pks" class="form-select" data-select2-selector="status">
-                        <option value="">Semua PKS</option>
-                        @foreach($pksList as $pks)
-                        <option value="{{ $pks->ID }}" {{ request('id_pks') == $pks->ID ? 'selected' : '' }}>{{ $pks->nama }} ({{ $pks->akro }})</option>
-                        @endforeach
-                    </select>
-                </div>
-                @endif
-                <div class="col-md-3 col-lg-2">
-                    <label class="form-label"><i class="feather-calendar me-1"></i>Bulan</label>
-                    <select name="bulan" class="form-select">
-                        @foreach(['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'] as $i => $bln)
-                        <option value="{{ $i + 1 }}" {{ $bulan == ($i + 1) ? 'selected' : '' }}>{{ $bln }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-3 col-lg-2">
-                    <label class="form-label"><i class="feather-calendar me-1"></i>Tahun</label>
-                    <select name="tahun" class="form-select">
-                        @foreach($years as $y)
-                        <option value="{{ $y }}" {{ $tahun == $y ? 'selected' : '' }}>{{ $y }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-3 col-lg-2">
-                    <label class="form-label"><i class="feather-tool me-1"></i>Jenis</label>
-                    <select name="jenis" class="form-select">
-                        <option value="">Semua</option>
-                        <option value="1" {{ request('jenis') == '1' ? 'selected' : '' }}>Mekanis</option>
-                        <option value="2" {{ request('jenis') == '2' ? 'selected' : '' }}>Manual</option>
-                    </select>
-                </div>
-                <div class="col-12 col-lg-4">
-                    <div class="d-flex gap-2 w-100">
-                        <button type="submit" class="btn btn-primary flex-grow-1"><i class="feather-search me-1"></i>Tampilkan</button>
-                        <a href="{{ route('report-pemeliharaan') }}" class="btn btn-outline-secondary"><i class="feather-refresh-cw me-1"></i>Reset</a>
-                    </div>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
-
-{{-- Data Table --}}
-@if($data->count() > 0)
-<div class="card section-card shadow-sm">
-    <div class="card-header py-3">
-        <h6 class="mb-0 fw-bold"><i class="feather-tool me-2 text-warning"></i>Data Pemeliharaan — {{ $namaBulan[(int)$bulan] }} {{ $tahun }}</h6>
-    </div>
-    <div class="card-body p-0">
         @foreach($dataByPks as $pksName => $items)
-        <div class="pks-group-header">
-            <i class="feather-home me-1"></i> {{ $pksName }}
-            <span class="badge bg-warning text-dark ms-2">{{ $items->count() }} data</span>
-        </div>
-        <div class="table-responsive">
-            <table class="table mb-0">
+        <div style="margin-top:14px;margin-bottom:16px;">
+            <div style="font-size:11px;font-weight:800;margin-bottom:4px;text-transform:uppercase;">PKS {{ $pksName }}</div>
+            <table class="print-report-table">
                 <thead>
                     <tr>
-                        <th>No</th>
+                        <th style="width:30px;">No</th>
                         <th>Tanggal</th>
                         <th>Blok</th>
                         <th>No Bak</th>
                         <th>Jenis</th>
-                        <th class="text-end">Flat Bed</th>
-                        <th class="text-end">Long Bed</th>
-                        <th class="text-end">Jumlah HK</th>
+                        <th style="text-align:right;">Flat Bed</th>
+                        <th style="text-align:right;">Long Bed</th>
+                        <th style="text-align:right;">Jumlah HK</th>
                         <th>Keterangan</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($items as $j => $item)
                     <tr>
-                        <td>{{ $j + 1 }}</td>
-                        <td>{{ $item->tanggal->format('d/m/Y') }}</td>
-                        <td>{{ $item->blok }}</td>
-                        <td>{{ $item->no_bak }}</td>
-                        <td>
-                            @if($item->jenis_pemeliharaan == '1')
-                                <span class="badge-mekanis">Mekanis</span>
-                            @elseif($item->jenis_pemeliharaan == '2')
-                                <span class="badge-manual">Manual</span>
-                            @else
-                                -
-                            @endif
-                        </td>
-                        <td class="text-end">{{ number_format($item->flat_bed, 2) }}</td>
-                        <td class="text-end">{{ number_format($item->long_bed, 2) }}</td>
-                        <td class="text-end">{{ $item->jumlah_hk }}</td>
+                        <td style="text-align:center;">{{ $j + 1 }}</td>
+                        <td>{{ $item->tanggal ? $item->tanggal->format('d/m/Y') : '-' }}</td>
+                        <td>{{ $item->blok ?? '-' }}</td>
+                        <td>{{ $item->no_bak ?? '-' }}</td>
+                        <td>{{ $item->jenis_pemeliharaan == '1' ? 'Mekanis' : ($item->jenis_pemeliharaan == '2' ? 'Manual' : '-') }}</td>
+                        <td style="text-align:right;">{{ number_format($item->flat_bed, 2) }}</td>
+                        <td style="text-align:right;">{{ number_format($item->long_bed, 2) }}</td>
+                        <td style="text-align:right;">{{ $item->jumlah_hk }}</td>
                         <td>{{ $item->keterangan ?? '-' }}</td>
                     </tr>
                     @endforeach
                 </tbody>
                 <tfoot>
                     @php
-                        $subtotalFlatBed = $items->sum(function ($row) {
-                            return is_numeric($row->flat_bed) ? $row->flat_bed + 0 : (float) preg_replace('/[^0-9.-]/', '', (string) $row->flat_bed);
-                        });
-                        $subtotalLongBed = $items->sum(function ($row) {
-                            return is_numeric($row->long_bed) ? $row->long_bed + 0 : (float) preg_replace('/[^0-9.-]/', '', (string) $row->long_bed);
-                        });
-                        $subtotalJumlahHk = $items->sum(function ($row) {
-                            return is_numeric($row->jumlah_hk) ? $row->jumlah_hk + 0 : (float) preg_replace('/[^0-9.-]/', '', (string) $row->jumlah_hk);
-                        });
+                        $subtotalFlatBed = $items->sum(fn($row) => is_numeric($row->flat_bed) ? $row->flat_bed + 0 : (float) preg_replace('/[^0-9.-]/', '', (string) $row->flat_bed));
+                        $subtotalLongBed = $items->sum(fn($row) => is_numeric($row->long_bed) ? $row->long_bed + 0 : (float) preg_replace('/[^0-9.-]/', '', (string) $row->long_bed));
+                        $subtotalJumlahHk = $items->sum(fn($row) => is_numeric($row->jumlah_hk) ? $row->jumlah_hk + 0 : (float) preg_replace('/[^0-9.-]/', '', (string) $row->jumlah_hk));
+                    @endphp
+                    <tr class="print-subtotal-row">
+                        <td colspan="5" style="text-align:right;">Subtotal {{ $pksName }}</td>
+                        <td style="text-align:right;">{{ number_format($subtotalFlatBed, 2) }}</td>
+                        <td style="text-align:right;">{{ number_format($subtotalLongBed, 2) }}</td>
+                        <td style="text-align:right;">{{ $subtotalJumlahHk }}</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        @endforeach
+    @else
+        <div style="padding:20px;text-align:center;">Tidak ada data pemeliharaan pada periode ini.</div>
+    @endif
+</div>
+
+{{-- Header Banner Card --}}
+<div class="report-header-card no-print">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div>
+            <h3 style="font-family:'Outfit',sans-serif;font-weight:900;margin:0 0 4px;font-size:22px;color:#ffffff;display:flex;align-items:center;gap:10px;">
+                <i class="feather-tool" style="color:#86efac;font-size:24px;"></i>
+                Report Pemeliharaan SIMOLI
+            </h3>
+            <p style="margin:0;color:rgba(209,250,229,.9);font-size:13px;font-weight:600;">
+                Laporan rekapitulasi data pemeliharaan bulan <strong>{{ $namaBulan[(int)$bulan] }} {{ $tahun }}</strong> seluruh PKS
+            </p>
+        </div>
+        <div>
+            <button onclick="window.print()" class="btn-ptpn" style="padding:10px 18px;font-size:13px;border-radius:12px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#ffffff;font-weight:800;">
+                <i class="feather-printer" style="font-size:14px;"></i>
+                Cetak Landscape
+            </button>
+        </div>
+    </div>
+</div>
+
+{{-- Stat KPI Cards --}}
+<div class="row g-3 mb-4 no-print">
+    <div class="col-xl-3 col-sm-6">
+        <div class="rpm-kpi">
+            <div class="d-flex align-items-center gap-3">
+                <div style="width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;">
+                    <i class="feather-file-text"></i>
+                </div>
+                <div>
+                    <h3 style="font-family:'Outfit',sans-serif;font-weight:900;color:#14532d;margin:0 0 2px;">{{ number_format($summary['count']) }}</h3>
+                    <span style="font-size:11.5px;color:#6b7280;font-weight:600;">Total Record Data</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <div class="rpm-kpi">
+            <div class="d-flex align-items-center gap-3">
+                <div style="width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;">
+                    <i class="feather-layers"></i>
+                </div>
+                <div>
+                    <h3 style="font-family:'Outfit',sans-serif;font-weight:900;color:#1d4ed8;margin:0 0 2px;">{{ number_format($summary['flat_bed'], 2) }}</h3>
+                    <span style="font-size:11.5px;color:#6b7280;font-weight:600;">Total Flat Bed</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <div class="rpm-kpi">
+            <div class="d-flex align-items-center gap-3">
+                <div style="width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;background:#fffbeb;color:#b45309;border:1px solid #fde68a;">
+                    <i class="feather-maximize-2"></i>
+                </div>
+                <div>
+                    <h3 style="font-family:'Outfit',sans-serif;font-weight:900;color:#b45309;margin:0 0 2px;">{{ number_format($summary['long_bed'], 2) }}</h3>
+                    <span style="font-size:11.5px;color:#6b7280;font-weight:600;">Total Long Bed</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <div class="rpm-kpi">
+            <div class="d-flex align-items-center gap-3">
+                <div style="width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;background:#f0fdfa;color:#0d9488;border:1px solid #99f6e4;">
+                    <i class="feather-users"></i>
+                </div>
+                <div>
+                    <h3 style="font-family:'Outfit',sans-serif;font-weight:900;color:#0d9488;margin:0 0 2px;">{{ number_format($summary['jumlah_hk']) }}</h3>
+                    <span style="font-size:11.5px;color:#6b7280;font-weight:600;">Total HK (Hari Kerja)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Filter Card --}}
+<div class="filter-card no-print">
+    <form action="{{ route('report-pemeliharaan') }}" method="GET">
+        <div class="row g-3 align-items-end">
+            @if(Auth::user()->isAdmin())
+            <div class="col-md-3 col-lg-3">
+                <label class="form-label">
+                    <i class="feather-home me-1" style="color:#16a34a;"></i> Unit PKS
+                </label>
+                <select name="id_pks" class="form-select" data-select2-selector="status">
+                    <option value="">Semua PKS</option>
+                    @foreach($pksList as $pks)
+                    <option value="{{ $pks->ID }}" {{ request('id_pks') == $pks->ID ? 'selected' : '' }}>{{ $pks->nama }} ({{ $pks->akro }})</option>
+                    @endforeach
+                </select>
+            </div>
+            @endif
+
+            <div class="col-md-3 col-lg-2">
+                <label class="form-label">
+                    <i class="feather-calendar me-1" style="color:#16a34a;"></i> Bulan
+                </label>
+                <select name="bulan" class="form-select">
+                    @foreach(['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'] as $i => $bln)
+                    <option value="{{ $i + 1 }}" {{ $bulan == ($i + 1) ? 'selected' : '' }}>{{ $bln }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="col-md-3 col-lg-2">
+                <label class="form-label">
+                    <i class="feather-calendar me-1" style="color:#16a34a;"></i> Tahun
+                </label>
+                <select name="tahun" class="form-select">
+                    @foreach($years as $y)
+                    <option value="{{ $y }}" {{ $tahun == $y ? 'selected' : '' }}>{{ $y }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="col-md-3 col-lg-2">
+                <label class="form-label">
+                    <i class="feather-tool me-1" style="color:#16a34a;"></i> Jenis
+                </label>
+                <select name="jenis" class="form-select">
+                    <option value="">Semua Jenis</option>
+                    <option value="1" {{ request('jenis') == '1' ? 'selected' : '' }}>Mekanis</option>
+                    <option value="2" {{ request('jenis') == '2' ? 'selected' : '' }}>Manual</option>
+                </select>
+            </div>
+
+            <div class="col-12 col-lg-3">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn-ptpn btn-ptpn-primary flex-grow-1" style="padding:10px 14px;font-size:13px;border-radius:12px;">
+                        <i class="feather-search" style="font-size:14px;"></i> Tampilkan
+                    </button>
+                    <a href="{{ route('report-pemeliharaan') }}" class="btn-ptpn btn-ptpn-outline" style="padding:10px 12px;border-radius:12px;" title="Reset">
+                        <i class="feather-refresh-cw" style="font-size:14px;"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+{{-- Data Table --}}
+@if($data->count() > 0)
+<div class="section-card no-print mb-4">
+    <div style="padding:16px 20px;border-bottom:1px solid rgba(22,163,74,.08);display:flex;align-items:center;justify-content:space-between;">
+        <h4 style="font-family:'Outfit',sans-serif;font-size:15px;font-weight:800;color:#14532d;margin:0;display:flex;align-items:center;gap:8px;">
+            <i class="feather-tool" style="color:#16a34a;font-size:18px;"></i>
+            Data Pemeliharaan — {{ $namaBulan[(int)$bulan] }} {{ $tahun }}
+        </h4>
+        <span class="mod-pill mod-pill-ok" style="font-size:10.5px;">
+            <i class="feather-database" style="font-size:11px;"></i>
+            {{ $summary['count'] }} Total Record
+        </span>
+    </div>
+
+    <div class="card-body p-0">
+        @foreach($dataByPks as $pksName => $items)
+        <div class="pks-group-header">
+            <div>
+                <i class="feather-home me-1"></i> PKS {{ $pksName }}
+            </div>
+            <span class="mod-pill mod-pill-info" style="font-size:11px;">{{ $items->count() }} transaksi</span>
+        </div>
+        <div class="table-responsive">
+            <table class="report-table mb-0">
+                <thead>
+                    <tr>
+                        <th style="width:40px;text-align:center;">No</th>
+                        <th style="min-width:110px;">Tanggal</th>
+                        <th style="min-width:100px;">Blok</th>
+                        <th style="min-width:100px;">No Bak</th>
+                        <th style="min-width:110px;">Jenis</th>
+                        <th style="text-align:right;min-width:100px;">Flat Bed</th>
+                        <th style="text-align:right;min-width:100px;">Long Bed</th>
+                        <th style="text-align:right;min-width:100px;">Jumlah HK</th>
+                        <th style="min-width:180px;">Keterangan</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($items as $j => $item)
+                    <tr>
+                        <td style="text-align:center;font-weight:700;color:#9ca3af;">{{ $j + 1 }}</td>
+                        <td>{{ $item->tanggal ? $item->tanggal->format('d/m/Y') : '-' }}</td>
+                        <td><span style="font-weight:700;color:#14532d;">{{ $item->blok ?? '-' }}</span></td>
+                        <td><span style="font-weight:700;color:#1d4ed8;">{{ $item->no_bak ?? '-' }}</span></td>
+                        <td>
+                            @if($item->jenis_pemeliharaan == '1')
+                                <span class="mod-pill mod-pill-info" style="font-size:10.5px;"><i class="feather-settings me-1"></i> Mekanis</span>
+                            @elseif($item->jenis_pemeliharaan == '2')
+                                <span class="mod-pill mod-pill-warn" style="font-size:10.5px;"><i class="feather-user me-1"></i> Manual</span>
+                            @else
+                                <span style="color:#9ca3af;">-</span>
+                            @endif
+                        </td>
+                        <td style="text-align:right;font-weight:700;color:#1d4ed8;">{{ number_format($item->flat_bed, 2) }}</td>
+                        <td style="text-align:right;font-weight:700;color:#b45309;">{{ number_format($item->long_bed, 2) }}</td>
+                        <td style="text-align:right;font-weight:700;color:#0d9488;">{{ $item->jumlah_hk }}</td>
+                        <td><small style="color:#6b7280;">{{ $item->keterangan ?? '-' }}</small></td>
+                    </tr>
+                    @endforeach
+                </tbody>
+                <tfoot>
+                    @php
+                        $subtotalFlatBed = $items->sum(fn($row) => is_numeric($row->flat_bed) ? $row->flat_bed + 0 : (float) preg_replace('/[^0-9.-]/', '', (string) $row->flat_bed));
+                        $subtotalLongBed = $items->sum(fn($row) => is_numeric($row->long_bed) ? $row->long_bed + 0 : (float) preg_replace('/[^0-9.-]/', '', (string) $row->long_bed));
+                        $subtotalJumlahHk = $items->sum(fn($row) => is_numeric($row->jumlah_hk) ? $row->jumlah_hk + 0 : (float) preg_replace('/[^0-9.-]/', '', (string) $row->jumlah_hk));
                     @endphp
                     <tr>
-                        <td colspan="5" class="text-end fw-bold">Subtotal {{ $pksName }}</td>
-                        <td class="text-end">{{ number_format($subtotalFlatBed, 2) }}</td>
-                        <td class="text-end">{{ number_format($subtotalLongBed, 2) }}</td>
-                        <td class="text-end">{{ $subtotalJumlahHk }}</td>
+                        <td colspan="5" style="text-align:right;">Subtotal PKS {{ $pksName }}</td>
+                        <td style="text-align:right;color:#1d4ed8;">{{ number_format($subtotalFlatBed, 2) }}</td>
+                        <td style="text-align:right;color:#b45309;">{{ number_format($subtotalLongBed, 2) }}</td>
+                        <td style="text-align:right;color:#0d9488;">{{ $subtotalJumlahHk }}</td>
                         <td></td>
                     </tr>
                 </tfoot>
@@ -775,23 +497,22 @@
         </div>
         @endforeach
     </div>
-    <div class="card-footer py-3">
-        <div class="row text-center">
-            <div class="col"><strong>Total Records:</strong> {{ $summary['count'] }}</div>
-            <div class="col"><strong>Flat Bed:</strong> {{ number_format($summary['flat_bed'], 2) }}</div>
-            <div class="col"><strong>Long Bed:</strong> {{ number_format($summary['long_bed'], 2) }}</div>
-            <div class="col"><strong>Jumlah HK:</strong> {{ $summary['jumlah_hk'] }}</div>
+
+    <div style="padding:16px 20px;background:#f0fdf4;border-top:1px solid #bbf7d0;">
+        <div class="row text-center font-weight-bold" style="font-size:13px;font-weight:800;color:#14532d;">
+            <div class="col">Total Records: {{ $summary['count'] }}</div>
+            <div class="col" style="color:#1d4ed8;">Flat Bed: {{ number_format($summary['flat_bed'], 2) }}</div>
+            <div class="col" style="color:#b45309;">Long Bed: {{ number_format($summary['long_bed'], 2) }}</div>
+            <div class="col" style="color:#0d9488;">Jumlah HK: {{ $summary['jumlah_hk'] }}</div>
         </div>
     </div>
 </div>
 @else
-<div class="card section-card shadow-sm">
-    <div class="card-body">
-        <div class="empty-report">
-            <i class="feather-inbox d-block"></i>
-            <h5 class="text-muted mt-3">Tidak ada data pemeliharaan</h5>
-            <p class="text-muted fs-13">Untuk bulan {{ $namaBulan[(int)$bulan] }} {{ $tahun }}</p>
-        </div>
+<div class="section-card no-print">
+    <div class="empty-report">
+        <i class="feather-inbox d-block"></i>
+        <h5 style="font-family:'Outfit',sans-serif;font-weight:800;color:#374151;margin-top:12px;">Tidak Ada Data Pemeliharaan</h5>
+        <p style="color:#6b7280;font-size:13px;">Untuk bulan {{ $namaBulan[(int)$bulan] }} {{ $tahun }}</p>
     </div>
 </div>
 @endif
@@ -801,8 +522,10 @@
 @section('scripts')
 <script src="{{ asset('duraluxadmin/assets/vendors/js/select2.min.js') }}"></script>
 <script>
-    $(document).ready(function() {
-        $('[data-select2-selector]').select2({ width: '100%' });
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof $ !== 'undefined' && $.fn.select2) {
+            $('[data-select2-selector]').select2({ width: '100%' });
+        }
     });
 </script>
 @endsection

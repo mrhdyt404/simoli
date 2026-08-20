@@ -5,8 +5,10 @@
 @section('content')
 <div class="d-flex align-items-center justify-content-between mb-3">
     <div>
-        <h5 class="fw-bold m-0 text-dark fs-17"><i class="feather-plus-circle me-1.5 text-primary"></i>Input Laporan Kerja</h5>
-        <div class="text-muted fs-12">Lengkapi data pekerjaan alat berat</div>
+        <h5 class="fw-bold m-0 text-dark fs-17">
+            <i class="feather-plus-circle me-1.5 text-primary"></i>Input Laporan Kerja Alat Berat
+        </h5>
+        <div class="text-muted fs-12">Isi data awal shift sebelum memulai pekerjaan operasional</div>
     </div>
     <a href="{{ route('operator.index') }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3 fs-12 fw-semibold">
         <i class="feather-arrow-left me-1"></i>Kembali
@@ -16,12 +18,12 @@
 <form action="{{ route('operator.store') }}" method="POST" enctype="multipart/form-data" id="formOperatorReport">
     @csrf
 
-    <!-- Card 1: Unit & Pekerjaan -->
+    <!-- Card 1: Unit & Waktu Kerja -->
     <div class="op-card mb-3">
         <div class="op-card-header">
             <span class="d-flex align-items-center">
                 <span class="step-badge">1</span>
-                <span>Unit Alat & Pekerjaan</span>
+                <span>Unit Alat & Informasi Pekerjaan</span>
             </span>
         </div>
         <div class="op-card-body">
@@ -53,19 +55,20 @@
 
             <div class="mb-3">
                 <label class="form-label">Jenis Kegiatan / Pekerjaan <span class="text-danger">*</span></label>
-                <input type="text" name="kegiatan" class="form-control @error('kegiatan') is-invalid @enderror" value="{{ old('kegiatan') }}" required placeholder="Contoh: Pengerukan kolam / Aplikasi Lahan">
+                <input type="text" name="kegiatan" class="form-control @error('kegiatan') is-invalid @enderror" value="{{ old('kegiatan') }}" required placeholder="Contoh: Pengerukan kolam / Normalisasi Bed / Aplikasi Lahan">
                 @error('kegiatan') <div class="invalid-feedback">{{ $message }}</div> @enderror
             </div>
 
             <div class="mb-0">
                 <label class="form-label">Lokasi / Blok Pekerjaan</label>
-                <input type="text" name="lokasi_blok" class="form-control @error('lokasi_blok') is-invalid @enderror" value="{{ old('lokasi_blok') }}" placeholder="Contoh: Kolam 2 Anaerob / Blok C18">
+                <input type="text" name="lokasi_blok" id="lokasi_blok" class="form-control @error('lokasi_blok') is-invalid @enderror" value="{{ old('lokasi_blok') }}" placeholder="Contoh: Kolam 2 Anaerob / Blok C18">
+                <small class="text-muted fs-11">Wajib diisi saat menyelesaikan shift kerja.</small>
                 @error('lokasi_blok') <div class="invalid-feedback">{{ $message }}</div> @enderror
             </div>
         </div>
     </div>
 
-    <!-- Card 2: Foto Dokumentasi Kerja (Sebelum & Sesudah) -->
+    <!-- Card 2: Foto Dokumentasi Kerja (Sebelum & Sesudah) & Jam Kerja -->
     <div class="op-card mb-3">
         <div class="op-card-header">
             <span class="d-flex align-items-center">
@@ -74,7 +77,7 @@
             </span>
         </div>
         <div class="op-card-body">
-            <div class="row g-3">
+            <div class="row g-3 mb-3">
                 <!-- Foto Sebelum -->
                 <div class="col-12 col-sm-6">
                     <label class="form-label text-dark fw-bold mb-1">
@@ -150,18 +153,8 @@
                     @error('foto_sesudah') <small class="text-danger d-block mt-1 fs-11">{{ $message }}</small> @enderror
                 </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Card 3: Hour Meter (HM) & Jam Kerja -->
-    <div class="op-card mb-3">
-        <div class="op-card-header">
-            <span class="d-flex align-items-center">
-                <span class="step-badge">3</span>
-                <span>Jam Kerja & Hour Meter (HM)</span>
-            </span>
-        </div>
-        <div class="op-card-body">
+            {{-- Hour Meter & Jam Kerja --}}
             <div class="row g-2">
                 <div class="col-6 mb-2">
                     <label class="form-label">Jam Awal Kerja <span class="text-danger">*</span></label>
@@ -195,23 +188,23 @@
         </div>
     </div>
 
-    <!-- Card 4: Hasil Aplikasi Bed (Jika Ada) -->
+    <!-- Card 3: Hasil Aplikasi Bed (Jika Pekerjaan Aplikasi Lahan) -->
     <div class="op-card mb-3">
         <div class="op-card-header">
             <span class="d-flex align-items-center">
-                <span class="step-badge">4</span>
-                <span>Hasil Aplikasi Bed (Aplikasi Lahan)</span>
+                <span class="step-badge">3</span>
+                <span>Hasil Aplikasi Bed (Opsional)</span>
             </span>
         </div>
         <div class="op-card-body">
             <div class="row g-2 mb-2">
                 <div class="col-6">
-                    <label class="form-label">Flat Bed (Jumlah)</label>
+                    <label class="form-label">Flat Bed</label>
                     <input type="number" name="flat_bed" id="flat_bed" class="form-control @error('flat_bed') is-invalid @enderror" value="{{ old('flat_bed', 0) }}" min="0" oninput="calcBedTotal()">
                     @error('flat_bed') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-6">
-                    <label class="form-label">Long Bed (Jumlah)</label>
+                    <label class="form-label">Long Bed</label>
                     <input type="number" name="long_bed" id="long_bed" class="form-control @error('long_bed') is-invalid @enderror" value="{{ old('long_bed', 0) }}" min="0" oninput="calcBedTotal()">
                     @error('long_bed') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
@@ -225,11 +218,11 @@
         </div>
     </div>
 
-    <!-- Card 5: BBM & Kondisi Alat -->
+    <!-- Card 4: BBM & Kondisi Alat -->
     <div class="op-card mb-3">
         <div class="op-card-header">
             <span class="d-flex align-items-center">
-                <span class="step-badge">5</span>
+                <span class="step-badge">4</span>
                 <span>Konsumsi BBM & Kondisi Alat</span>
             </span>
         </div>
@@ -251,8 +244,8 @@
             </div>
 
             <div class="mb-0">
-                <label class="form-label">Catatan / Kendala di Lapangan</label>
-                <textarea name="catatan" class="form-control" rows="2" placeholder="Tuliskan catatan kondisi cuaca, kendala alat, atau rincian pekerjaan...">{{ old('catatan') }}</textarea>
+                <label class="form-label">Catatan Lapangan / Kendala Operasional</label>
+                <textarea name="catatan" class="form-control" rows="2" placeholder="Tuliskan catatan kondisi lapangan, kendala teknis, atau komponen yang diperbaiki...">{{ old('catatan') }}</textarea>
             </div>
         </div>
     </div>
@@ -261,7 +254,7 @@
     <div class="mb-4">
         <button type="submit" class="btn btn-op-primary shadow-lg py-3">
             <i class="feather-check-circle me-2 fs-5"></i>
-            <span>SIMPAN LAPORAN KERJA</span>
+            <span>SIMPAN LAPORAN KERJA ALAT BERAT</span>
         </button>
     </div>
 </form>
@@ -377,15 +370,12 @@
             }
         }
 
-        // Tier 1: Try Fast Cached Position (last 5 minutes)
         navigator.geolocation.getCurrentPosition(
             (pos) => handleSuccess(pos, 'Cache GPS'),
             (err1) => {
-                // Tier 2: Real-Time Satellite Fix with 25s timeout
                 navigator.geolocation.getCurrentPosition(
                     (pos) => handleSuccess(pos, 'Satelit HP'),
                     (err2) => {
-                        // Tier 3: Low-Accuracy Device Fallback
                         navigator.geolocation.getCurrentPosition(
                             (pos) => handleSuccess(pos, 'Perkiraan Perangkat'),
                             (err3) => handleFinalError(err3),
@@ -474,7 +464,7 @@
             });
         }
 
-        // 2. Intercept Form Submission for 100% Offline-First Reliability
+        // 2. Intercept Form Submission for Offline Reliability
         const form = document.getElementById('formOperatorReport');
         if (form) {
             form.addEventListener('submit', async function(e) {

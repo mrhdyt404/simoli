@@ -36,31 +36,40 @@
         </div>
 
         <div class="mb-3 p-2.5 bg-light rounded-3 border">
-            <span class="text-muted fs-11 d-block fw-semibold text-uppercase">KEGIATAN / PEKERJAAN</span>
+            <span class="text-muted fs-11 d-block fw-semibold text-uppercase">KEGIATAN & PENGALIRAN LA</span>
             <div class="fw-bold text-primary fs-14">{{ $log->kegiatan }}</div>
-            @if($log->lokasi_blok)
-                <div class="text-muted fs-12 mt-1"><i class="feather-map-pin me-1 text-danger"></i>Lokasi: <strong class="text-dark">{{ $log->lokasi_blok }}</strong></div>
-            @endif
+            <div class="row g-2 mt-1">
+                @if($log->lokasi_blok)
+                <div class="col-6 text-muted fs-12">
+                    <i class="feather-map-pin me-1 text-danger"></i>Block Pengaliran: <strong class="text-dark">{{ $log->lokasi_blok }}</strong>
+                </div>
+                @endif
+                @if($log->no_bak)
+                <div class="col-6 text-muted fs-12">
+                    <i class="feather-layers me-1 text-primary"></i>Bak Distribusi: <strong class="text-dark">{{ $log->no_bak }}</strong>
+                </div>
+                @endif
+            </div>
         </div>
 
-        <!-- Bed Breakdown Grid -->
+        <!-- Bed Breakdown Grid matching Report Format -->
         <div class="row g-2 mb-3">
             <div class="col-4">
-                <div class="p-2 text-center bg-soft-primary rounded-3 border border-primary-subtle">
-                    <span class="text-muted fs-11 d-block">Flat Bed</span>
-                    <span class="fw-bolder fs-14 text-primary">{{ $log->flat_bed }}</span>
+                <div class="p-2 text-center bg-soft-success rounded-3 border border-success-subtle">
+                    <span class="text-muted fs-11 d-block fw-semibold">Bed di alirkan</span>
+                    <span class="fw-bolder fs-14 text-success">{{ number_format($log->flat_bed, 0, ',', '.') }}</span>
                 </div>
             </div>
             <div class="col-4">
                 <div class="p-2 text-center bg-soft-primary rounded-3 border border-primary-subtle">
-                    <span class="text-muted fs-11 d-block">Long Bed</span>
-                    <span class="fw-bolder fs-14 text-primary">{{ $log->long_bed }}</span>
+                    <span class="text-muted fs-11 d-block fw-semibold">Long Bed</span>
+                    <span class="fw-bolder fs-14 text-primary">{{ number_format($log->long_bed, 0, ',', '.') }}</span>
                 </div>
             </div>
             <div class="col-4">
                 <div class="p-2 text-center bg-primary text-white rounded-3">
-                    <span class="opacity-80 fs-11 d-block">Total Bed</span>
-                    <span class="fw-bolder fs-14">{{ $log->jumlah_bed }}</span>
+                    <span class="opacity-80 fs-11 d-block fw-semibold">Total Bed</span>
+                    <span class="fw-bolder fs-14">{{ number_format($log->jumlah_bed, 0, ',', '.') }}</span>
                 </div>
             </div>
         </div>

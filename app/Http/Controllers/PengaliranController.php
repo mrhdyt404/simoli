@@ -82,13 +82,106 @@ class PengaliranController extends Controller
         ));
     }
 
+    private array $defaultTotalBeds = [
+        'TPU' => 15112,
+        'TME' => 6768,
+        'SGO' => 3382,
+        'SPA' => 7490,
+        'SGH' => 3460,
+        'SBT' => 15370,
+        'LDA' => 6985,
+        'TAN' => 10344,
+        'TER' => 5691,
+        'STA' => 8370,
+        'SRO' => 6297,
+        'SIN' => 4657,
+    ];
+
+    public function getPksProgress($idPks): object
+    {
+        $pks = Pks::find($idPks);
+        $akro = strtoupper($pks->akro ?? '');
+        $tahun = (int) date('Y');
+        $bulan = (int) date('n');
+
+        $rencana = \App\Models\Rencana::where('id_pks', $idPks)->where('tahun', $tahun)->first();
+        if ($rencana && ($rencana->flat_bed > 0 || $rencana->long_bed > 0)) {
+            $totalBed = $rencana->flat_bed ?: ($rencana->flat_bed + $rencana->long_bed);
+        } else {
+            $totalBed = $this->defaultTotalBeds[$akro] ?? 0;
+        }
+
+        $startOfMonth = \Carbon\Carbon::now('Asia/Jakarta')->startOfMonth();
+        $endOfMonth = \Carbon\Carbon::now('Asia/Jakarta')->endOfMonth();
+        $totalDaysInMonth = $endOfMonth->day;
+        $todayDay = (int) date('j');
+
+        if ($todayDay <= 7) {
+            $startOfWeek = \Carbon\Carbon::now('Asia/Jakarta')->startOfMonth();
+            $endOfWeek = \Carbon\Carbon::createFromDate($tahun, $bulan, min(7, $totalDaysInMonth))->endOfDay();
+        } elseif ($todayDay <= 14) {
+            $startOfWeek = \Carbon\Carbon::createFromDate($tahun, $bulan, 8)->startOfDay();
+            $endOfWeek = \Carbon\Carbon::createFromDate($tahun, $bulan, min(14, $totalDaysInMonth))->endOfDay();
+        } elseif ($todayDay <= 21) {
+            $startOfWeek = \Carbon\Carbon::createFromDate($tahun, $bulan, 15)->startOfDay();
+            $endOfWeek = \Carbon\Carbon::createFromDate($tahun, $bulan, min(21, $totalDaysInMonth))->endOfDay();
+        } elseif ($todayDay <= 28) {
+            $startOfWeek = \Carbon\Carbon::createFromDate($tahun, $bulan, 22)->startOfDay();
+            $endOfWeek = \Carbon\Carbon::createFromDate($tahun, $bulan, min(28, $totalDaysInMonth))->endOfDay();
+        } else {
+            $startOfWeek = \Carbon\Carbon::createFromDate($tahun, $bulan, 29)->startOfDay();
+            $endOfWeek = \Carbon\Carbon::createFromDate($tahun, $bulan, $totalDaysInMonth)->endOfDay();
+        }
+
+        $monthRecords = Pengaliran::where('id_pks', $idPks)
+            ->whereYear('tanggal', $tahun)
+            ->whereMonth('tanggal', $bulan)
+            ->get();
+
+        $weekRecords = $monthRecords->filter(fn($item) => \Carbon\Carbon::parse($item->tanggal)->betweenIncluded($startOfWeek, $endOfWeek));
+
+        $formatList = function($items, $field) {
+            $collected = [];
+            foreach ($items as $item) {
+                $val = trim((string)($item->{$field} ?? ''));
+                if ($val !== '' && $val !== '-') {
+                    $parts = preg_split('/[\/,\s]+/', $val, -1, PREG_SPLIT_NO_EMPTY);
+                    foreach ($parts as $p) {
+                        $p = trim($p);
+                        if ($p !== '' && $p !== '-' && !in_array($p, $collected)) $collected[] = $p;
+                    }
+                }
+            }
+            return empty($collected) ? '-' : implode(', ', $collected);
+        };
+
+        return (object) [
+            'pks' => $pks,
+            'akro' => $akro,
+            'nama' => $pks->nama ?? 'Unit PKS',
+            'total_bed' => $totalBed,
+            'minggu_ini' => (object) [
+                'bed_dialirkan' => (int) $this->numericSum($weekRecords, 'flat_bed'),
+                'blok' => $formatList($weekRecords, 'blok'),
+                'bak' => $formatList($weekRecords, 'no_bak'),
+            ],
+            'sd_bulan_ini' => (object) [
+                'bed_dialirkan' => (int) $this->numericSum($monthRecords, 'flat_bed'),
+                'blok' => $formatList($monthRecords, 'blok'),
+                'bak' => $formatList($monthRecords, 'no_bak'),
+            ],
+            'keterangan' => 'Pengaliran Limbah lancar',
+        ];
+    }
+
     public function create()
     {
         $user = Auth::user();
-        $pksList = Pks::orderBy('NAMA')
-            ->get();
+        $pksList = Pks::orderBy('NAMA')->get();
+        $defaultPksId = $user->id_pks ?: ($pksList->first() ? $pksList->first()->id_pks : 1);
+        $pksProgress = $this->getPksProgress($defaultPksId);
 
-        return view('pengaliran.create', compact('pksList', 'user'));
+        return view('pengaliran.create', compact('pksList', 'user', 'pksProgress'));
     }
 
     public function store(Request $request)
@@ -146,8 +239,9 @@ class PengaliranController extends Controller
         }
 
         $pksList = Pks::orderBy('NAMA')->get();
+        $pksProgress = $this->getPksProgress($pengaliran->id_pks);
 
-        return view('pengaliran.edit', compact('pengaliran', 'pksList', 'user'));
+        return view('pengaliran.edit', compact('pengaliran', 'pksList', 'user', 'pksProgress'));
     }
 
     public function update(Request $request, $id)

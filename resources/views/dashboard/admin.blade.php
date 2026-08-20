@@ -1,944 +1,1117 @@
 @extends('layouts.simoli')
 
-@section('title', 'Dashboard Admin')
-
-@section('styles')
-    <style>
-        .welcome-card {
-            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-            border: none;
-            border-radius: 16px;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .welcome-card::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -20%;
-            width: 300px;
-            height: 300px;
-            background: rgba(255, 255, 255, 0.08);
-            border-radius: 50%;
-        }
-
-        .welcome-card::after {
-            content: '';
-            position: absolute;
-            bottom: -30%;
-            right: 10%;
-            width: 200px;
-            height: 200px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 50%;
-        }
-
-        .stat-icon {
-            width: 52px;
-            height: 52px;
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 22px;
-        }
-
-        .stat-icon.bg-primary-soft {
-            background: rgba(79, 70, 229, 0.12);
-            color: #4f46e5;
-        }
-
-        .stat-icon.bg-success-soft {
-            background: rgba(16, 185, 129, 0.12);
-            color: #10b981;
-        }
-
-        .stat-icon.bg-warning-soft {
-            background: rgba(245, 158, 11, 0.12);
-            color: #f59e0b;
-        }
-
-        .stat-icon.bg-danger-soft {
-            background: rgba(239, 68, 68, 0.12);
-            color: #ef4444;
-        }
-
-        .monitoring-badge {
-            font-size: 12px;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-weight: 600;
-        }
-
-        .activity-timeline {
-            position: relative;
-            padding-left: 28px;
-        }
-
-        .activity-timeline::before {
-            content: '';
-            position: absolute;
-            left: 8px;
-            top: 0;
-            bottom: 0;
-            width: 2px;
-            background: #e5e7eb;
-        }
-
-        .activity-dot {
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            position: absolute;
-            left: 0;
-            border: 3px solid #fff;
-            box-shadow: 0 0 0 2px #e5e7eb;
-        }
-
-        .activity-dot.success {
-            background: #10b981;
-            box-shadow: 0 0 0 2px #10b981;
-        }
-
-        .activity-dot.warning {
-            background: #f59e0b;
-            box-shadow: 0 0 0 2px #f59e0b;
-        }
-
-        .filter-form .form-control {
-            border-radius: 10px;
-            border: 1px solid #e0e3e8;
-        }
-
-        .filter-form .btn {
-            border-radius: 10px;
-        }
-
-        .section-divider {
-            font-size: 16px;
-            font-weight: 700;
-            margin-bottom: 0;
-            margin-top: 8px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .section-divider i {
-            font-size: 20px;
-        }
-
-        .stat-mini {
-            text-align: center;
-            padding: 16px 8px;
-            border-radius: 12px;
-            transition: transform 0.2s;
-        }
-
-        .stat-mini:hover {
-            transform: translateY(-2px);
-        }
-
-        .stat-mini .stat-mini-value {
-            font-size: 22px;
-            font-weight: 800;
-            line-height: 1.2;
-        }
-
-        .stat-mini .stat-mini-label {
-            font-size: 11px;
-            font-weight: 600;
-            color: #6b7280;
-            margin-top: 4px;
-        }
-
-        .stat-mini .stat-mini-icon {
-            font-size: 28px;
-            margin-bottom: 6px;
-        }
-
-        .pks-rank-table th {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-weight: 700;
-        }
-
-        .pks-rank-table td {
-            font-size: 12px;
-            white-space: nowrap;
-        }
-
-        .theme-adaptive-text {
-            color: #111827;
-        }
-
-        .theme-adaptive-subtext {
-            color: #374151;
-        }
-
-        .app-skin-dark .theme-adaptive-text,
-        .app-skin-dark .theme-adaptive-subtext {
-            color: #ffffff;
-        }
-
-        .total-row-adaptive {
-            background: #f0f3ff;
-            color: #111827;
-        }
-
-        .app-skin-dark .total-row-adaptive {
-            background: #1f2937;
-            color: #f9fafb;
-        }
-
-        .quick-report-card {
-            border: 1px solid #eef2ff;
-            border-radius: 16px;
-            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-            overflow: hidden;
-        }
-
-        .quick-report-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
-            border-color: #c7d2fe;
-        }
-
-        .quick-report-card .report-icon {
-            width: 52px;
-            height: 52px;
-            border-radius: 14px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 22px;
-            flex-shrink: 0;
-        }
-
-        .report-meta {
-            font-size: 11px;
-            line-height: 1.5;
-            color: #6b7280;
-            margin-bottom: 0;
-        }
-
-        .summary-note-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 12px;
-        }
-
-        .summary-note-list li {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 6px;
-            padding: 14px 16px;
-            border: 1px solid #e5e7eb;
-            border-radius: 14px;
-            background: #f8fafc;
-            min-height: 84px;
-        }
-
-        .summary-note-list .label {
-            font-size: 12px;
-            color: #6b7280;
-        }
-
-        .summary-note-list .value {
-            font-size: 15px;
-            font-weight: 800;
-            color: #111827;
-        }
-
-        @media (max-width: 575.98px) {
-            .summary-note-list {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .report-hub-card {
-            border: 1px solid #e5e7eb;
-            border-radius: 18px;
-            background: #ffffff;
-            transition: .3s;
-        }
-
-        .report-hub-copy h5 {
-            font-size: 20px;
-            font-weight: 700;
-            color: #1f2937;
-            margin-bottom: 6px;
-        }
-
-        .report-hub-copy p {
-            font-size: 14px;
-            color: #6b7280;
-            margin-bottom: 0;
-            line-height: 1.7;
-        }
-
-        .report-filter-chip {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 14px;
-            border-radius: 50px;
-            background: #eef2ff;
-            color: #4338ca;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .report-filter-chip.warning {
-            background: #fff7ed;
-            color: #ea580c;
-        }
-
-        .report-filter-chip.info {
-            background: #ecfeff;
-            color: #0891b2;
-        }
-
-        .report-filter-chip.success {
-            background: #ecfdf5;
-            color: #047857;
-        }
-
-        .report-filter-chip.warning {
-            background: #fffbeb;
-            color: #b45309;
-        }
-
-        .report-filter-chip.info {
-            background: #ecfeff;
-            color: #0e7490;
-        }
-
-        .status-alert {
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 700;
-        }
-
-        .status-alert.safe {
-            background: #dcfce7;
-            color: #15803d;
-        }
-
-        .status-alert.warning {
-            background: #fef3c7;
-            color: #b45309;
-        }
-
-        .status-alert.danger {
-            background: #fee2e2;
-            color: #dc2626;
-        }
-
-
-        .monitor-icon {
-            width: 38px;
-            height: 38px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-        }
-
-        .report-hint {
-            font-size: 11px;
-            color: #6b7280;
-            margin-top: 10px;
-            margin-bottom: 0;
-        }
-
-        /* =========================
-                                                                                                   DARK MODE
-                                                                                                ========================= */
-
-        .app-skin-dark .report-hub-card {
-            background: #1b2431;
-            border-color: #344054;
-        }
-
-        .app-skin-dark .report-hub-copy h5 {
-            color: #ffffff;
-        }
-
-        .app-skin-dark .report-hub-copy p {
-            color: #cbd5e1;
-        }
-
-        .app-skin-dark .report-filter-chip {
-            background: #293445;
-            color: #e2e8f0;
-        }
-
-        .app-skin-dark .report-filter-chip.warning {
-            background: #473519;
-            color: #fbbf24;
-        }
-
-        .app-skin-dark .report-filter-chip.info {
-            background: #123847;
-            color: #67e8f9;
-        }
-
-        .app-skin-dark .report-filter-chip.success {
-            background: #163d34;
-            color: #6ee7b7;
-        }
-
-        .app-skin-dark .btn-light-brand {
-            background: #293445;
-            color: #ffffff;
-            border: 1px solid #3d4d63;
-        }
-
-        .app-skin-dark .btn-light-brand:hover {
-            background: #2563eb;
-            border-color: #2563eb;
-            color: #fff;
-        }
-    </style>
-@endsection
-
-@section('page-title', 'Dashboard')
+@section('title', 'Dashboard Admin — Executive Monitoring SIMOLI')
+@section('page-title', 'Dashboard Eksekutif')
+@section('page-description', 'Monitoring Pengaliran Land Aplikasi, Pemeliharaan Kolam & Alat Berat — 12 Unit PKS PTPN IV')
 
 @section('breadcrumb')
-    <li class="breadcrumb-item">Admin</li>
+    <li>Dashboard Admin</li>
 @endsection
 
-@section('page-actions')
-    <div class="page-header-right-items">
-        <div class="d-flex d-md-none">
-            <a href="javascript:void(0)" class="page-header-right-close-toggle">
-                <i class="feather-arrow-left me-2"></i><span>Back</span>
-            </a>
+@section('page-actions-hero')
+    <form action="{{ route('dashboard') }}" method="GET" class="d-flex align-items-center gap-2 flex-wrap">
+        <div class="d-flex align-items-center gap-1 rounded-pill px-3 py-2"
+             style="background:rgba(22,163,74,0.08);border:1.5px solid rgba(22,163,74,0.2);">
+            <i class="feather-calendar text-success" style="font-size:15px;"></i>
+            <input type="date" name="tanggal" class="border-0 bg-transparent fw-semibold"
+                   style="font-size:13px;color:var(--ptpn-900,#14532d);outline:none;width:130px;"
+                   value="{{ $tanggal }}">
         </div>
-        <div class="d-flex align-items-center gap-2 page-header-right-items-wrapper">
-            <form action="{{ route('dashboard') }}" method="GET" class="d-flex align-items-center gap-2 filter-form">
-                <input type="date" name="tanggal" class="form-control" value="{{ $tanggal }}" style="width: 170px">
-                <button type="submit" class="btn btn-primary"><i class="feather-search me-1"></i>Filter</button>
-                <a href="{{ route('dashboard') }}" class="btn btn-light-brand"><i class="feather-refresh-cw"></i></a>
-            </form>
-        </div>
-    </div>
-    <div class="d-md-none d-flex align-items-center">
-        <a href="javascript:void(0)" class="page-header-right-open-toggle"><i class="feather-align-right fs-20"></i></a>
-    </div>
+        <button type="submit" class="btn-ptpn btn-ptpn-primary" style="padding:8px 16px;">
+            <i class="feather-filter" style="font-size:14px;"></i>
+            <span class="d-none d-sm-inline">Terapkan</span>
+        </button>
+        <a href="{{ route('dashboard') }}" class="btn-ptpn btn-ptpn-outline" style="padding:8px 12px;" title="Reset">
+            <i class="feather-refresh-cw" style="font-size:14px;"></i>
+        </a>
+    </form>
+@endsection
+
+@section('styles')
+<style>
+    /* ================================================================
+       ADMIN DASHBOARD — PTPN GREEN EXECUTIVE THEME
+       ================================================================ */
+
+    /* Disable default page-hero-strip (admin has its own) */
+    .page-hero-strip { display: none; }
+
+    /* === ANIMATIONS === */
+    @keyframes fadeUpCard {
+        from { opacity: 0; transform: translateY(18px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes countUp {
+        from { opacity: 0; transform: scale(0.8); }
+        to   { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes livePulse {
+        0%   { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); transform: scale(0.95); }
+        70%  { box-shadow: 0 0 0 9px rgba(34, 197, 94, 0); transform: scale(1.05); }
+        100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); transform: scale(0.95); }
+    }
+
+    @keyframes shimmerLine {
+        0%   { background-position: -200% center; }
+        100% { background-position: 200% center; }
+    }
+
+    /* === HERO BANNER === */
+    .admin-hero {
+        background: linear-gradient(135deg, #030d07 0%, #0a2317 35%, #0e3b26 65%, #16a34a 100%);
+        border-radius: 20px;
+        border: 1px solid rgba(34, 197, 94, 0.2);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(34, 197, 94, 0.05) inset;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 28px;
+        animation: fadeUpCard 0.4s ease-out;
+    }
+
+    .admin-hero::before {
+        content: '';
+        position: absolute;
+        top: -100px; right: -100px;
+        width: 400px; height: 400px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(34, 197, 94, 0.2) 0%, transparent 70%);
+        pointer-events: none;
+    }
+
+    .admin-hero::after {
+        content: '';
+        position: absolute;
+        bottom: -80px; left: 20%;
+        width: 300px; height: 300px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(212, 160, 23, 0.12) 0%, transparent 70%);
+        pointer-events: none;
+    }
+
+    .admin-hero-inner {
+        position: relative;
+        z-index: 2;
+        padding: clamp(24px, 3vw + 14px, 44px);
+    }
+
+    /* Live badge */
+    .live-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 5px 13px;
+        border-radius: 50px;
+        background: rgba(34, 197, 94, 0.12);
+        border: 1px solid rgba(34, 197, 94, 0.3);
+        color: #86efac;
+        font-size: 10.5px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        margin-bottom: 16px;
+    }
+
+    .live-dot {
+        width: 8px; height: 8px;
+        border-radius: 50%;
+        background: #4ade80;
+        animation: livePulse 2s ease-in-out infinite;
+        display: inline-block;
+    }
+
+    .admin-hero-title {
+        font-family: 'Outfit', sans-serif;
+        font-size: clamp(20px, 2.5vw + 12px, 34px);
+        font-weight: 900;
+        color: #ffffff;
+        line-height: 1.15;
+        letter-spacing: -0.5px;
+        margin-bottom: 10px;
+    }
+
+    .admin-hero-sub {
+        font-size: clamp(12px, 1vw + 9px, 14px);
+        color: rgba(187, 247, 208, 0.75);
+        line-height: 1.6;
+        margin-bottom: 24px;
+        max-width: 540px;
+    }
+
+    /* Date + Role pills */
+    .hero-meta-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .hero-meta-pill {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 6px 13px;
+        border-radius: 50px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        font-size: clamp(11px, 0.8vw + 8px, 13px);
+        font-weight: 600;
+        color: rgba(209, 250, 229, 0.9);
+    }
+
+    /* Hero stat grid */
+    .hero-stat-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+    }
+
+    .hero-stat-tile {
+        background: rgba(255, 255, 255, 0.07);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 14px;
+        padding: 14px 16px;
+        transition: all 0.2s ease;
+        backdrop-filter: blur(8px);
+    }
+
+    .hero-stat-tile:hover {
+        background: rgba(255, 255, 255, 0.13);
+        border-color: rgba(34, 197, 94, 0.4);
+        transform: translateY(-2px);
+    }
+
+    .hero-stat-val {
+        font-family: 'Outfit', sans-serif;
+        font-size: clamp(22px, 3vw + 10px, 32px);
+        font-weight: 900;
+        color: #ffffff;
+        line-height: 1;
+        animation: countUp 0.6s ease-out;
+    }
+
+    .hero-stat-lbl {
+        font-size: 10.5px;
+        font-weight: 700;
+        color: rgba(187, 247, 208, 0.65);
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        margin-top: 5px;
+    }
+
+    .hero-stat-icon {
+        font-size: 20px;
+        margin-bottom: 8px;
+    }
+
+    /* === SECTION HEADER === */
+    .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 18px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid rgba(22, 163, 74, 0.12);
+    }
+
+    .section-title {
+        font-family: 'Outfit', sans-serif;
+        font-size: clamp(14px, 1vw + 10px, 17px);
+        font-weight: 800;
+        color: #14532d;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0;
+    }
+
+    .section-title-dot {
+        width: 8px; height: 8px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #16a34a, #4ade80);
+        box-shadow: 0 0 6px rgba(34, 197, 94, 0.6);
+    }
+
+    /* === KPI CARDS === */
+    .kpi-card {
+        background: #ffffff;
+        border-radius: 18px;
+        border: 1px solid rgba(22, 163, 74, 0.1);
+        padding: 20px;
+        box-shadow: 0 2px 12px rgba(22, 163, 74, 0.06);
+        transition: all 0.25s ease;
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+        animation: fadeUpCard 0.4s ease-out;
+    }
+
+    .kpi-card::after {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        border-radius: 18px 18px 0 0;
+    }
+
+    .kpi-card-green::after  { background: linear-gradient(90deg, #16a34a, #4ade80); }
+    .kpi-card-gold::after   { background: linear-gradient(90deg, #d4a017, #fbbf24); }
+    .kpi-card-blue::after   { background: linear-gradient(90deg, #1d4ed8, #60a5fa); }
+    .kpi-card-purple::after { background: linear-gradient(90deg, #7c3aed, #c084fc); }
+
+    .kpi-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 30px rgba(22, 163, 74, 0.12);
+        border-color: rgba(22, 163, 74, 0.25);
+    }
+
+    .kpi-label {
+        font-size: 10.5px;
+        font-weight: 700;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        margin-bottom: 6px;
+    }
+
+    .kpi-value {
+        font-family: 'Outfit', sans-serif;
+        font-size: clamp(20px, 2vw + 12px, 28px);
+        font-weight: 900;
+        line-height: 1.1;
+        letter-spacing: -0.5px;
+        margin-bottom: 8px;
+    }
+
+    .kpi-sub {
+        font-size: 11.5px;
+        color: #6b7280;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
+    .kpi-icon {
+        width: 48px; height: 48px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        flex-shrink: 0;
+    }
+
+    .kpi-icon-green  { background: linear-gradient(135deg, #dcfce7, #f0fdf4); color: #16a34a; border: 1px solid #bbf7d0; }
+    .kpi-icon-gold   { background: linear-gradient(135deg, #fef3c7, #fffbeb); color: #b45309; border: 1px solid #fde68a; }
+    .kpi-icon-blue   { background: linear-gradient(135deg, #dbeafe, #eff6ff); color: #1d4ed8; border: 1px solid #bfdbfe; }
+    .kpi-icon-purple { background: linear-gradient(135deg, #f3e8ff, #faf5ff); color: #7c3aed; border: 1px solid #e9d5ff; }
+
+    /* === CHART CARDS === */
+    .chart-card {
+        background: #ffffff;
+        border-radius: 18px;
+        border: 1px solid rgba(22, 163, 74, 0.1);
+        box-shadow: 0 2px 12px rgba(22, 163, 74, 0.06);
+        overflow: hidden;
+        height: 100%;
+        transition: box-shadow 0.2s ease;
+    }
+
+    .chart-card:hover {
+        box-shadow: 0 8px 24px rgba(22, 163, 74, 0.1);
+    }
+
+    .chart-card-header {
+        padding: 18px 20px 14px;
+        border-bottom: 1px solid rgba(22, 163, 74, 0.08);
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .chart-title {
+        font-family: 'Outfit', sans-serif;
+        font-size: 14px;
+        font-weight: 800;
+        color: #14532d;
+        margin-bottom: 2px;
+    }
+
+    .chart-sub {
+        font-size: 11.5px;
+        color: #6b7280;
+    }
+
+    /* === PKS COMPLIANCE TABLE === */
+    .compliance-table-wrap {
+        background: #ffffff;
+        border-radius: 18px;
+        border: 1px solid rgba(22, 163, 74, 0.1);
+        box-shadow: 0 2px 12px rgba(22, 163, 74, 0.06);
+        overflow: hidden;
+    }
+
+    .compliance-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: clamp(11.5px, 0.7vw + 8px, 13px);
+    }
+
+    .compliance-table thead th {
+        background: #052e16;
+        color: #86efac;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.7px;
+        padding: 12px 16px;
+        border: none;
+        white-space: nowrap;
+    }
+
+    .compliance-table tbody td {
+        padding: 12px 16px;
+        border-bottom: 1px solid rgba(22, 163, 74, 0.07);
+        vertical-align: middle;
+    }
+
+    .compliance-table tbody tr:hover td {
+        background: rgba(22, 163, 74, 0.03);
+    }
+
+    .compliance-table tbody tr:last-child td { border-bottom: none; }
+
+    /* PKS Avatar */
+    .pks-avatar {
+        width: 38px; height: 38px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 12px;
+        color: #ffffff;
+        flex-shrink: 0;
+    }
+
+    /* Module pill */
+    .mod-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 9px;
+        border-radius: 50px;
+        font-size: 10.5px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .mod-pill-ok  { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+    .mod-pill-err { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+
+    /* Status chip */
+    .status-chip-tbl {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 4px 10px;
+        border-radius: 50px;
+        font-size: 10.5px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+
+    .chip-safe    { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+    .chip-warning { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+    .chip-danger  { background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; }
+
+    /* === QUICK REPORT TILES === */
+    .report-tile {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 16px 18px;
+        background: #ffffff;
+        border-radius: 16px;
+        border: 1px solid rgba(22, 163, 74, 0.1);
+        text-decoration: none !important;
+        transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        height: 100%;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .report-tile::before {
+        content: '';
+        position: absolute;
+        left: 0; top: 0; bottom: 0;
+        width: 3px;
+        background: linear-gradient(180deg, #16a34a, #4ade80);
+        border-radius: 16px 0 0 16px;
+    }
+
+    .report-tile:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 28px rgba(22, 163, 74, 0.14);
+        border-color: rgba(22, 163, 74, 0.3);
+    }
+
+    .report-tile-icon {
+        width: 46px; height: 46px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        color: #ffffff;
+        flex-shrink: 0;
+    }
+
+    .report-tile-title {
+        font-family: 'Outfit', sans-serif;
+        font-size: 13.5px;
+        font-weight: 800;
+        color: #14532d;
+        margin-bottom: 2px;
+    }
+
+    .report-tile-desc {
+        font-size: 11px;
+        color: #6b7280;
+        line-height: 1.4;
+    }
+
+    /* === STAGGER ANIMATIONS === */
+    .kpi-card:nth-child(1) { animation-delay: 0.05s; }
+    .kpi-card:nth-child(2) { animation-delay: 0.10s; }
+    .kpi-card:nth-child(3) { animation-delay: 0.15s; }
+    .kpi-card:nth-child(4) { animation-delay: 0.20s; }
+
+    /* === DARK MODE === */
+    html.app-skin-dark .kpi-card,
+    html.app-skin-dark .chart-card,
+    html.app-skin-dark .compliance-table-wrap,
+    html.app-skin-dark .report-tile {
+        background: #0a2317 !important;
+        border-color: rgba(34, 197, 94, 0.15) !important;
+    }
+
+    html.app-skin-dark .kpi-value,
+    html.app-skin-dark .chart-title,
+    html.app-skin-dark .section-title,
+    html.app-skin-dark .report-tile-title { color: #d1fae5 !important; }
+
+    html.app-skin-dark .kpi-label,
+    html.app-skin-dark .chart-sub,
+    html.app-skin-dark .kpi-sub,
+    html.app-skin-dark .report-tile-desc { color: #6b8f72 !important; }
+
+    html.app-skin-dark .compliance-table tbody td {
+        border-color: rgba(34, 197, 94, 0.08) !important;
+        color: #d1fae5;
+    }
+
+    html.app-skin-dark .compliance-table tbody tr:hover td { background: rgba(34, 197, 94, 0.04) !important; }
+
+    html.app-skin-dark .section-header { border-color: rgba(34, 197, 94, 0.12) !important; }
+
+    /* === RESPONSIVE === */
+    @media (max-width: 991.98px) {
+        .hero-stat-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 575.98px) {
+        .hero-stat-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+        .admin-hero-inner { padding: 20px; }
+        .hero-stat-val { font-size: 22px; }
+    }
+</style>
 @endsection
 
 @php
     $selectedDate = \Carbon\Carbon::parse($tanggal);
-    $pctPengaliran = $totalPks > 0 ? round(($sudahPengaliran / $totalPks) * 100) : 0;
-    $pctPemeliharaan = $totalPks > 0 ? round(($sudahPemeliharaan / $totalPks) * 100) : 0;
-    $pctLengkap = $totalPks > 0 ? round(($sudahLengkap / $totalPks) * 100) : 0;
-    $belumKirim = $totalPks - $sudahLengkap;
-    $pctBelum = $totalPks > 0 ? round(($belumKirim / $totalPks) * 100) : 0;
-    $bulanLabel = $selectedDate->translatedFormat('F Y');
-    $filterBulan = $selectedDate->format('m');
-    $filterTahun = $selectedDate->format('Y');
-@endphp
+    $bulanLabel   = $selectedDate->translatedFormat('F Y');
+    $filterBulan  = $selectedDate->format('m');
+    $filterTahun  = $selectedDate->format('Y');
 
-@php
-    $rencanaMap = collect($monitoringRencana)->mapWithKeys(function ($item) {
-        return [
-            $item['pks']->ID => $item['rencana']
-        ];
-    });
+    $pksAvatarColors = [
+        'TPU' => 'linear-gradient(135deg,#0284c7,#0369a1)',
+        'TME' => 'linear-gradient(135deg,#2563eb,#1d4ed8)',
+        'SGO' => 'linear-gradient(135deg,#0d9488,#0f766e)',
+        'SPA' => 'linear-gradient(135deg,#16a34a,#15803d)',
+        'SGH' => 'linear-gradient(135deg,#4f46e5,#4338ca)',
+        'SBT' => 'linear-gradient(135deg,#7c3aed,#6d28d9)',
+        'LDA' => 'linear-gradient(135deg,#9333ea,#7e22ce)',
+        'TAN' => 'linear-gradient(135deg,#c026d3,#a21caf)',
+        'TER' => 'linear-gradient(135deg,#e11d48,#be123c)',
+        'STA' => 'linear-gradient(135deg,#ea580c,#c2410c)',
+        'SRO' => 'linear-gradient(135deg,#d97706,#b45309)',
+        'SIN' => 'linear-gradient(135deg,#059669,#047857)',
+    ];
 @endphp
 
 @section('content')
-    <div class="dashboard-admin">
-        <div class="row g-4">
-            {{-- ================= MONITORING SUMMARY ================= --}}
-            <div class="col-12">
-                <div class="card border-0 shadow-sm" style="border-radius:18px;">
-                    <div class="card-body p-4">
-                        <div class="d-flex justify-content-between align-items-center flex-wrap mb-4">
-                            <div>
-                                <h4 class="fw-bold mb-1">
-                                    Halo, {{ Auth::user()->pks->nama }}
-                                </h4>
-                                <p class="text-muted mb-0 fs-13">
-                                    Monitoring seluruh PKS
-                                    <strong>
-                                        {{ \Carbon\Carbon::parse($tanggal)->locale('id')->translatedFormat('l, d F Y') }}
-                                    </strong>
-                                </p>
-                            </div>
-                            <div>
-                                @if($sudahLengkap == $totalPks)
-                                    <span class="badge bg-success px-3 py-2">
-                                        <i class="feather-check-circle me-1"></i>
-                                        Semua PKS Lengkap
-                                    </span>
-                                @else
-                                    <span class="badge bg-warning px-3 py-2">
-                                        <i class="feather-alert-circle me-1"></i>
-                                        Ada Monitoring Belum Selesai
-                                    </span>
-                                @endif
-                            </div>
+<article class="dashboard-admin">
+
+    {{-- ================================================================
+         1. HERO EXECUTIVE BANNER
+         ================================================================ --}}
+    <section class="admin-hero" aria-label="Executive Summary Banner">
+        <div class="admin-hero-inner">
+            <div class="row align-items-start g-4">
+                {{-- Left: Title & meta --}}
+                <div class="col-lg-6">
+                    <div class="live-badge">
+                        <span class="live-dot"></span>
+                        Monitoring Real-Time SIMOLI PTPN IV
+                    </div>
+                    <h2 class="admin-hero-title">
+                        Executive Dashboard<br>
+                        <span style="color:#4ade80;">Land Aplikasi & IPAL</span>
+                    </h2>
+                    <p class="admin-hero-sub">
+                        Pengawasan terintegrasi 12 Unit PKS — pengaliran limbah, pemeliharaan kolam IPAL &amp; bed,
+                        serta operasional alat berat secara real-time.
+                    </p>
+                    <div class="hero-meta-pills">
+                        <div class="hero-meta-pill">
+                            <i class="feather-calendar" style="font-size:14px;color:#4ade80;"></i>
+                            {{ $selectedDate->locale('id')->translatedFormat('l, d F Y') }}
                         </div>
-                        <div class="row g-3">
-
-                            {{-- TOTAL --}}
-                            <div class="col-md-3 col-6">
-                                <div class="p-3 rounded-3 bg-light text-center">
-                                    <i class="feather-home fs-22 text-primary"></i>
-                                    <h3 class="fw-bold mb-0 text-primary">
-                                        {{ $totalPks }}
-                                    </h3>
-                                    <small class="text-muted">
-                                        Total PKS
-                                    </small>
-                                </div>
-                            </div>
-
-                            {{-- LENGKAP --}}
-                            <div class="col-md-3 col-6">
-                                <div class="p-3 rounded-3 bg-soft-success text-center">
-                                    <i class="feather-check-circle fs-22 text-success"></i>
-                                    <h3 class="fw-bold mb-0 text-success">
-                                        {{ $sudahLengkap }}
-                                    </h3>
-                                    <small class="text-muted">
-                                        PKS Lengkap
-                                    </small>
-                                </div>
-                            </div>
-
-                            {{-- SEBAGIAN --}}
-                            <div class="col-md-3 col-6">
-                                <div class="p-3 rounded-3 bg-soft-warning text-center">
-                                    <i class="feather-clock fs-22 text-warning"></i>
-                                    <h3 class="fw-bold mb-0 text-warning">
-                                        {{ $sebagian }}
-                                    </h3>
-                                    <small class="text-muted">
-                                        Sebagian
-                                    </small>
-                                </div>
-                            </div>
-
-                            {{-- BELUM --}}
-                            <div class="col-md-3 col-6">
-                                <div class="p-3 rounded-3 bg-soft-danger text-center">
-                                    <i class="feather-x-circle fs-22 text-danger"></i>
-                                    <h3 class="fw-bold mb-0 text-danger">
-                                        {{ $belumAda }}
-                                    </h3>
-                                    <small class="text-muted">
-                                        Belum Ada Data
-                                    </small>
-                                </div>
-                            </div>
+                        <div class="hero-meta-pill">
+                            <i class="feather-shield" style="font-size:14px;color:#4ade80;"></i>
+                            Administrator Regional SIMOLI
                         </div>
                     </div>
                 </div>
-            </div>
 
-            {{-- ================= STATISTIK ALAT BERAT ================= --}}
-            <div class="col-12">
-                <div class="card border-0 shadow-sm" style="border-radius:18px;">
-                    <div class="card-body p-4">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5 class="fw-bold mb-0">
-                                <i class="feather-truck text-primary me-2"></i>Monitoring Alat Berat Pengolahan Limbah
-                            </h5>
-                            <a href="{{ route('monitoring-alat-berat.index') }}" class="btn btn-sm btn-outline-primary">
-                                Log Operasional <i class="feather-arrow-right ms-1"></i>
-                            </a>
+                {{-- Right: Stats Grid --}}
+                <div class="col-lg-6">
+                    <div class="hero-stat-grid">
+                        <div class="hero-stat-tile">
+                            <div class="hero-stat-icon"><i class="feather-home" style="color:#4ade80;"></i></div>
+                            <div class="hero-stat-val">{{ $totalPks }}</div>
+                            <div class="hero-stat-lbl">PKS Terdaftar</div>
                         </div>
-                        <div class="row g-3">
-                            <div class="col-md-3 col-6">
-                                <div class="p-3 rounded-3 bg-light text-center">
-                                    <h4 class="fw-bold mb-0 text-dark">{{ $statAlatBerat['total_unit'] ?? 0 }} Unit</h4>
-                                    <small class="text-muted">Total Unit Alat Berat</small>
-                                </div>
-                            </div>
-                            <div class="col-md-3 col-6">
-                                <div class="p-3 rounded-3 bg-soft-success text-center">
-                                    <h4 class="fw-bold mb-0 text-success">{{ $statAlatBerat['ready'] ?? 0 }} Unit</h4>
-                                    <small class="text-muted">Ready / Operational</small>
-                                </div>
-                            </div>
-                            <div class="col-md-3 col-6">
-                                <div class="p-3 rounded-3 bg-soft-warning text-center">
-                                    <h4 class="fw-bold mb-0 text-warning">{{ $statAlatBerat['maintenance'] ?? 0 }} Unit</h4>
-                                    <small class="text-muted">In Maintenance</small>
-                                </div>
-                            </div>
-                            <div class="col-md-3 col-6">
-                                <div class="p-3 rounded-3 bg-soft-danger text-center">
-                                    <h4 class="fw-bold mb-0 text-danger">{{ $statAlatBerat['breakdown'] ?? 0 }} Unit</h4>
-                                    <small class="text-muted">Breakdown / Rusak</small>
-                                </div>
-                            </div>
+                        <div class="hero-stat-tile">
+                            <div class="hero-stat-icon"><i class="feather-check-circle" style="color:#86efac;"></i></div>
+                            <div class="hero-stat-val" style="color:#86efac;">{{ $sudahLengkap }}</div>
+                            <div class="hero-stat-lbl">PKS Lengkap</div>
+                        </div>
+                        <div class="hero-stat-tile">
+                            <div class="hero-stat-icon"><i class="feather-clock" style="color:#fde68a;"></i></div>
+                            <div class="hero-stat-val" style="color:#fde68a;">{{ $sebagian }}</div>
+                            <div class="hero-stat-lbl">Sebagian Input</div>
+                        </div>
+                        <div class="hero-stat-tile">
+                            <div class="hero-stat-icon"><i class="feather-alert-triangle" style="color:#fca5a5;"></i></div>
+                            <div class="hero-stat-val" style="color:#fca5a5;">{{ $belumAda }}</div>
+                            <div class="hero-stat-lbl">Belum Input</div>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            {{-- ================= REPORT HUB ================= --}}
-            <div class="col-12">
-                <div class="card report-hub-card">
-                    <div class="card-body p-4">
-
-                        <div class="row align-items-center g-4">
-
-                            <div class="col-lg-7">
-                                <div class="report-hub-copy">
-                                    <h5>
-                                        <i class="feather-book-open text-success me-2"></i>
-                                        Seluruh Laporan
-                                    </h5>
-
-                                    <p>
-                                        Pusat akses seluruh laporan monitoring SIMOLI.
-                                        Pilih jenis laporan yang ingin ditampilkan sesuai
-                                        periode monitoring.
-                                    </p>
-
-                                    <div class="d-flex flex-wrap gap-2 mt-3">
-                                        <span class="report-filter-chip">
-                                            <i class="feather-home"></i> PKS
-                                        </span>
-
-                                        <span class="report-filter-chip warning">
-                                            <i class="feather-calendar"></i> Bulan
-                                        </span>
-
-                                        <span class="report-filter-chip info">
-                                            <i class="feather-flag"></i> Tahun
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="col-lg-5">
-                                <div class="row g-2">
-
-                                    <div class="col-12">
-                                        <a href="{{ route('report-pengaliran', ['bulan' => $filterBulan, 'tahun' => $filterTahun]) }}"
-                                            class="btn btn-primary text-white w-100 py-2 fw-semibold">
-                                            <i class="feather-droplet me-2 text-white"></i>
-                                            Laporan Pengaliran
-                                        </a>
-                                    </div>
-
-                                    <div class="col-12">
-                                        <a href="{{ route('report-pemeliharaan', ['bulan' => $filterBulan, 'tahun' => $filterTahun]) }}"
-                                            class="btn btn-warning text-white w-100 py-2 fw-semibold">
-                                            <i class="feather-tool me-2 text-white"></i>
-                                            Laporan Pemeliharaan
-                                        </a>
-                                    </div>
-
-                                    <div class="col-12">
-                                        <a href="{{ route('report-rencana', ['tahun' => $filterTahun]) }}"
-                                            class="btn btn-info text-white w-100 py-2 fw-semibold">
-                                            <i class="feather-clipboard me-2 text-white"></i>
-                                            Laporan Rencana
-                                        </a>
-                                    </div>
-
-                                    <div class="col-12">
-                                        <a href="{{ route('report-alat-berat', ['bulan' => $filterBulan, 'tahun' => $filterTahun]) }}"
-                                            class="btn btn-light-brand w-100 py-2">
-                                            <i class="feather-truck me-2"></i>
-                                            Laporan Alat Berat
-                                        </a>
-                                    </div>
-
-                                </div>
-                            </div>
-
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-
-            {{-- ================= MONITORING PKS ================= --}}
-            <div class="col-12">
-                <div class="card stretch stretch-full">
-
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="card-title mb-0">
-                            <i class="feather-monitor text-primary me-2"></i>
-                            Monitoring Seluruh PKS
-                        </h5>
-
-                        <span class="badge bg-soft-primary text-primary">
-                            {{ $selectedDate->translatedFormat('d F Y') }}
-                        </span>
-                    </div>
-
-
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-
-                            <table class="table table-hover mb-0">
-
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th class="ps-4 text-white">PKS</th>
-                                        <th class="text-white">Monitoring</th>
-                                        <th class="text-center text-white">Kelengkapan</th>
-                                        <th class="text-center pe-4 text-white">Status</th>
-                                    </tr>
-                                </thead>
-
-
-                                <tbody>
-
-                                    @foreach($monitoringData as $item)
-
-                                        @php
-                                            $rencanaAda = $rencanaMap[$item['pks']->ID] ?? false;
-
-                                            $jumlahSelesai =
-                                                ($item['pengaliran'] ? 1 : 0) +
-                                                ($item['pemeliharaan'] ? 1 : 0) +
-                                                ($rencanaAda ? 1 : 0);
-
-
-                                            if ($jumlahSelesai == 3) {
-                                                $status = 'Aman';
-                                                $statusClass = 'safe';
-                                                $icon = 'check-circle';
-
-                                            } elseif ($jumlahSelesai > 0) {
-                                                $status = 'Sebagian';
-                                                $statusClass = 'warning';
-                                                $icon = 'alert-circle';
-
-                                            } else {
-                                                $status = 'Belum Input';
-                                                $statusClass = 'danger';
-                                                $icon = 'x-circle';
-                                            }
-                                        @endphp
-
-
-                                        <tr>
-
-                                            {{-- PKS --}}
-                                            <td class="ps-4">
-
-                                                <div class="d-flex align-items-center gap-3">
-
-                                                    <div class="
-                                                            monitor-icon
-                                                            @if($statusClass == 'safe')
-                                                                bg-soft-success text-success
-                                                            @elseif($statusClass == 'warning')
-                                                                bg-soft-warning text-warning
-                                                            @else
-                                                                bg-soft-danger text-danger
-                                                            @endif
-                                                        ">
-                                                        {{ strtoupper(substr($item['pks']->akro, 0, 2)) }}
-                                                    </div>
-
-
-                                                    <div>
-                                                        <div class="fw-semibold">
-                                                            {{ $item['pks']->nama }}
-                                                        </div>
-
-                                                        <small class="text-muted">
-                                                            {{ $item['pks']->akro }}
-                                                        </small>
-                                                    </div>
-
-                                                </div>
-
-                                            </td>
-
-
-
-                                            {{-- Monitoring --}}
-                                            <td>
-
-                                                <div class="d-flex flex-wrap gap-2">
-
-                                                    <span
-                                                        class="badge {{ $item['pengaliran'] ? 'bg-success text-white' : 'bg-danger text-white' }}">
-                                                        <i class="feather-{{ $item['pengaliran'] ? 'check' : 'x' }} me-1 text-white"></i>
-                                                        Pengaliran
-                                                    </span>
-
-
-                                                    <span
-                                                        class="badge {{ $item['pemeliharaan'] ? 'bg-success text-white' : 'bg-danger text-white' }}">
-                                                        <i class="feather-{{ $item['pemeliharaan'] ? 'check' : 'x' }} me-1 text-white"></i>
-                                                        Pemeliharaan
-                                                    </span>
-
-
-                                                    <span
-                                                        class="badge {{ $rencanaAda ? 'bg-success text-white' : 'bg-danger text-white' }}">
-                                                        <i class="feather-{{ $rencanaAda ? 'check' : 'x' }} me-1 text-white"></i>
-                                                        Rencana
-                                                    </span>
-
-                                                </div>
-
-                                            </td>
-
-
-
-                                            {{-- Kelengkapan --}}
-                                            <td class="text-center">
-
-                                                <div class="fw-bold fs-16">
-                                                    {{ $jumlahSelesai }}/3
-                                                </div>
-
-
-                                                <div class="progress mt-2" style="height:6px;width:80px;margin:auto">
-
-                                                    <div class="progress-bar 
-                                                            @if($jumlahSelesai == 3)
-                                                                bg-success
-                                                            @elseif($jumlahSelesai > 0)
-                                                                bg-warning
-                                                            @else
-                                                                bg-danger
-                                                            @endif" style="width: {{ ($jumlahSelesai / 3) * 100 }}%">
-                                                    </div>
-
-                                                </div>
-
-                                            </td>
-
-
-
-                                            {{-- Status --}}
-                                            <td class="text-center pe-4">
-
-                                                <span class="status-alert {{ $statusClass }}">
-                                                    <i class="feather-{{ $icon }} me-1"></i>
-                                                    {{ $status }}
-                                                </span>
-
-
-                                                <div class="fs-11 text-muted mt-1">
-
-                                                    @if($statusClass == 'safe')
-                                                        Semua monitoring lengkap
-
-                                                    @elseif($statusClass == 'warning')
-                                                        Ada monitoring belum selesai
-
-                                                    @else
-                                                        Belum ada data monitoring
-
-                                                    @endif
-
-                                                </div>
-
-                                            </td>
-
-                                        </tr>
-
-                                    @endforeach
-
-                                </tbody>
-
-                            </table>
-
-                        </div>
-                    </div>
-
                 </div>
             </div>
         </div>
-    </div>
+    </section>
+
+    {{-- ================================================================
+         2. KPI CARDS — Indikator Kinerja Utama
+         ================================================================ --}}
+    <section aria-label="Indikator Kinerja Utama">
+        <div class="section-header">
+            <h3 class="section-title">
+                <span class="section-title-dot"></span>
+                Indikator Kinerja Utama — Bulan {{ $bulanLabel }}
+            </h3>
+            <span class="mod-pill mod-pill-ok" style="font-size:11px;">Akumulasi Bulan Berjalan</span>
+        </div>
+
+        <div class="row g-3 mb-4">
+            {{-- KPI 1: Pengaliran Volume --}}
+            <div class="col-xl-3 col-md-6">
+                <div class="kpi-card kpi-card-green">
+                    <div class="d-flex align-items-start justify-content-between mb-3">
+                        <div class="min-w-0">
+                            <div class="kpi-label">Vol. Limbah Dialirkan</div>
+                            <div class="kpi-value" style="color:#16a34a;">
+                                {{ number_format($statPengaliran['vol_dialirkan'] ?? 0, 0, ',', '.') }}
+                                <span style="font-size:14px;font-weight:600;color:#6b7280;">m³</span>
+                            </div>
+                        </div>
+                        <div class="kpi-icon kpi-icon-green"><i class="feather-droplet"></i></div>
+                    </div>
+                    <div class="kpi-sub">
+                        <span>Vol. Dihasilkan:</span>
+                        <strong style="color:#14532d;">{{ number_format($statPengaliran['vol_dihasilkan'] ?? 0, 0, ',', '.') }} m³</strong>
+                    </div>
+                </div>
+            </div>
+
+            {{-- KPI 2: Bed Land Aplikasi --}}
+            <div class="col-xl-3 col-md-6">
+                <div class="kpi-card kpi-card-green">
+                    <div class="d-flex align-items-start justify-content-between mb-3">
+                        <div class="min-w-0">
+                            <div class="kpi-label">Bed Land Aplikasi</div>
+                            <div class="kpi-value" style="color:#059669;">
+                                {{ number_format($statPengaliran['total_flat_bed'] ?? 0, 0, ',', '.') }}
+                                <span style="font-size:14px;font-weight:600;color:#6b7280;">Bed</span>
+                            </div>
+                        </div>
+                        <div class="kpi-icon kpi-icon-green"><i class="feather-grid"></i></div>
+                    </div>
+                    <div class="kpi-sub">
+                        <span>Luas Area:</span>
+                        <strong style="color:#14532d;">{{ number_format($statPengaliran['total_luas_area'] ?? 0, 1, ',', '.') }} Ha</strong>
+                    </div>
+                </div>
+            </div>
+
+            {{-- KPI 3: Pemeliharaan --}}
+            <div class="col-xl-3 col-md-6">
+                <div class="kpi-card kpi-card-gold">
+                    <div class="d-flex align-items-start justify-content-between mb-3">
+                        <div class="min-w-0">
+                            <div class="kpi-label">Pemeliharaan Bed</div>
+                            <div class="kpi-value" style="color:#b45309;">
+                                {{ number_format(($statPemeliharaan['total_flat_bed'] ?? 0) + ($statPemeliharaan['total_long_bed'] ?? 0), 0, ',', '.') }}
+                                <span style="font-size:14px;font-weight:600;color:#6b7280;">Bed</span>
+                            </div>
+                        </div>
+                        <div class="kpi-icon kpi-icon-gold"><i class="feather-tool"></i></div>
+                    </div>
+                    <div class="kpi-sub">
+                        <span>Tenaga Kerja:</span>
+                        <strong style="color:#92400e;">{{ number_format($statPemeliharaan['total_hk'] ?? 0, 0, ',', '.') }} HK</strong>
+                    </div>
+                </div>
+            </div>
+
+            {{-- KPI 4: Alat Berat --}}
+            <div class="col-xl-3 col-md-6">
+                <div class="kpi-card kpi-card-blue">
+                    <div class="d-flex align-items-start justify-content-between mb-3">
+                        <div class="min-w-0">
+                            <div class="kpi-label">Alat Berat Operasional</div>
+                            <div class="kpi-value" style="color:#1d4ed8;">
+                                {{ $statAlatBerat['ready'] ?? 0 }}
+                                <span style="font-size:14px;font-weight:600;color:#6b7280;">/ {{ $statAlatBerat['total_unit'] ?? 0 }} Unit</span>
+                            </div>
+                        </div>
+                        <div class="kpi-icon kpi-icon-blue"><i class="feather-truck"></i></div>
+                    </div>
+                    <div class="kpi-sub">
+                        <span>BBM Solar:</span>
+                        <strong style="color:#1e40af;">{{ number_format($statAlatBerat['total_bbm'] ?? 0, 0, ',', '.') }} Ltr</strong>
+                        <span class="ms-2">HM:</span>
+                        <strong style="color:#1e40af;">{{ number_format($statAlatBerat['total_hm'] ?? 0, 1, ',', '.') }} Jam</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {{-- ================================================================
+         3. ANALYTICS CHARTS
+         ================================================================ --}}
+    <section aria-label="Analytics Charts" class="mb-4">
+        <div class="section-header">
+            <h3 class="section-title">
+                <span class="section-title-dot"></span>
+                Analitik & Visualisasi Data
+            </h3>
+            <span class="mod-pill mod-pill-ok" style="font-size:11px;">Harian & Bulanan</span>
+        </div>
+
+        <div class="row g-4 mb-4">
+            {{-- Trend Chart --}}
+            <div class="col-lg-8">
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <div>
+                            <div class="chart-title">
+                                <i class="feather-trending-up" style="color:#16a34a;margin-right:6px;"></i>
+                                Trend Monitoring 7 Hari Terakhir
+                            </div>
+                            <div class="chart-sub">Jumlah PKS yang menginput laporan harian</div>
+                        </div>
+                        <span class="mod-pill mod-pill-ok" style="font-size:10px;">Harian</span>
+                    </div>
+                    <div style="padding:16px;">
+                        <div id="trendChart" style="min-height:280px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Donut Chart --}}
+            <div class="col-lg-4">
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <div>
+                            <div class="chart-title">
+                                <i class="feather-pie-chart" style="color:#16a34a;margin-right:6px;"></i>
+                                Status Kelengkapan Hari Ini
+                            </div>
+                            <div class="chart-sub">Kepatuhan input 12 PKS</div>
+                        </div>
+                    </div>
+                    <div style="padding:16px;">
+                        <div id="statusDonutChart" style="min-height:230px;"></div>
+                        <div class="row g-2 text-center pt-2" style="border-top:1px solid rgba(22,163,74,0.1);">
+                            <div class="col-4">
+                                <div style="font-size:18px;font-weight:900;color:#16a34a;">{{ $sudahLengkap }}</div>
+                                <small style="font-size:10px;color:#6b7280;font-weight:700;">Lengkap</small>
+                            </div>
+                            <div class="col-4">
+                                <div style="font-size:18px;font-weight:900;color:#d97706;">{{ $sebagian }}</div>
+                                <small style="font-size:10px;color:#6b7280;font-weight:700;">Sebagian</small>
+                            </div>
+                            <div class="col-4">
+                                <div style="font-size:18px;font-weight:900;color:#ef4444;">{{ $belumAda }}</div>
+                                <small style="font-size:10px;color:#6b7280;font-weight:700;">Belum Ada</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Volume Per PKS + Pemeliharaan Per PKS --}}
+        <div class="row g-4">
+            <div class="col-lg-6">
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <div>
+                            <div class="chart-title">
+                                <i class="feather-bar-chart-2" style="color:#16a34a;margin-right:6px;"></i>
+                                Volume Limbah Dialirkan per PKS
+                            </div>
+                            <div class="chart-sub">Akumulasi bulan {{ $bulanLabel }} (m³)</div>
+                        </div>
+                    </div>
+                    <div style="padding:16px;">
+                        <div id="volPerPksChart" style="min-height:280px;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <div>
+                            <div class="chart-title">
+                                <i class="feather-sliders" style="color:#d97706;margin-right:6px;"></i>
+                                Hasil Pemeliharaan Bed per PKS
+                            </div>
+                            <div class="chart-sub">Flat Bed &amp; Long Bed dikerjakan</div>
+                        </div>
+                    </div>
+                    <div style="padding:16px;">
+                        <div id="maintPerPksChart" style="min-height:280px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {{-- ================================================================
+         4. PKS COMPLIANCE MATRIX TABLE
+         ================================================================ --}}
+    <section aria-label="Matriks Kepatuhan PKS" class="mb-4">
+        <div class="section-header">
+            <h3 class="section-title">
+                <span class="section-title-dot"></span>
+                Matriks Kelengkapan Harian Seluruh PKS
+            </h3>
+            <span class="mod-pill mod-pill-ok" style="font-size:11px;">
+                {{ $selectedDate->translatedFormat('d F Y') }}
+            </span>
+        </div>
+
+        <div class="compliance-table-wrap">
+            <div class="table-responsive" style="-webkit-overflow-scrolling: touch;">
+                <table class="compliance-table" role="table" aria-label="Status Kepatuhan PKS">
+                    <thead>
+                        <tr>
+                            <th style="width:48px;text-align:center;">#</th>
+                            <th style="min-width:200px;">PKS (Pabrik Kelapa Sawit)</th>
+                            <th>Pengaliran LA</th>
+                            <th>Pemeliharaan Bed</th>
+                            <th>Rencana Tahunan</th>
+                            <th style="width:130px;text-align:center;">Kelengkapan</th>
+                            <th style="width:140px;text-align:center;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @php $no = 1; @endphp
+                        @foreach($monitoringData as $item)
+                        @php
+                            $akro   = strtoupper($item['pks']->akro ?? '');
+                            $avatar = $pksAvatarColors[$akro] ?? 'linear-gradient(135deg,#16a34a,#059669)';
+                            $pksId  = $item['pks']->id_pks ?? $item['pks']->ID;
+                            $adaRencana = $rencanaMap[$pksId] ?? false;
+                            $done = ($item['pengaliran'] ? 1 : 0) + ($item['pemeliharaan'] ? 1 : 0) + ($adaRencana ? 1 : 0);
+                            $chipClass = $done == 3 ? 'chip-safe' : ($done > 0 ? 'chip-warning' : 'chip-danger');
+                            $chipLabel = $done == 3 ? 'Lengkap' : ($done > 0 ? 'Sebagian' : 'Belum Input');
+                            $chipIcon  = $done == 3 ? 'feather-check-circle' : ($done > 0 ? 'feather-clock' : 'feather-x-circle');
+                        @endphp
+                        <tr>
+                            <td style="text-align:center;font-weight:700;color:#9ca3af;font-size:12px;">{{ $no++ }}</td>
+                            <td>
+                                <div style="display:flex;align-items:center;gap:10px;">
+                                    <div class="pks-avatar" style="background:{{ $avatar }};">{{ $akro }}</div>
+                                    <div>
+                                        <div style="font-weight:700;color:#14532d;font-size:13px;">{{ $item['pks']->nama }}</div>
+                                        <div style="font-size:10.5px;color:#6b7280;font-weight:600;">PKS {{ $akro }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                @if($item['pengaliran'])
+                                    <span class="mod-pill mod-pill-ok"><i class="feather-check-circle"></i> Sudah Input</span>
+                                @else
+                                    <span class="mod-pill mod-pill-err"><i class="feather-x-circle"></i> Belum Ada</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if($item['pemeliharaan'])
+                                    <span class="mod-pill mod-pill-ok"><i class="feather-check-circle"></i> Sudah Input</span>
+                                @else
+                                    <span class="mod-pill mod-pill-err"><i class="feather-x-circle"></i> Belum Ada</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if($adaRencana)
+                                    <span class="mod-pill mod-pill-ok"><i class="feather-check-circle"></i> Tersedia</span>
+                                @else
+                                    <span class="mod-pill mod-pill-err"><i class="feather-x-circle"></i> Belum Ada</span>
+                                @endif
+                            </td>
+                            <td style="text-align:center;">
+                                <div style="font-size:12px;font-weight:800;color:#14532d;margin-bottom:6px;">{{ $done }} / 3</div>
+                                <div style="height:6px;border-radius:10px;background:rgba(22,163,74,0.1);overflow:hidden;">
+                                    <div style="height:100%;border-radius:10px;width:{{ ($done/3)*100 }}%;
+                                        background:{{ $done==3 ? 'linear-gradient(90deg,#16a34a,#4ade80)' : ($done>0 ? 'linear-gradient(90deg,#d97706,#fbbf24)' : '#ef4444') }};
+                                        transition:width 1s ease;"></div>
+                                </div>
+                            </td>
+                            <td style="text-align:center;">
+                                <span class="status-chip-tbl {{ $chipClass }}">
+                                    <i class="{{ $chipIcon }}" style="font-size:12px;"></i>
+                                    {{ $chipLabel }}
+                                </span>
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    {{-- ================================================================
+         5. QUICK REPORT ACCESS TILES
+         ================================================================ --}}
+    <section aria-label="Akses Cepat Laporan" class="mb-4">
+        <div class="section-header">
+            <h3 class="section-title">
+                <span class="section-title-dot"></span>
+                Pusat Akses Laporan Eksekutif
+            </h3>
+            <span class="mod-pill mod-pill-ok" style="font-size:11px;">Format Resmi SIMOLI</span>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-xl-3 col-md-6">
+                <a href="{{ route('report-pengaliran', ['bulan' => $filterBulan, 'tahun' => $filterTahun]) }}" class="report-tile">
+                    <div class="report-tile-icon" style="background:linear-gradient(135deg,#16a34a,#22c55e);">
+                        <i class="feather-droplet"></i>
+                    </div>
+                    <div>
+                        <div class="report-tile-title">Laporan Pengaliran LA</div>
+                        <div class="report-tile-desc">Format Land Aplikasi of the Month &amp; rekap per PKS</div>
+                    </div>
+                    <i class="feather-arrow-right" style="font-size:16px;color:#16a34a;margin-left:auto;flex-shrink:0;"></i>
+                </a>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <a href="{{ route('report-pemeliharaan', ['bulan' => $filterBulan, 'tahun' => $filterTahun]) }}" class="report-tile">
+                    <div class="report-tile-icon" style="background:linear-gradient(135deg,#d97706,#f59e0b);">
+                        <i class="feather-tool"></i>
+                    </div>
+                    <div>
+                        <div class="report-tile-title">Laporan Pemeliharaan</div>
+                        <div class="report-tile-desc">Normalisasi bed, pengerukan kolam &amp; HK tenaga kerja</div>
+                    </div>
+                    <i class="feather-arrow-right" style="font-size:16px;color:#d97706;margin-left:auto;flex-shrink:0;"></i>
+                </a>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <a href="{{ route('report-rencana', ['tahun' => $filterTahun]) }}" class="report-tile">
+                    <div class="report-tile-icon" style="background:linear-gradient(135deg,#7c3aed,#8b5cf6);">
+                        <i class="feather-clipboard"></i>
+                    </div>
+                    <div>
+                        <div class="report-tile-title">Laporan Rencana Tahunan</div>
+                        <div class="report-tile-desc">Target flat bed, long bed &amp; kapasitas kolam IPAL</div>
+                    </div>
+                    <i class="feather-arrow-right" style="font-size:16px;color:#7c3aed;margin-left:auto;flex-shrink:0;"></i>
+                </a>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <a href="{{ route('monitoring-alat-berat.index') }}" class="report-tile">
+                    <div class="report-tile-icon" style="background:linear-gradient(135deg,#0d9488,#14b8a6);">
+                        <i class="feather-truck"></i>
+                    </div>
+                    <div>
+                        <div class="report-tile-title">Log Operasional Alat Berat</div>
+                        <div class="report-tile-desc">Monitoring HM, BBM solar &amp; dokumentasi lapangan</div>
+                    </div>
+                    <i class="feather-arrow-right" style="font-size:16px;color:#0d9488;margin-left:auto;flex-shrink:0;"></i>
+                </a>
+            </div>
+        </div>
+    </section>
+
+</article>
 @endsection
 
 @section('scripts')
-    <script src="{{ asset('duraluxadmin/assets/vendors/js/apexcharts.min.js') }}"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            var isDark = document.documentElement.classList.contains('app-skin-dark');
-            var gridColor = isDark ? '#1e293b' : '#f1f1f1';
-            var labelColor = isDark ? '#94a3b8' : '#9ca3af';
-            var bgCard = isDark ? '#0f172a' : '#fff';
+<script src="{{ asset('duraluxadmin/assets/vendors/js/apexcharts.min.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var isDark    = document.documentElement.classList.contains('app-skin-dark');
+    var gridColor = isDark ? 'rgba(34,197,94,0.06)' : 'rgba(22,163,74,0.06)';
+    var labelClr  = isDark ? '#6b8f72' : '#6b7280';
+    var bgCard    = isDark ? '#0a2317' : '#ffffff';
+    var fontFam   = "'Outfit', 'Plus Jakarta Sans', sans-serif";
 
-            // Donut Chart
-            new ApexCharts(document.querySelector("#statusDonutChart"), {
-                series: [{{ $sudahLengkap }}, {{ $sebagian }}, {{ $belumAda }}],
-                chart: { type: 'donut', height: 220 },
-                labels: ['Lengkap', 'Sebagian', 'Belum Ada'],
-                colors: ['#10b981', '#f59e0b', '#ef4444'],
-                plotOptions: { pie: { donut: { size: '70%', labels: { show: true, name: { show: true, fontSize: '13px' }, value: { show: true, fontSize: '20px', fontWeight: 700 }, total: { show: true, label: 'Total PKS', fontSize: '12px', formatter: function (w) { return {{ $totalPks }}; } } } } } },
-                legend: { position: 'bottom', fontSize: '12px', fontFamily: 'inherit', labels: { colors: labelColor } },
-                dataLabels: { enabled: false },
-                stroke: { width: 2, colors: [bgCard] },
-                responsive: [{ breakpoint: 480, options: { chart: { height: 200 } } }]
-            }).render();
+    var chartDefaults = {
+        toolbar: { show: false },
+        fontFamily: fontFam,
+        background: 'transparent',
+        animations: { enabled: true, easing: 'easeinout', speed: 700 }
+    };
 
-            // Trend Chart
-            new ApexCharts(document.querySelector("#trendChart"), {
-                series: [{ name: 'Pengaliran', data: {!! json_encode(array_column($trendData, 'pengaliran')) !!} }, { name: 'Pemeliharaan', data: {!! json_encode(array_column($trendData, 'pemeliharaan')) !!} }],
-                chart: { type: 'area', height: 300, toolbar: { show: false }, fontFamily: 'inherit' },
-                colors: ['#10b981', '#f59e0b'],
-                fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 90, 100] } },
-                stroke: { curve: 'smooth', width: 2.5 },
-                xaxis: { categories: {!! json_encode(array_column($trendData, 'label')) !!}, labels: { style: { fontSize: '11px', colors: labelColor } }, axisBorder: { show: false }, axisTicks: { show: false } },
-                yaxis: { max: {{ $totalPks + 1 }}, labels: { style: { fontSize: '11px', colors: labelColor }, formatter: function (val) { return Math.round(val); } } },
-                grid: { borderColor: gridColor, strokeDashArray: 4 },
-                legend: { fontSize: '12px', fontFamily: 'inherit', labels: { colors: labelColor } },
-                dataLabels: { enabled: false },
-                tooltip: { y: { formatter: function (val) { return val + ' PKS'; } } },
-                markers: { size: 4, strokeWidth: 0 }
-            }).render();
+    /* ── 1. DONUT: Kelengkapan Hari Ini ── */
+    new ApexCharts(document.querySelector('#statusDonutChart'), {
+        series: [{{ $sudahLengkap }}, {{ $sebagian }}, {{ $belumAda }}],
+        chart: { ...chartDefaults, type: 'donut', height: 230 },
+        labels: ['Lengkap', 'Sebagian', 'Belum Input'],
+        colors: ['#16a34a', '#d97706', '#ef4444'],
+        plotOptions: {
+            pie: {
+                donut: {
+                    size: '72%',
+                    labels: {
+                        show: true,
+                        name: { show: true, fontSize: '12px', color: labelClr },
+                        value: { show: true, fontSize: '20px', fontWeight: 900, color: isDark ? '#d1fae5' : '#14532d' },
+                        total: {
+                            show: true, label: 'Total PKS',
+                            fontSize: '10px', fontWeight: 600, color: labelClr,
+                            formatter: function() { return {{ $totalPks }}; }
+                        }
+                    }
+                }
+            }
+        },
+        legend: { position: 'bottom', fontSize: '11px', fontFamily: fontFam, labels: { colors: labelClr } },
+        stroke: { width: 2, colors: [bgCard] },
+        dataLabels: { enabled: false }
+    }).render();
 
-            // Volume Dialirkan Per PKS
-            var pksLabels = {!! json_encode(collect($statsPerPks)->pluck('pks.AKRO')->values()) !!};
-            var volData = {!! json_encode(collect($statsPerPks)->pluck('vol_dialirkan')->values()) !!};
+    /* ── 2. AREA: Trend 7 Hari ── */
+    var trendDays   = {!! json_encode(array_keys((array)($trend ?? []))) !!};
+    var trendPengal = {!! json_encode(array_column((array)($trend ?? []), 'pengaliran')) !!};
+    var trendPemeli = {!! json_encode(array_column((array)($trend ?? []), 'pemeliharaan')) !!};
 
-            new ApexCharts(document.querySelector("#volPerPksChart"), {
-                series: [{ name: 'Vol. Dialirkan (m³)', data: volData }],
-                chart: { type: 'bar', height: 320, toolbar: { show: false }, fontFamily: 'inherit' },
-                colors: ['#10b981'],
-                plotOptions: { bar: { borderRadius: 4, columnWidth: '55%', dataLabels: { position: 'top' } } },
-                dataLabels: { enabled: true, formatter: function (val) { return val > 0 ? val.toLocaleString() : ''; }, offsetY: -20, style: { fontSize: '10px', colors: [labelColor] } },
-                xaxis: { categories: pksLabels, labels: { style: { fontSize: '10px', colors: labelColor }, rotate: -45, rotateAlways: pksLabels.length > 6 } },
-                yaxis: { labels: { style: { fontSize: '10px', colors: labelColor }, formatter: function (val) { return val.toLocaleString(); } } },
-                grid: { borderColor: gridColor, strokeDashArray: 4 },
-                tooltip: { y: { formatter: function (val) { return val.toLocaleString() + ' m³'; } } }
-            }).render();
+    new ApexCharts(document.querySelector('#trendChart'), {
+        series: [
+            { name: 'Pengaliran LA', data: trendPengal },
+            { name: 'Pemeliharaan',  data: trendPemeli }
+        ],
+        chart: { ...chartDefaults, type: 'area', height: 280 },
+        colors: ['#16a34a', '#d97706'],
+        fill: {
+            type: 'gradient',
+            gradient: {
+                shadeIntensity: 1, opacityFrom: 0.35, opacityTo: 0.05, stops: [0, 100]
+            }
+        },
+        stroke: { curve: 'smooth', width: 2.5 },
+        xaxis: {
+            categories: trendDays,
+            labels: { style: { colors: labelClr, fontSize: '11px', fontFamily: fontFam } },
+            axisBorder: { show: false }, axisTicks: { show: false }
+        },
+        yaxis: {
+            min: 0, max: {{ $totalPks }},
+            tickAmount: {{ $totalPks }},
+            labels: { style: { colors: labelClr, fontSize: '11px', fontFamily: fontFam } }
+        },
+        grid: { borderColor: gridColor, strokeDashArray: 4 },
+        legend: { position: 'top', horizontalAlign: 'right', fontSize: '11px', fontFamily: fontFam, labels: { colors: labelClr } },
+        markers: { size: 4, strokeWidth: 0, hover: { size: 6 } },
+        tooltip: {
+            theme: isDark ? 'dark' : 'light',
+            style: { fontSize: '12px', fontFamily: fontFam }
+        }
+    }).render();
 
-            // Pemeliharaan Per PKS - Stacked Bar
-            new ApexCharts(document.querySelector("#maintPerPksChart"), {
-                series: [
-                    { name: 'Flat Bed', data: {!! json_encode(collect($statsPerPks)->pluck('flat_bed_m')->values()) !!} },
-                    { name: 'Long Bed', data: {!! json_encode(collect($statsPerPks)->pluck('long_bed')->values()) !!} }
-                ],
-                chart: { type: 'bar', height: 320, stacked: true, toolbar: { show: false }, fontFamily: 'inherit' },
-                colors: ['#f59e0b', '#6366f1'],
-                plotOptions: { bar: { borderRadius: 4, columnWidth: '55%' } },
-                xaxis: { categories: pksLabels, labels: { style: { fontSize: '10px', colors: labelColor }, rotate: -45, rotateAlways: pksLabels.length > 6 } },
-                yaxis: { labels: { style: { fontSize: '10px', colors: labelColor }, formatter: function (val) { return Math.round(val); } } },
-                grid: { borderColor: gridColor, strokeDashArray: 4 },
-                legend: { fontSize: '12px', fontFamily: 'inherit', labels: { colors: labelColor } },
-                dataLabels: { enabled: false },
-                tooltip: { y: { formatter: function (val) { return Math.round(val); } } }
-            }).render();
-        });
-    </script>
+    /* ── 3. COLUMN: Volume per PKS ── */
+    var pksNames = {!! json_encode(array_column((array)($statPerPks ?? []), 'akro')) !!};
+    var pksVols  = {!! json_encode(array_column((array)($statPerPks ?? []), 'vol_dialirkan')) !!};
+
+    new ApexCharts(document.querySelector('#volPerPksChart'), {
+        series: [{ name: 'Vol. Dialirkan (m³)', data: pksVols }],
+        chart: { ...chartDefaults, type: 'bar', height: 280 },
+        colors: ['#16a34a'],
+        fill: {
+            type: 'gradient',
+            gradient: { shade: 'light', type: 'vertical', shadeIntensity: 0.3, gradientToColors: ['#4ade80'], stops: [0, 100] }
+        },
+        plotOptions: { bar: { borderRadius: 6, columnWidth: '55%' } },
+        xaxis: {
+            categories: pksNames,
+            labels: { style: { colors: labelClr, fontSize: '10px', fontFamily: fontFam } },
+            axisBorder: { show: false }
+        },
+        yaxis: { labels: { style: { colors: labelClr, fontSize: '11px', fontFamily: fontFam } } },
+        grid: { borderColor: gridColor, strokeDashArray: 4 },
+        dataLabels: { enabled: false },
+        tooltip: { theme: isDark ? 'dark' : 'light', style: { fontSize: '11px', fontFamily: fontFam } }
+    }).render();
+
+    /* ── 4. STACKED: Pemeliharaan per PKS ── */
+    var maintFlat = {!! json_encode(array_column((array)($maintPerPks ?? []), 'flat_bed')) !!};
+    var maintLong = {!! json_encode(array_column((array)($maintPerPks ?? []), 'long_bed')) !!};
+    var maintPks  = {!! json_encode(array_column((array)($maintPerPks ?? []), 'akro')) !!};
+
+    new ApexCharts(document.querySelector('#maintPerPksChart'), {
+        series: [
+            { name: 'Flat Bed', data: maintFlat },
+            { name: 'Long Bed', data: maintLong }
+        ],
+        chart: { ...chartDefaults, type: 'bar', height: 280, stacked: true },
+        colors: ['#d97706', '#16a34a'],
+        plotOptions: { bar: { borderRadius: 4, columnWidth: '55%' } },
+        xaxis: {
+            categories: maintPks,
+            labels: { style: { colors: labelClr, fontSize: '10px', fontFamily: fontFam } },
+            axisBorder: { show: false }
+        },
+        yaxis: { labels: { style: { colors: labelClr, fontSize: '11px', fontFamily: fontFam } } },
+        grid: { borderColor: gridColor, strokeDashArray: 4 },
+        dataLabels: { enabled: false },
+        legend: { position: 'top', horizontalAlign: 'right', fontSize: '11px', fontFamily: fontFam, labels: { colors: labelClr } },
+        tooltip: { theme: isDark ? 'dark' : 'light', style: { fontSize: '11px', fontFamily: fontFam } }
+    }).render();
+});
+</script>
 @endsection

@@ -16,6 +16,7 @@ class MonitoringAlatBerat extends Model
         'operator',
         'kegiatan',
         'lokasi_blok',
+        'no_bak',
         'flat_bed',
         'long_bed',
         'jumlah_bed',
