@@ -317,7 +317,7 @@
                     <select name="id_pks" class="form-select" data-select2-selector="status">
                         <option value="">Semua PKS</option>
                         @foreach($pksList as $pks)
-                            <option value="{{ $pks->ID }}" {{ request('id_pks') == $pks->ID ? 'selected' : '' }}>
+                            <option value="{{ $pks->id_pks }}" {{ request('id_pks') == $pks->id_pks ? 'selected' : '' }}>
                                 {{ $pks->nama }} ({{ $pks->akro }})
                             </option>
                         @endforeach

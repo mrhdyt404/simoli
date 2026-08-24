@@ -252,14 +252,14 @@
                 <select name="id_pks" class="form-control @error('id_pks') is-invalid @enderror" data-select2-selector="status" required>
                     <option value="">— Pilih PKS —</option>
                     @foreach($pksList as $pks)
-                    <option value="{{ $pks->ID }}" {{ old('id_pks') == $pks->ID ? 'selected' : '' }}>
-                        {{ $pks->NAMA }} ({{ $pks->AKRO }})
+                    <option value="{{ $pks->id_pks }}" {{ old('id_pks') == $pks->id_pks ? 'selected' : '' }}>
+                        {{ $pks->nama }} ({{ $pks->akro }})
                     </option>
                     @endforeach
                 </select>
                 @error('id_pks') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 @else
-                <input type="hidden" name="id_pks" value="{{ $user->ID }}">
+                <input type="hidden" name="id_pks" value="{{ $user->id_pks }}">
                 <div class="pks-display">
                     <i class="feather-map-pin" style="color:#16a34a;font-size:18px;"></i>
                     <div>

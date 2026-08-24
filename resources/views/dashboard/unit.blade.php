@@ -652,8 +652,8 @@
                 </form>
             </div>
             <div style="padding:20px;">
-                <div style="position:relative;height:320px;">
-                    <canvas id="volumeChart"></canvas>
+                <div style="position:relative;min-height:320px;">
+                    <div id="volumeChart" style="min-height:320px;"></div>
                 </div>
             </div>
         </div>
@@ -851,63 +851,62 @@
 @endsection
 
 @section('scripts')
+<script src="{{ asset('duraluxadmin/assets/vendors/js/apexcharts.min.js') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    var fontFam = "'Outfit','Plus Jakarta Sans',sans-serif";
-    var ctx     = document.getElementById('volumeChart');
-    if (!ctx) return;
+    var isDark    = document.documentElement.classList.contains('app-skin-dark');
+    var fontFam   = "'Outfit','Plus Jakarta Sans',sans-serif";
+    var labelClr  = isDark ? '#6b8f72' : '#6b7280';
+    var gridColor = isDark ? 'rgba(34,197,94,0.06)' : 'rgba(22,163,74,0.06)';
 
-    var volumeChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: @json($labelHari),
-            datasets: [{
-                label: 'Volume Limbah Dialirkan (m³)',
-                data: @json($volumeGrafik),
-                borderColor: '#16a34a',
-                backgroundColor: 'rgba(22,163,74,0.08)',
-                fill: true,
-                tension: 0.4,
-                borderWidth: 2.5,
-                pointRadius: 4,
-                pointBackgroundColor: '#16a34a',
-                pointBorderColor: '#ffffff',
-                pointBorderWidth: 2,
-                pointHoverRadius: 7
-            }]
+    var chartEl = document.querySelector('#volumeChart');
+    if (!chartEl) return;
+
+    var volumeChartOptions = {
+        series: [{
+            name: 'Volume Limbah Dialirkan (m³)',
+            data: @json($volumeGrafik)
+        }],
+        chart: {
+            type: 'area',
+            height: 320,
+            toolbar: { show: false },
+            fontFamily: fontFam,
+            background: 'transparent',
+            animations: { enabled: true, easing: 'easeinout', speed: 700 }
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: { mode: 'index', intersect: false },
-            plugins: {
-                legend: {
-                    labels: { font: { family: fontFam, size: 12, weight: '700' }, color: '#374151' }
-                },
-                tooltip: {
-                    backgroundColor: '#052e16',
-                    titleFont: { family: fontFam, size: 12, weight: '700' },
-                    bodyFont: { family: fontFam, size: 11 },
-                    padding: 12,
-                    cornerRadius: 10
-                }
-            },
-            scales: {
-                x: {
-                    grid: { color: 'rgba(22,163,74,0.06)' },
-                    ticks: {
-                        autoSkip: true, maxTicksLimit: 15,
-                        font: { family: fontFam, size: 10 }, color: '#6b7280'
-                    }
-                },
-                y: {
-                    beginAtZero: true,
-                    grid: { color: 'rgba(22,163,74,0.06)' },
-                    ticks: { font: { family: fontFam, size: 10 }, color: '#6b7280' }
-                }
+        colors: ['#16a34a'],
+        fill: {
+            type: 'gradient',
+            gradient: {
+                shadeIntensity: 1,
+                opacityFrom: 0.35,
+                opacityTo: 0.05,
+                stops: [0, 100]
             }
+        },
+        stroke: { curve: 'smooth', width: 2.5 },
+        xaxis: {
+            categories: @json($labelHari),
+            labels: { style: { colors: labelClr, fontSize: '11px', fontFamily: fontFam } },
+            axisBorder: { show: false },
+            axisTicks: { show: false }
+        },
+        yaxis: {
+            min: 0,
+            labels: { style: { colors: labelClr, fontSize: '11px', fontFamily: fontFam } }
+        },
+        grid: { borderColor: gridColor, strokeDashArray: 4 },
+        markers: { size: 4, strokeWidth: 0, hover: { size: 6 } },
+        tooltip: {
+            theme: isDark ? 'dark' : 'light',
+            style: { fontSize: '12px', fontFamily: fontFam },
+            y: { formatter: function(val) { return val + ' m³'; } }
         }
-    });
+    };
+
+    var volumeChart = new ApexCharts(chartEl, volumeChartOptions);
+    volumeChart.render();
 
     /* Filter AJAX reload */
     var form = document.getElementById('filterGrafik');
@@ -923,9 +922,13 @@ document.addEventListener('DOMContentLoaded', function() {
             fetch("{{ route('dashboard.grafik-volume') }}?" + params.toString(), {
                 headers: { 'X-Requested-With': 'XMLHttpRequest' }
             }).then(r => r.json()).then(data => {
-                volumeChart.data.labels = data.labelHari;
-                volumeChart.data.datasets[0].data = data.volumeGrafik;
-                volumeChart.update();
+                volumeChart.updateOptions({
+                    xaxis: { categories: data.labelHari }
+                });
+                volumeChart.updateSeries([{
+                    name: 'Volume Limbah Dialirkan (m³)',
+                    data: data.volumeGrafik
+                }]);
 
                 /* update filter badges */
                 var lblBulan  = document.getElementById('filterLabelBulan');
@@ -938,10 +941,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 /* repopulate nilai options */
                 var nilaiSel = document.getElementById('nilai');
-                nilaiSel.innerHTML = '<option value="">Semua</option>';
-                (data.pilihan || []).forEach(function(item) {
-                    nilaiSel.innerHTML += '<option value="' + item + '">' + item + '</option>';
-                });
+                if (nilaiSel) {
+                    nilaiSel.innerHTML = '<option value="">Semua</option>';
+                    (data.pilihan || []).forEach(function(item) {
+                        nilaiSel.innerHTML += '<option value="' + item + '">' + item + '</option>';
+                    });
+                }
             });
         });
     }

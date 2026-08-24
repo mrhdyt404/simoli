@@ -54,9 +54,9 @@
     
     .mab-kpi:hover { transform:translateY(-4px); box-shadow:0 12px 28px rgba(22,163,74,.12); }
 
-    .mab-kpi-label { font-size:10.5px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px; }
+    .mab-kpi-label { font-size:10.5px;font-weight:700;color:;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px; }
     .mab-kpi-value { font-family:'Outfit',sans-serif;font-size:clamp(18px,1.8vw+8px,24px);font-weight:900;line-height:1.1;letter-spacing:-.5px;margin-bottom:6px; }
-    .mab-kpi-sub   { font-size:11px;color:#6b7280; }
+    .mab-kpi-sub   { font-size:11px;color:; }
     .mab-kpi-icon  { width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0; }
     
     .kpi-icon-g { background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0; }
@@ -161,10 +161,10 @@
 
     /* Action btns */
     .tbl-action { display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:9px;border:none;cursor:pointer;transition:all .2s ease;font-size:14px; }
-    .tbl-action-view   { background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0; }
+    .tbl-action-view   { background:;color:#16a34a;border:1px solid #bbf7d0; }
     .tbl-action-edit   { background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe; }
     .tbl-action-delete { background:#fef2f2;color:#dc2626;border:1px solid #fca5a5; }
-    .tbl-action-view:hover   { background:#dcfce7;transform:scale(1.1); }
+    /* .tbl-action-view:hover   { background:#dcfce7;transform:scale(1.1); } */
     .tbl-action-edit:hover   { background:#dbeafe;transform:scale(1.1); }
     .tbl-action-delete:hover { background:#fee2e2;transform:scale(1.1); }
 
@@ -218,7 +218,7 @@
                     <div class="d-flex align-items-start justify-content-between mb-2">
                         <div>
                             <div class="mab-kpi-label">Konsumsi BBM</div>
-                            <div class="mab-kpi-value" style="color:#b45309;">{{ number_format($totalBbm, 0) }} <span style="font-size:13px;font-weight:600;color:#6b7280;">Liter</span></div>
+                            <div class="mab-kpi-value" style="color:#b45309;">{{ number_format($totalBbm, 0) }} <span style="font-size:13px;font-weight:600;">Liter</span></div>
                         </div>
                         <div class="mab-kpi-icon kpi-icon-a"><i class="feather-droplet"></i></div>
                     </div>
@@ -231,7 +231,7 @@
                     <div class="d-flex align-items-start justify-content-between mb-2">
                         <div>
                             <div class="mab-kpi-label">Total Bed Dikerjakan</div>
-                            <div class="mab-kpi-value" style="color:#0d9488;">{{ number_format($totalBed ?? 0) }} <span style="font-size:13px;font-weight:600;color:#6b7280;">Bed</span></div>
+                            <div class="mab-kpi-value" style="color:#0d9488;">{{ number_format($totalBed ?? 0) }} <span style="font-size:13px;font-weight:600;">Bed</span></div>
                         </div>
                         <div class="mab-kpi-icon kpi-icon-t"><i class="feather-grid"></i></div>
                     </div>
@@ -244,7 +244,7 @@
                     <div class="d-flex align-items-start justify-content-between mb-2">
                         <div>
                             <div class="mab-kpi-label">Kegiatan Operasional</div>
-                            <div class="mab-kpi-value" style="color:#1d4ed8;">{{ $totalKegiatan }} <span style="font-size:13px;font-weight:600;color:#6b7280;">Log</span></div>
+                            <div class="mab-kpi-value" style="color:#1d4ed8;">{{ $totalKegiatan }} <span style="font-size:13px;font-weight:600;">Log</span></div>
                         </div>
                         <div class="mab-kpi-icon kpi-icon-b"><i class="feather-activity"></i></div>
                     </div>
@@ -383,7 +383,7 @@
                         </td>
 
                         <td>
-                            <div style="font-weight:700;color:#14532d;font-size:13px;">
+                            <div style="font-weight:700;font-size:13px;">
                                 {{ \Carbon\Carbon::parse($log->tanggal)->format('d/m/Y') }}
                             </div>
                         </td>
@@ -398,17 +398,17 @@
 
                         <td>
                             <div style="font-weight:800;color:#16a34a;font-size:13px;">{{ $log->alatBerat ? $log->alatBerat->kode_alat : '-' }}</div>
-                            <small style="color:#6b7280;font-size:11px;">{{ $log->alatBerat ? $log->alatBerat->nama_alat : '-' }}</small>
+                            <small style="font-size:11px;">{{ $log->alatBerat ? $log->alatBerat->nama_alat : '-' }}</small>
                         </td>
 
                         <td>
-                            <span style="font-weight:600;color:#374151;">{{ $log->operator }}</span>
+                            <span style="font-weight:600;">{{ $log->operator }}</span>
                         </td>
 
                         <td>
-                            <div style="font-weight:700;color:#14532d;">{{ $log->kegiatan }}</div>
+                            <div style="font-weight:700;">{{ $log->kegiatan }}</div>
                             @if($log->lokasi_blok)
-                                <small style="color:#6b7280;font-size:11px;"><i class="feather-map-pin me-1"></i>{{ $log->lokasi_blok }}</small>
+                                <small style="font-size:11px;"><i class="feather-map-pin me-1"></i>{{ $log->lokasi_blok }}</small>
                             @endif
                             @php
                                 $latAwal = $log->latitude_awal ?? $log->latitude;
@@ -439,7 +439,7 @@
                         </td>
 
                         <td>
-                            <small style="font-weight:600;color:#6b7280;">{{ $log->hm_awal_formatted }} - {{ $log->hm_akhir_formatted }}</small>
+                            <small style="font-weight:600;color:;">{{ $log->hm_awal_formatted }} - {{ $log->hm_akhir_formatted }}</small>
                         </td>
 
                         <td style="text-align:right;font-weight:800;color:#16a34a;">
@@ -535,7 +535,7 @@
 @endsection
 
 @section('scripts')
-<script src="{{ asset('duraluxadmin/assets/vendors/js/select2.min.js') }}"></script>
+<!-- <script src="{{ asset('duraluxadmin/assets/vendors/js/select2.min.js') }}"></script> -->
 <script src="{{ asset('duraluxadmin/assets/vendors/js/select2-active.min.js') }}"></script>
 <script src="{{ asset('duraluxadmin/assets/vendors/js/sweetalert2.min.js') }}"></script>
 <script>

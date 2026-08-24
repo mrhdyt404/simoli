@@ -648,7 +648,7 @@
                     </div>
                     <div class="kpi-sub">
                         <span>Vol. Dihasilkan:</span>
-                        <strong style="color:#14532d;">{{ number_format($statPengaliran['vol_dihasilkan'] ?? 0, 0, ',', '.') }} m³</strong>
+                        <strong style="">{{ number_format($statPengaliran['vol_dihasilkan'] ?? 0, 0, ',', '.') }} m³</strong>
                     </div>
                 </div>
             </div>
@@ -668,7 +668,7 @@
                     </div>
                     <div class="kpi-sub">
                         <span>Luas Area:</span>
-                        <strong style="color:#14532d;">{{ number_format($statPengaliran['total_luas_area'] ?? 0, 1, ',', '.') }} Ha</strong>
+                        <strong style="">{{ number_format($statPengaliran['total_luas_area'] ?? 0, 1, ',', '.') }} Ha</strong>
                     </div>
                 </div>
             </div>
@@ -688,7 +688,7 @@
                     </div>
                     <div class="kpi-sub">
                         <span>Tenaga Kerja:</span>
-                        <strong style="color:#92400e;">{{ number_format($statPemeliharaan['total_hk'] ?? 0, 0, ',', '.') }} HK</strong>
+                        <strong style="">{{ number_format($statPemeliharaan['total_hk'] ?? 0, 0, ',', '.') }} HK</strong>
                     </div>
                 </div>
             </div>
@@ -708,9 +708,9 @@
                     </div>
                     <div class="kpi-sub">
                         <span>BBM Solar:</span>
-                        <strong style="color:#1e40af;">{{ number_format($statAlatBerat['total_bbm'] ?? 0, 0, ',', '.') }} Ltr</strong>
+                        <strong style="color:;">{{ number_format($statAlatBerat['total_bbm'] ?? 0, 0, ',', '.') }} Ltr</strong>
                         <span class="ms-2">HM:</span>
-                        <strong style="color:#1e40af;">{{ number_format($statAlatBerat['total_hm'] ?? 0, 1, ',', '.') }} Jam</strong>
+                        <strong style="color:;">{{ number_format($statAlatBerat['total_hm'] ?? 0, 1, ',', '.') }} Jam</strong>
                     </div>
                 </div>
             </div>
@@ -866,7 +866,7 @@
                                 <div style="display:flex;align-items:center;gap:10px;">
                                     <div class="pks-avatar" style="background:{{ $avatar }};">{{ $akro }}</div>
                                     <div>
-                                        <div style="font-weight:700;color:#14532d;font-size:13px;">{{ $item['pks']->nama }}</div>
+                                        <div style="font-weight:700;font-size:13px;">{{ $item['pks']->nama }}</div>
                                         <div style="font-size:10.5px;color:#6b7280;font-weight:600;">PKS {{ $akro }}</div>
                                     </div>
                                 </div>
@@ -893,7 +893,7 @@
                                 @endif
                             </td>
                             <td style="text-align:center;">
-                                <div style="font-size:12px;font-weight:800;color:#14532d;margin-bottom:6px;">{{ $done }} / 3</div>
+                                <div style="font-size:12px;font-weight:800;margin-bottom:6px;">{{ $done }} / 3</div>
                                 <div style="height:6px;border-radius:10px;background:rgba(22,163,74,0.1);overflow:hidden;">
                                     <div style="height:100%;border-radius:10px;width:{{ ($done/3)*100 }}%;
                                         background:{{ $done==3 ? 'linear-gradient(90deg,#16a34a,#4ade80)' : ($done>0 ? 'linear-gradient(90deg,#d97706,#fbbf24)' : '#ef4444') }};
@@ -1027,9 +1027,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }).render();
 
     /* ── 2. AREA: Trend 7 Hari ── */
-    var trendDays   = {!! json_encode(array_keys((array)($trend ?? []))) !!};
-    var trendPengal = {!! json_encode(array_column((array)($trend ?? []), 'pengaliran')) !!};
-    var trendPemeli = {!! json_encode(array_column((array)($trend ?? []), 'pemeliharaan')) !!};
+    var trendDays   = {!! json_encode(array_column((array)($trendData ?? []), 'label')) !!};
+    var trendPengal = {!! json_encode(array_column((array)($trendData ?? []), 'pengaliran')) !!};
+    var trendPemeli = {!! json_encode(array_column((array)($trendData ?? []), 'pemeliharaan')) !!};
 
     new ApexCharts(document.querySelector('#trendChart'), {
         series: [
@@ -1051,8 +1051,8 @@ document.addEventListener('DOMContentLoaded', function() {
             axisBorder: { show: false }, axisTicks: { show: false }
         },
         yaxis: {
-            min: 0, max: {{ $totalPks }},
-            tickAmount: {{ $totalPks }},
+            min: 0, max: {{ $totalPks > 0 ? $totalPks : 5 }},
+            tickAmount: {{ $totalPks > 0 ? $totalPks : 5 }},
             labels: { style: { colors: labelClr, fontSize: '11px', fontFamily: fontFam } }
         },
         grid: { borderColor: gridColor, strokeDashArray: 4 },
@@ -1065,8 +1065,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }).render();
 
     /* ── 3. COLUMN: Volume per PKS ── */
-    var pksNames = {!! json_encode(array_column((array)($statPerPks ?? []), 'akro')) !!};
-    var pksVols  = {!! json_encode(array_column((array)($statPerPks ?? []), 'vol_dialirkan')) !!};
+    var pksNames = {!! json_encode(array_column((array)($statsPerPks ?? []), 'akro')) !!};
+    var pksVols  = {!! json_encode(array_column((array)($statsPerPks ?? []), 'vol_dialirkan')) !!};
 
     new ApexCharts(document.querySelector('#volPerPksChart'), {
         series: [{ name: 'Vol. Dialirkan (m³)', data: pksVols }],
@@ -1089,9 +1089,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }).render();
 
     /* ── 4. STACKED: Pemeliharaan per PKS ── */
-    var maintFlat = {!! json_encode(array_column((array)($maintPerPks ?? []), 'flat_bed')) !!};
-    var maintLong = {!! json_encode(array_column((array)($maintPerPks ?? []), 'long_bed')) !!};
-    var maintPks  = {!! json_encode(array_column((array)($maintPerPks ?? []), 'akro')) !!};
+    var maintFlat = {!! json_encode(array_column((array)($statsPerPks ?? []), 'flat_bed_m')) !!};
+    var maintLong = {!! json_encode(array_column((array)($statsPerPks ?? []), 'long_bed')) !!};
+    var maintPks  = {!! json_encode(array_column((array)($statsPerPks ?? []), 'akro')) !!};
 
     new ApexCharts(document.querySelector('#maintPerPksChart'), {
         series: [

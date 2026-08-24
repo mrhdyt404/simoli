@@ -325,7 +325,7 @@
         justify-content: center;
         font-weight: 800;
         font-size: 12px;
-        color: #0f172a;
+        /* color: #0f172a; */
     }
 
     .pks-icon {
@@ -591,7 +591,7 @@
         box-shadow: 0 2px 4px rgba(5,46,22,.3);
     }
 
-    .pks-cell { display:flex;align-items:center;gap:6px;justify-content:center;font-weight:800;font-size:12px;color:#0f172a; }
+    .pks-cell { display:flex;align-items:center;gap:6px;justify-content:center;font-weight:800;font-size:12px;}
     .pks-icon { width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center; }
 
     .status-badge-container { display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;line-height:1.25;text-align:left; }
@@ -620,18 +620,155 @@
         color: #166534; border-top: 1px solid #bbf7d0; border-bottom: 1px solid #bbf7d0;
     }
 
+    /* === NAV TABS CUSTOM SYSTEM === */
+    .nav-tabs-custom {
+        border-bottom: 2px solid rgba(22, 163, 74, 0.15);
+        gap: 8px;
+        padding-bottom: 4px;
+        display: flex;
+        flex-wrap: wrap;
+    }
+    .nav-tabs-custom .nav-item {
+        margin-bottom: -2px;
+    }
+    .nav-tabs-custom .nav-link {
+        border: 1.5px solid #cbd5e1;
+        border-radius: 12px;
+        background: #ffffff;
+        color: #334155;
+        font-weight: 700;
+        font-size: 13px;
+        padding: 10px 18px;
+        transition: all 0.25s ease;
+        display: inline-flex;
+        align-items: center;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
+    }
+    .nav-tabs-custom .nav-link:hover {
+        border-color: #16a34a;
+        color: #15803d;
+        background: #f0fdf4;
+    }
+    .nav-tabs-custom .nav-link.active {
+        background: linear-gradient(135deg, #16a34a 0%, #15803d 100%) !important;
+        border-color: #16a34a !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 14px rgba(22, 163, 74, 0.35) !important;
+    }
+    .nav-tabs-custom .nav-link.active i {
+        color: #86efac !important;
+    }
+
     /* === DARK MODE === */
-    html.app-skin-dark .infografis-card { background:#0a2317;border-color:rgba(34,197,94,.15);box-shadow:0 10px 30px rgba(0,0,0,.3); }
-    html.app-skin-dark .info-header-bg { background:linear-gradient(180deg,#0e3b26,#052e16); }
-    html.app-skin-dark .info-title-main { color:#d1fae5; }
-    html.app-skin-dark .table-simoli-report { background:#0a2317;border-color:rgba(34,197,94,.1); }
-    html.app-skin-dark .table-simoli-report td { color:#d1fae5;border-color:rgba(34,197,94,.08); }
-    html.app-skin-dark .table-simoli-report tbody tr:nth-child(even) { background-color:#0e3b26; }
-    html.app-skin-dark .table-simoli-report tbody tr:hover { background-color:#0a2317; }
-    html.app-skin-dark .info-footer-bg { background:linear-gradient(180deg,#0a2317,#052e16);border-color:rgba(34,197,94,.1); }
-    html.app-skin-dark .filter-card { background:#0a2317 !important;border-color:rgba(34,197,94,.15) !important; }
-    html.app-skin-dark .stat-card { background:#0a2317 !important;border-color:rgba(34,197,94,.12) !important; }
-    html.app-skin-dark .pks-group-header { background:linear-gradient(135deg,#0e3b26,#052e16);border-color:rgba(34,197,94,.1); }
+    html.app-skin-dark .infografis-card,
+    html[data-bs-theme="dark"] .infografis-card,
+    [data-theme="dark"] .infografis-card { background:#0a2317;border-color:rgba(34,197,94,.15);box-shadow:0 10px 30px rgba(0,0,0,.3); }
+
+    html.app-skin-dark .info-header-bg,
+    html[data-bs-theme="dark"] .info-header-bg,
+    [data-theme="dark"] .info-header-bg { background:linear-gradient(180deg,#0e3b26,#052e16); }
+
+    html.app-skin-dark .info-title-main,
+    html[data-bs-theme="dark"] .info-title-main,
+    [data-theme="dark"] .info-title-main { color:#d1fae5; }
+
+    html.app-skin-dark .table-simoli-report,
+    html[data-bs-theme="dark"] .table-simoli-report,
+    [data-theme="dark"] .table-simoli-report { background:#0a2317;border-color:rgba(34,197,94,.1); }
+
+    html.app-skin-dark .table-simoli-report td,
+    html[data-bs-theme="dark"] .table-simoli-report td,
+    [data-theme="dark"] .table-simoli-report td { color:#d1fae5;border-color:rgba(34,197,94,.08); }
+
+    html.app-skin-dark .table-simoli-report tbody tr:nth-child(even),
+    html[data-bs-theme="dark"] .table-simoli-report tbody tr:nth-child(even),
+    [data-theme="dark"] .table-simoli-report tbody tr:nth-child(even) { background-color:#0e3b26; }
+
+    html.app-skin-dark .table-simoli-report tbody tr:hover,
+    html[data-bs-theme="dark"] .table-simoli-report tbody tr:hover,
+    [data-theme="dark"] .table-simoli-report tbody tr:hover { background-color:#0a2317; }
+
+    html.app-skin-dark .info-footer-bg,
+    html[data-bs-theme="dark"] .info-footer-bg,
+    [data-theme="dark"] .info-footer-bg { background:linear-gradient(180deg,#0a2317,#052e16);border-color:rgba(34,197,94,.1); }
+
+    html.app-skin-dark .filter-card,
+    html[data-bs-theme="dark"] .filter-card,
+    [data-theme="dark"] .filter-card { background:#0a2317 !important;border-color:rgba(34,197,94,.15) !important; }
+
+    html.app-skin-dark .stat-card,
+    html[data-bs-theme="dark"] .stat-card,
+    [data-theme="dark"] .stat-card { background:#0a2317 !important;border-color:rgba(34,197,94,.12) !important; }
+
+    html.app-skin-dark .pks-group-header,
+    html[data-bs-theme="dark"] .pks-group-header,
+    [data-theme="dark"] .pks-group-header { background:linear-gradient(135deg,#0e3b26,#052e16);border-color:rgba(34,197,94,.1); }
+
+    /* Nav Tabs Dark Mode */
+    html.app-skin-dark .nav-tabs-custom,
+    html[data-bs-theme="dark"] .nav-tabs-custom,
+    [data-theme="dark"] .nav-tabs-custom,
+    body.dark-mode .nav-tabs-custom {
+        border-bottom-color: rgba(34, 197, 94, 0.25);
+    }
+
+    html.app-skin-dark .nav-tabs-custom .nav-link,
+    html[data-bs-theme="dark"] .nav-tabs-custom .nav-link,
+    [data-theme="dark"] .nav-tabs-custom .nav-link,
+    body.dark-mode .nav-tabs-custom .nav-link {
+        background: #0a2317 !important;
+        border-color: rgba(34, 197, 94, 0.25) !important;
+        color: #a7f3d0 !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+    }
+
+    html.app-skin-dark .nav-tabs-custom .nav-link:hover,
+    html[data-bs-theme="dark"] .nav-tabs-custom .nav-link:hover,
+    [data-theme="dark"] .nav-tabs-custom .nav-link:hover,
+    body.dark-mode .nav-tabs-custom .nav-link:hover {
+        background: #0e3b26 !important;
+        border-color: #22c55e !important;
+        color: #6ee7b7 !important;
+    }
+
+    html.app-skin-dark .nav-tabs-custom .nav-link.active,
+    html[data-bs-theme="dark"] .nav-tabs-custom .nav-link.active,
+    [data-theme="dark"] .nav-tabs-custom .nav-link.active,
+    body.dark-mode .nav-tabs-custom .nav-link.active {
+        background: linear-gradient(135deg, #15803d 0%, #052e16 100%) !important;
+        border-color: #22c55e !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), 0 0 12px rgba(34, 197, 94, 0.4) !important;
+    }
+
+    html.app-skin-dark .nav-tabs-custom .nav-link.active i,
+    html[data-bs-theme="dark"] .nav-tabs-custom .nav-link.active i,
+    [data-theme="dark"] .nav-tabs-custom .nav-link.active i,
+    body.dark-mode .nav-tabs-custom .nav-link.active i {
+        color: #4ade80 !important;
+    }
+
+    .nav-tabs-custom .nav-link i.text-primary { color: #16a34a !important; }
+    .nav-tabs-custom .nav-link i.text-success { color: #0d9488 !important; }
+    
+    .nav-tabs-custom .nav-link.active i.text-primary,
+    .nav-tabs-custom .nav-link.active i.text-success {
+        color: #86efac !important;
+    }
+
+    html.app-skin-dark .nav-tabs-custom .nav-link i.text-primary,
+    html[data-bs-theme="dark"] .nav-tabs-custom .nav-link i.text-primary,
+    [data-theme="dark"] .nav-tabs-custom .nav-link i.text-primary,
+    body.dark-mode .nav-tabs-custom .nav-link i.text-primary {
+        color: #4ade80 !important;
+    }
+
+    html.app-skin-dark .nav-tabs-custom .nav-link i.text-success,
+    html[data-bs-theme="dark"] .nav-tabs-custom .nav-link i.text-success,
+    [data-theme="dark"] .nav-tabs-custom .nav-link i.text-success,
+    body.dark-mode .nav-tabs-custom .nav-link i.text-success {
+        color: #2dd4bf !important;
+    }
 
     /* === PRINT === */
     @media print {
@@ -1176,7 +1313,7 @@
                 </div>
                 <div class="table-responsive">
                     <table class="table table-hover mb-0">
-                        <thead class="table-light">
+                        <thead class="">
                             <tr>
                                 <th style="width: 40px;">No</th>
                                 <th>Tanggal</th>
@@ -1198,7 +1335,7 @@
                                 <td>{{ \Carbon\Carbon::parse($item->tanggal)->format('d/m/Y') }}</td>
                                 <td>{{ $item->jam_mulai }} - {{ $item->jam_selesai }}</td>
                                 <td>{{ $item->no_bak ?? '-' }}</td>
-                                <td><span class="badge bg-light text-dark border">{{ $item->blok ?? '-' }}</span></td>
+                                <td><span class="badge text-dark border">{{ $item->blok ?? '-' }}</span></td>
                                 <td class="text-end fw-semibold">{{ number_format($item->flat_bed, 0, ',', '.') }}</td>
                                 <td class="text-end">{{ number_format($item->vol_limbah_dihasilkan, 0, ',', '.') }}</td>
                                 <td class="text-end fw-bold text-success">{{ number_format($item->vol_limbah_dialirkan, 0, ',', '.') }}</td>
@@ -1208,7 +1345,7 @@
                             </tr>
                             @endforeach
                         </tbody>
-                        <tfoot class="table-light">
+                        <tfoot class="">
                             <tr>
                                 <td colspan="5" class="text-end fw-bold">Subtotal {{ $pksName }}</td>
                                 <td class="text-end fw-bold">{{ number_format($items->sum('flat_bed'), 0, ',', '.') }}</td>
@@ -1247,7 +1384,7 @@
 @endsection
 
 @section('scripts')
-<script src="{{ asset('duraluxadmin/assets/vendors/js/select2.min.js') }}"></script>
+<!-- <script src="{{ asset('duraluxadmin/assets/vendors/js/select2.min.js') }}"></script> -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
     $(document).ready(function() {

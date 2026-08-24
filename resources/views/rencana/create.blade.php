@@ -172,8 +172,8 @@
                 <select name="id_pks" class="form-control @error('id_pks') is-invalid @enderror" data-select2-selector="status" required>
                     <option value="">— Pilih PKS —</option>
                     @foreach($pksList as $pks)
-                    <option value="{{ $pks->ID }}" {{ old('id_pks') == $pks->ID ? 'selected' : '' }}>
-                        {{ $pks->NAMA }} ({{ $pks->AKRO }})
+                    <option value="{{ $pks->id_pks }}" {{ old('id_pks') == $pks->id_pks ? 'selected' : '' }}>
+                        {{ $pks->nama }} ({{ $pks->akro }})
                     </option>
                     @endforeach
                 </select>

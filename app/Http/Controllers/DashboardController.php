@@ -149,6 +149,7 @@ class DashboardController extends Controller
             $mq = Pemeliharaan::where('id_pks', $pks->id_pks)->whereBetween('tanggal', [$startOfMonth, $endOfMonth]);
             $statsPerPks[] = [
                 'pks' => $pks,
+                'akro' => $pks->akro ?? $pks->nama,
                 'vol_dialirkan' => $this->numericSum((clone $pq)->get(), 'vol_limbah_dialirkan'),
                 'flat_bed_p' => $this->numericSum((clone $pq)->get(), 'flat_bed'),
                 'luas_area' => $this->numericSum((clone $pq)->get(), 'luas_area'),
@@ -177,6 +178,7 @@ class DashboardController extends Controller
             ->where('tahun', $selectedYear);
 
         $monitoringRencana = [];
+        $rencanaMap = [];
         foreach ($pksList as $pks) {
             $hasRencana = (clone $rencanaTahunIni)
                 ->where('id_pks', $pks->id_pks)
@@ -186,6 +188,8 @@ class DashboardController extends Controller
                 'pks' => $pks,
                 'rencana' => $hasRencana,
             ];
+
+            $rencanaMap[$pks->id_pks] = $hasRencana;
         }
 
         $statRencana = [
@@ -242,6 +246,7 @@ class DashboardController extends Controller
             'statRencana',
             'statAlatBerat',
             'monitoringRencana',
+            'rencanaMap',
             'statsPerPks',
             'recentPengaliran',
             'recentPemeliharaan',

@@ -28,20 +28,42 @@ class ReportPemeliharaanController extends Controller
     {
         $user = Auth::user();
 
-        $pksList = Pks::orderBy('nama')->get();
+        // Official PKS sequence: TPU, TME, SPA, SGO, SBT, LDA, SGH, TAN, TER, STA, SRO, SIN
+        $pksOrder = ['TPU', 'TME', 'SPA', 'SGO', 'SBT', 'LDA', 'SGH', 'TAN', 'TER', 'STA', 'SRO', 'SIN'];
+
+        $pksList = Pks::get()->sortBy(function ($pks) use ($pksOrder) {
+            $idx = array_search(strtoupper($pks->akro ?? ''), $pksOrder);
+            return $idx === false ? 999 : $idx;
+        })->values();
 
         // Default filters
         $bulan = $request->input('bulan', date('m'));
         $tahun = $request->input('tahun', date('Y'));
 
-        $query = Pemeliharaan::with('pks')
-            ->whereMonth('tanggal', $bulan)
-            ->whereYear('tanggal', $tahun);
+        $query = Pemeliharaan::with('pks');
 
+        // Filter PKS
         if ($user->isUnit()) {
             $query->where('id_pks', $user->id_pks);
         } elseif ($request->filled('id_pks')) {
             $query->where('id_pks', $request->id_pks);
+        }
+
+        // Date range vs Month/Year filtering
+        if ($request->filled('dari_tanggal')) {
+            $query->whereDate('tanggal', '>=', $request->dari_tanggal);
+        }
+        if ($request->filled('sampai_tanggal')) {
+            $query->whereDate('tanggal', '<=', $request->sampai_tanggal);
+        }
+
+        if (!$request->filled('dari_tanggal') && !$request->filled('sampai_tanggal')) {
+            if ($bulan !== 'all' && !empty($bulan)) {
+                $query->whereMonth('tanggal', $bulan);
+            }
+            if ($tahun !== 'all' && !empty($tahun)) {
+                $query->whereYear('tanggal', $tahun);
+            }
         }
 
         // Filter jenis
@@ -49,11 +71,26 @@ class ReportPemeliharaanController extends Controller
             $query->where('jenis_pemeliharaan', $request->jenis);
         }
 
+        // Search filter (Blok / No Bak / Keterangan)
+        if ($request->filled('q')) {
+            $search = $request->q;
+            $query->where(function ($q) use ($search) {
+                $q->where('blok', 'like', "%{$search}%")
+                  ->orWhere('no_bak', 'like', "%{$search}%")
+                  ->orWhere('keterangan', 'like', "%{$search}%");
+            });
+        }
+
         $data = $query->orderBy('tanggal', 'asc')->orderBy('id_pks')->get();
 
-        // Group by PKS
+        // Group by PKS and sort groups by official PKS sequence
         $dataByPks = $data->groupBy(function ($item) {
             return $item->pks ? $item->pks->nama : 'N/A';
+        })->sortBy(function ($items, $pksName) use ($pksOrder) {
+            $firstItem = $items->first();
+            $akro = strtoupper($firstItem && $firstItem->pks ? ($firstItem->pks->akro ?? '') : '');
+            $idx = array_search($akro, $pksOrder);
+            return $idx === false ? 999 : $idx;
         });
 
         // Summary
@@ -72,6 +109,9 @@ class ReportPemeliharaanController extends Controller
 
         if ($years->isEmpty()) {
             $years = collect([date('Y')]);
+        }
+        if (!$years->contains(date('Y'))) {
+            $years->prepend(date('Y'));
         }
 
         return view('report.report-pemeliharaan', compact(

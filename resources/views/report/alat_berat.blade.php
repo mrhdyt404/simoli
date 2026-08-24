@@ -1,8 +1,8 @@
 @extends('layouts.simoli')
 
-@section('title', 'Report Monitoring Alat Berat')
-@section('page-title', 'Report Alat Berat')
-@section('page-description', 'Laporan Operasional Periodik & Jam Kerja (HM) Alat Berat Pengolahan Limbah')
+@section('title', 'Highlight Monitoring Alat Berat')
+@section('page-title', 'Report Monitoring Alat Berat')
+@section('page-description', 'Highlight Laporan Operasional, Hasil Pekerjaan & Koordinat GPS Alat Berat')
 
 @section('breadcrumb')
     <li>Report</li>
@@ -12,6 +12,18 @@
 
 @php
     $namaBulan = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    
+    // Group data by date for Highlight format
+    $dataByTanggal = $data->groupBy(function($item) {
+        return $item->tanggal;
+    });
+
+    // Start & End date for period pill
+    $firstDate = $data->min('tanggal');
+    $lastDate = $data->max('tanggal');
+    
+    $startDateStr = $firstDate ? \Carbon\Carbon::parse($firstDate)->translatedFormat('d F Y') : '01 ' . $namaBulan[(int)$bulan] . ' ' . $tahun;
+    $endDateStr = $lastDate ? \Carbon\Carbon::parse($lastDate)->translatedFormat('d F Y') : \Carbon\Carbon::createFromDate($tahun, $bulan, 1)->endOfMonth()->translatedFormat('d F Y');
 @endphp
 
 @section('styles')
@@ -19,7 +31,7 @@
 <link rel="stylesheet" type="text/css" href="{{ asset('duraluxadmin/assets/vendors/css/select2-theme.min.css') }}" />
 <style>
     /* ================================================================
-       REPORT ALAT BERAT — PTPN GREEN THEME
+       REPORT ALAT BERAT — PTPN GREEN GLOSSY & GRADIENT THEME
        ================================================================ */
     @keyframes fadeUpCard {
         from { opacity:0; transform:translateY(12px); }
@@ -28,39 +40,110 @@
 
     .print-only { display: none; }
 
-    /* === HEADER CARD === */
-    .report-header-card {
+    /* === INFOGRAFIS HIGHLIGHT HEADER BANNER (PTPN GREEN GRADIENT) === */
+    .highlight-banner {
+        background: linear-gradient(135deg, #052e16 0%, #0a2317 35%, #166534 75%, #16a34a 100%);
         border-radius: 20px;
-        background: linear-gradient(135deg, #052e16 0%, #0a2317 40%, #166534 80%, #16a34a 100%);
-        border: 1px solid rgba(34,197,94,.25);
-        box-shadow: 0 10px 30px rgba(0,0,0,.12);
+        padding: 24px 30px;
         color: #ffffff;
-        padding: 24px 28px;
         position: relative;
         overflow: hidden;
+        box-shadow: 0 14px 35px rgba(5,46,22,.3);
         margin-bottom: 24px;
-        animation: fadeUpCard .4s ease-out;
+        border: 1px solid rgba(34,197,94,.3);
     }
 
-    .report-header-card::after {
-        content:'';position:absolute;top:-60px;right:-60px;
-        width:220px;height:220px;border-radius:50%;
-        background:radial-gradient(circle,rgba(34,197,94,.2) 0%,transparent 70%);
-        pointer-events:none;
+    .highlight-banner::before {
+        content: '';
+        position: absolute;
+        top: -100px;
+        right: -100px;
+        width: 320px;
+        height: 320px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(134,239,172,.2) 0%, transparent 70%);
+        pointer-events: none;
     }
 
-    /* === STAT CARDS === */
+    .highlight-title-badge {
+        display: inline-block;
+        background: rgba(255,255,255,.15);
+        backdrop-filter: blur(10px);
+        padding: 4px 14px;
+        border-radius: 50px;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: #86efac;
+        margin-bottom: 8px;
+        border: 1px solid rgba(255,255,255,.2);
+    }
+
+    .highlight-title-main {
+        font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+        font-size: clamp(24px, 3vw + 12px, 38px);
+        font-weight: 900;
+        line-height: 1.05;
+        letter-spacing: -0.5px;
+        text-transform: uppercase;
+        color: #ffffff;
+        text-shadow: 0 3px 10px rgba(0,0,0,.3);
+        margin-bottom: 12px;
+    }
+
+    .highlight-title-main span {
+        color: #fbbf24;
+        text-shadow: 0 0 20px rgba(251,191,36,.5);
+    }
+
+    .period-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: linear-gradient(135deg, #d4a017 0%, #b45309 100%);
+        color: #ffffff;
+        padding: 8px 18px;
+        border-radius: 50px;
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        box-shadow: 0 4px 15px rgba(180,83,9,.35);
+        border: 1px solid rgba(255,255,255,.3);
+    }
+
+    /* Ribbon badge top right */
+    .motto-ribbon {
+        background: linear-gradient(135deg, #052e16 0%, #166534 100%);
+        border: 2px solid #fbbf24;
+        color: #ffffff;
+        padding: 10px 16px;
+        border-radius: 12px;
+        text-align: center;
+        box-shadow: 0 6px 20px rgba(0,0,0,.25);
+        transform: rotate(1deg);
+    }
+    .motto-ribbon-text {
+        font-family: 'Outfit', sans-serif;
+        font-size: 12px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #fbbf24;
+        line-height: 1.2;
+    }
+
+    /* === STAT KPI CARDS === */
     .rab-kpi {
         background: #ffffff;
-        border-radius: 18px;
-        border: 1px solid rgba(22,163,74,.1);
-        box-shadow: 0 2px 12px rgba(22,163,74,.06);
-        padding: 18px;
+        border-radius: 16px;
+        border: 1px solid rgba(22,163,74,.12);
+        box-shadow: 0 2px 10px rgba(22,163,74,.05);
+        padding: 16px;
         height: 100%;
-        transition: all .25s ease;
-        animation: fadeUpCard .4s ease-out;
+        transition: all .2s ease;
     }
-    .rab-kpi:hover { transform: translateY(-3px); box-shadow: 0 10px 26px rgba(22,163,74,.12); }
+    .rab-kpi:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(22,163,74,.12); }
 
     /* === FILTER CARD === */
     .filter-card {
@@ -71,263 +154,436 @@
         padding: 20px;
         margin-bottom: 24px;
     }
-
     .filter-card .form-control,
     .filter-card .form-select {
         border-radius: 12px;
         border: 1.5px solid #e5e7eb;
         font-size: 13px;
         padding: 9px 14px;
-        transition: all .2s ease;
         background: #f9fafb;
     }
 
-    .filter-card .form-control:focus,
-    .filter-card .form-select:focus {
-        border-color: rgba(22,163,74,.4);
-        background: #fff;
-        box-shadow: 0 0 0 3px rgba(34,197,94,.08);
-    }
-
-    .filter-card label.form-label {
-        font-size: 11px;
-        font-weight: 700;
-        color: #6b7280;
-        text-transform: uppercase;
-        letter-spacing: .4px;
-        margin-bottom: 6px;
-        display: block;
-    }
-
-    .filter-card .select2-container--default .select2-selection--single {
-        height: 42px; border-radius: 12px; border: 1.5px solid #e5e7eb;
-        background: #f9fafb; padding: 6px 12px;
-    }
-    .filter-card .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 28px; font-size: 13px; }
-    .filter-card .select2-container--default .select2-selection--single .select2-selection__arrow { height: 40px; }
-
-    /* === DATA TABLE SECTION === */
-    .section-card {
+    /* === HIGHLIGHT TABLE DESIGN (PTPN Green Gradient Accent Headers) === */
+    .highlight-table-card {
         background: #ffffff;
-        border-radius: 18px;
-        border: 1px solid rgba(22,163,74,.1);
-        box-shadow: 0 2px 12px rgba(22,163,74,.06);
+        border-radius: 20px;
+        border: 1px solid rgba(22,163,74,.15);
+        box-shadow: 0 4px 20px rgba(22,163,74,.08);
         overflow: hidden;
+        margin-bottom: 24px;
     }
 
-    .pks-group-header {
-        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-        padding: 12px 20px;
-        font-weight: 800;
-        font-size: 13px;
-        color: #166534;
-        border-top: 1px solid #bbf7d0;
-        border-bottom: 1px solid #bbf7d0;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-
-    .report-table {
+    .highlight-table {
         width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
-        font-size: clamp(11px, .65vw+8.5px, 12.5px);
+        border-collapse: collapse;
+        font-size: 12px;
     }
 
-    .report-table thead th {
-        background: #052e16;
-        color: #86efac;
-        font-size: 10px;
-        font-weight: 700;
+    .highlight-table thead th {
+        padding: 14px 12px;
+        font-weight: 800;
+        font-size: 11px;
         text-transform: uppercase;
-        letter-spacing: .5px;
-        padding: 11px 14px;
-        border: none;
+        letter-spacing: 0.5px;
+        color: #ffffff;
+        text-align: center;
+        border: 1px solid rgba(255,255,255,.2);
         white-space: nowrap;
     }
 
-    .report-table tbody td {
-        padding: 10px 14px;
-        border-bottom: 1px solid rgba(22,163,74,.07);
+    /* Color coded headers - Dashboard PTPN Palette */
+    .th-tanggal   { background: #052e16 !important; color: #86efac !important; } /* Dark Forest */
+    .th-asal      { background: #14532d !important; } /* Deep PTPN Green */
+    .th-kerja     { background: #0d9488 !important; } /* Teal */
+    .th-pekerjaan { background: #b45309 !important; } /* Amber / Gold */
+    .th-lokasi    { background: #166534 !important; } /* PTPN Emerald */
+    .th-hasil     { background: #16a34a !important; } /* Bright PTPN Green */
+
+    .highlight-table tbody td {
+        padding: 10px 12px;
+        border: 1px solid #e2e8f0;
         vertical-align: middle;
+        font-size: 12px;
     }
 
-    .report-table tbody tr:hover td { background: rgba(22,163,74,.03); }
-
-    .report-table tfoot td {
+    .td-tanggal {
         background: #f0fdf4;
-        border-top: 2px solid #bbf7d0;
         font-weight: 800;
         color: #14532d;
-        padding: 11px 14px;
-        font-size: 12.5px;
+        text-align: center;
+        vertical-align: middle !important;
+        font-size: 12px;
+        white-space: nowrap;
+        border-right: 2px solid #bbf7d0 !important;
     }
 
-    .empty-report { padding: 60px 20px; text-align: center; }
-    .empty-report i { font-size: 56px; color: #d1d5db; margin-bottom: 12px; }
+    /* PKS Akronim Badge Pills */
+    .badge-pks-asal {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 800;
+        background: linear-gradient(135deg, #052e16 0%, #166534 100%);
+        color: #86efac;
+        border: 1px solid #22c55e;
+        text-align: center;
+        min-width: 48px;
+    }
 
-    /* Dark mode */
+    .badge-pks-kerja {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 800;
+        background: #ccfbf1;
+        color: #0f766e;
+        border: 1px solid #5eead4;
+        text-align: center;
+        min-width: 48px;
+    }
+
+    .badge-pks-off {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 800;
+        background: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #fca5a5;
+        text-align: center;
+        min-width: 48px;
+    }
+
+    /* GPS Interactive Links */
+    .gps-link-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 9px;
+        border-radius: 50px;
+        background: #f0fdf4;
+        color: #15803d;
+        border: 1px solid #86efac;
+        font-size: 10px;
+        font-weight: 700;
+        text-decoration: none;
+        transition: all .2s ease;
+        margin-top: 4px;
+    }
+    .gps-link-pill:hover {
+        background: #16a34a;
+        color: #ffffff;
+        border-color: #15803d;
+        transform: translateY(-1px);
+        box-shadow: 0 3px 8px rgba(22,163,74,.25);
+    }
+
+    .gps-link-akhir {
+        background: #e0f2fe;
+        color: #0369a1;
+        border-color: #7dd3fc;
+    }
+    .gps-link-akhir:hover {
+        background: #0284c7;
+        color: #ffffff;
+        border-color: #0369a1;
+        box-shadow: 0 3px 8px rgba(2,132,199,.25);
+    }
+
+    .text-hasil {
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    /* Footer AKHLAK */
+    .akhlak-footer {
+        background: linear-gradient(135deg, #052e16 0%, #14532d 100%);
+        color: #ffffff;
+        padding: 12px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 11px;
+        font-weight: 700;
+        border-radius: 0 0 20px 20px;
+    }
+    .akhlak-tag { color: #86efac; font-weight: 800; letter-spacing: 0.5px; }
+
+    /* Dark Mode */
+    html.app-skin-dark .highlight-table-card,
     html.app-skin-dark .filter-card,
-    html.app-skin-dark .rab-kpi,
-    html.app-skin-dark .section-card { background:#0a2317 !important; border-color:rgba(34,197,94,.15) !important; }
-    html.app-skin-dark .filter-card .form-control,
-    html.app-skin-dark .filter-card .form-select { background:#0e3b26;border-color:rgba(34,197,94,.2);color:#d1fae5; }
-    html.app-skin-dark .pks-group-header { background:linear-gradient(135deg,#0e3b26,#052e16);border-color:rgba(34,197,94,.15);color:#86efac; }
-    html.app-skin-dark .report-table thead th { background:#021a0b !important; }
-    html.app-skin-dark .report-table tbody td { border-color:rgba(34,197,94,.07) !important; color:#d1fae5; }
-    html.app-skin-dark .report-table tfoot td { background:#0e3b26;border-color:rgba(34,197,94,.2);color:#86efac; }
-
-    /* === PRINT === */
+    html.app-skin-dark .rab-kpi { background: #0a2317 !important; border-color: rgba(34,197,94,.15) !important; }
+    html.app-skin-dark .highlight-table tbody td { border-color: rgba(34,197,94,.1) !important; color: #d1fae5; }
+    html.app-skin-dark .td-tanggal { background: #0e3b26 !important; color: #86efac !important; border-right-color: rgba(34,197,94,.2) !important; }
+    html.app-skin-dark .gps-link-pill { background: #0e3b26; color: #86efac; border-color: rgba(34,197,94,.3); }
+    html.app-skin-dark .header-oprasional{background: #0e3b26 !important;}
+    /* ================================================================
+       PRINT STYLES — PTPN Green Infografis Print Format
+       ================================================================ */
     @media print {
-        @page { size: A4 landscape; margin: 6mm 10mm 10mm 10mm; }
-        html, body { width:100% !important;margin:0 !important;padding:0 !important;background:#fff !important;color:#000 !important;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important; }
+        @page { size: A4 landscape; margin: 4mm 6mm 6mm 6mm; }
+        html, body { width: 100% !important; margin: 0 !important; padding: 0 !important; background: #fff !important; color: #000 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         .nxl-navigation, .nxl-header, .filter-card, .no-print,
         .page-hero-strip, .page-header, .breadcrumb, .nxl-footer,
-        .report-header-card, .rab-kpi, .btn, .btn-ptpn { display:none !important; }
-        .main-content, .nxl-container, .nxl-content { padding:0 !important;margin:0 !important; }
-        .print-only { display:block !important; }
-        .print-report-header { border-bottom:1px solid #000;margin-bottom:12px;padding-bottom:6px; }
-        .print-report-header-table { width:100%;border-collapse:collapse; }
-        .print-report-header-table td { border:none !important;vertical-align:middle; }
-        .print-report-table { width:100%;border-collapse:collapse;margin-top:8px; }
-        .print-report-table th, .print-report-table td { border:1px solid #000 !important;padding:4px 6px;font-size:8.5px; }
-        .print-report-table th { background:#f2f2f2 !important;font-weight:bold;text-align:center; }
-        .print-subtotal-row td { background:#f9f9f9 !important;font-weight:bold; }
+        .rab-kpi, .btn, .btn-ptpn, .nav-tabs-custom { display: none !important; }
+        .main-content, .nxl-container, .nxl-content { padding: 0 !important; margin: 0 !important; }
+        .print-only { display: block !important; }
+
+        .print-banner {
+            background: linear-gradient(135deg, #052e16 0%, #166534 60%, #16a34a 100%) !important;
+            color: #ffffff !important;
+            padding: 14px 20px !important;
+            border-radius: 12px !important;
+            margin-bottom: 10px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        .print-title {
+            font-size: 22px !important;
+            font-weight: 900 !important;
+            text-transform: uppercase !important;
+            color: #ffffff !important;
+            margin: 0 !important;
+        }
+        .print-title span { color: #fbbf24 !important; }
+
+        .print-period-pill {
+            background: #b45309 !important;
+            color: #ffffff !important;
+            padding: 4px 12px !important;
+            border-radius: 30px !important;
+            font-size: 11px !important;
+            font-weight: 800 !important;
+            display: inline-block !important;
+            margin-top: 4px !important;
+        }
+
+        .print-table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            margin-top: 6px !important;
+        }
+        .print-table th {
+            padding: 7px 6px !important;
+            font-size: 9.5px !important;
+            font-weight: 800 !important;
+            text-transform: uppercase !important;
+            color: #ffffff !important;
+            text-align: center !important;
+            border: 1px solid #000 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        .print-table td {
+            border: 1px solid #94a3b8 !important;
+            padding: 5px 7px !important;
+            font-size: 9.5px !important;
+            color: #000000 !important;
+            vertical-align: middle !important;
+        }
+        .print-td-tanggal {
+            background: #f0fdf4 !important;
+            font-weight: 800 !important;
+            color: #14532d !important;
+            text-align: center !important;
+            font-size: 9.5px !important;
+            white-space: nowrap !important;
+            border-right: 2px solid #16a34a !important;
+        }
+
+        .print-akhlak-footer {
+            background: #052e16 !important;
+            color: #ffffff !important;
+            padding: 6px 14px !important;
+            font-size: 9px !important;
+            font-weight: 700 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            margin-top: 10px !important;
+            border-radius: 6px !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        .gps-link-pill {
+            text-decoration: none !important;
+            color: #15803d !important;
+            border: 1px solid #86efac !important;
+            background: #f0fdf4 !important;
+            padding: 2px 5px !important;
+            font-size: 8.5px !important;
+        }
     }
 </style>
 @endsection
 
 @section('content')
 
-{{-- Print Header --}}
-<div class="print-only print-report-header">
-    <table class="print-report-header-table">
-        <tr>
-            <td style="width:70px;">
-                <img src="{{ asset('logo/Icon%20SIMOLI.png') }}" style="width:55px;height:auto;" alt="SIMOLI">
-            </td>
-            <td style="text-align:center;">
-                <h3 style="margin:0;font-size:15px;font-weight:800;text-transform:uppercase;">Report Monitoring Alat Berat SIMOLI</h3>
-                <div style="font-size:11px;font-weight:700;">PT. Perkebunan Nusantara IV Regional III</div>
-                <div style="font-size:10px;">Sistem Monitoring Limbah Land Aplikasi</div>
-            </td>
-            <td style="width:110px;text-align:right;font-size:10px;">
-                <div><strong>Periode:</strong></div>
-                <div>{{ $namaBulan[(int)$bulan] }} {{ $tahun }}</div>
-            </td>
-        </tr>
-    </table>
-</div>
-
+{{-- ================================================================
+     PRINT CONTAINER (PTPN Green Infografis Print Format)
+     ================================================================ --}}
 <div class="print-only">
-    <p style="font-size:10px;margin-bottom:10px;">Berikut report monitoring operasional alat berat bulan {{ $namaBulan[(int)$bulan] }} {{ $tahun }} per PKS:</p>
+    <div class="print-banner">
+        <div>
+            <div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:#86efac;text-transform:uppercase;">
+                REPORT MONITORING EXCAVATOR &amp; ALAT BERAT — PTPN IV REGIONAL III
+            </div>
+            <div class="print-title">
+                HIGHLIGHT <span>EXCAVATOR &amp; ALAT BERAT</span>
+            </div>
+            <div class="print-period-pill">
+                📅 {{ strtoupper($startDateStr) }} – {{ strtoupper($endDateStr) }}
+            </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:14px;">
+            <div style="background:#052e16;border:2px solid #fbbf24;color:#fbbf24;padding:6px 12px;border-radius:8px;text-align:center;font-size:9.5px;font-weight:900;text-transform:uppercase;">
+                KOMPAK KERJA KERAS<br>HASIL JELAS!
+            </div>
+        </div>
+    </div>
 
     @if($data->count() > 0)
-        @foreach($dataByPks as $pksName => $items)
-        <div style="margin-top:14px;margin-bottom:16px;">
-            <div style="font-size:11px;font-weight:800;margin-bottom:4px;text-transform:uppercase;">PKS {{ $pksName }}</div>
-            <table class="print-report-table">
-                <thead>
-                    <tr>
-                        <th style="width:25px;">No</th>
-                        <th>Tanggal</th>
-                        <th>Kode Alat</th>
-                        <th>Nama Alat</th>
-                        <th>Operator</th>
-                        <th>Kegiatan &amp; Lokasi</th>
-                        <th>Bed</th>
-                        <th>HM Awal</th>
-                        <th>HM Akhir</th>
-                        <th>Total HM</th>
-                        <th>BBM (L)</th>
-                        <th>Kondisi</th>
-                        <th>Catatan</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($items as $j => $item)
-                    <tr>
-                        <td style="text-align:center;">{{ $j + 1 }}</td>
-                        <td>{{ \Carbon\Carbon::parse($item->tanggal)->format('d/m/Y') }}</td>
-                        <td>{{ $item->alatBerat ? $item->alatBerat->kode_alat : '-' }}</td>
-                        <td>{{ $item->alatBerat ? $item->alatBerat->nama_alat : '-' }}</td>
-                        <td>{{ $item->operator }}</td>
-                        <td>
-                            {{ $item->kegiatan }} {{ $item->lokasi_blok ? '('.$item->lokasi_blok.')' : '' }}
-                            @php
-                                $latAwal = $item->latitude_awal ?? $item->latitude;
-                                $longAwal = $item->longitude_awal ?? $item->longitude;
-                                $latAkhir = $item->latitude_akhir;
-                                $longAkhir = $item->longitude_akhir;
-                            @endphp
-                            @if(($latAwal && $longAwal) || ($latAkhir && $longAkhir))
-                                <div style="font-size: 8px; color: #4b5563; margin-top: 2px;">
-                                    @if($latAwal && $longAwal)<div>GPS Awal: {{ $latAwal }}, {{ $longAwal }}</div>@endif
-                                    @if($latAkhir && $longAkhir)<div>GPS Akhir: {{ $latAkhir }}, {{ $longAkhir }}</div>@endif
-                                </div>
-                            @endif
+    <table class="print-table">
+        <thead>
+            <tr>
+                <th class="th-tanggal" style="width:120px;">📅 TANGGAL</th>
+                <th class="th-asal" style="width:75px;">ASAL EXC.</th>
+                <th class="th-kerja" style="width:75px;">KERJA EXC.</th>
+                <th class="th-pekerjaan">⚙️ PEKERJAAN</th>
+                <th class="th-lokasi" style="min-width:160px;">📍 LOKASI &amp; GPS KOORDINAT</th>
+                <th class="th-hasil" style="width:150px;">✔️ HASIL PEKERJAAN</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($dataByTanggal as $tgl => $itemsOnDate)
+                @foreach($itemsOnDate as $idx => $item)
+                <tr>
+                    @if($idx === 0)
+                        <td rowspan="{{ $itemsOnDate->count() }}" class="print-td-tanggal">
+                            <i class="feather-calendar me-1"></i>
+                            {{ strtoupper(\Carbon\Carbon::parse($tgl)->translatedFormat('j F Y')) }}
                         </td>
-                        <td style="text-align:center;">F: {{ $item->flat_bed ?? 0 }}<br>L: {{ $item->long_bed ?? 0 }}</td>
-                        <td style="text-align:center;">{{ $item->hm_awal_formatted }}</td>
-                        <td style="text-align:center;">{{ $item->hm_akhir_formatted }}</td>
-                        <td style="text-align:right;">{{ $item->total_hm_formatted }}</td>
-                        <td style="text-align:right;">{{ number_format($item->bbm_liter, 0) }}</td>
-                        <td style="text-align:center;">{{ $item->kondisi_alat }}</td>
-                        <td>{{ $item->catatan ?? '-' }}</td>
-                    </tr>
-                    @endforeach
-                </tbody>
-                <tfoot>
-                    <tr class="print-subtotal-row">
-                        <td colspan="6" style="text-align:right;">Subtotal {{ $pksName }}</td>
-                        <td style="text-align:center;">F: {{ $items->sum('flat_bed') }}<br>L: {{ $items->sum('long_bed') }}</td>
-                        <td colspan="2"></td>
-                        <td style="text-align:right;">{{ \App\Models\MonitoringAlatBerat::formatHm($items->sum('total_hm'), true) }}</td>
-                        <td style="text-align:right;">{{ number_format($items->sum('bbm_liter'), 0) }} L</td>
-                        <td colspan="2"></td>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
-        @endforeach
+                    @endif
 
-        <div class="print-footer">
-            <div class="print-footer-left">Dokumen internal SIMOLI - PT. Perkebunan Nusantara V</div>
-            <div class="print-footer-right">Dicetak: {{ now()->translatedFormat('d F Y H:i') }}</div>
-        </div>
+                    <td style="text-align:center;font-weight:800;">
+                        <span class="badge-pks-asal">{{ $item->alatBerat && $item->alatBerat->pks ? $item->alatBerat->pks->akro : ($item->pks ? $item->pks->akro : 'N/A') }}</span>
+                    </td>
+
+                    <td style="text-align:center;font-weight:800;">
+                        @if($item->kondisi_alat == 'Breakdown' || $item->kegiatan == 'OFF')
+                            <span class="badge-pks-off">OFF</span>
+                        @else
+                            <span class="badge-pks-kerja">{{ $item->pks ? $item->pks->akro : '-' }}</span>
+                        @endif
+                    </td>
+
+                    <td style="font-weight:600;">
+                        {{ $item->kegiatan }}
+                    </td>
+
+                    <td>
+                        <div style="font-weight:700;">{{ $item->lokasi_blok ?? ($item->kegiatan == 'OFF' ? 'OFF' : '-') }}</div>
+                        @php
+                            $latAwal = $item->latitude_awal ?? $item->latitude;
+                            $longAwal = $item->longitude_awal ?? $item->longitude;
+                            $latAkhir = $item->latitude_akhir;
+                            $longAkhir = $item->longitude_akhir;
+                        @endphp
+                        @if(($latAwal && $longAwal) || ($latAkhir && $longAkhir))
+                            <div style="margin-top:2px;">
+                                @if($latAwal && $longAwal)
+                                    <a href="{{ $item->google_maps_url_awal }}" target="_blank" class="gps-link-pill">
+                                        GPS Awal: {{ number_format((float)$latAwal, 4) }}, {{ number_format((float)$longAwal, 4) }}
+                                    </a>
+                                @endif
+                                @if($latAkhir && $longAkhir)
+                                    <a href="{{ $item->google_maps_url_akhir }}" target="_blank" class="gps-link-pill gps-link-akhir">
+                                        GPS Akhir: {{ number_format((float)$latAkhir, 4) }}, {{ number_format((float)$longAkhir, 4) }}
+                                    </a>
+                                @endif
+                            </div>
+                        @endif
+                    </td>
+
+                    <td style="font-weight:700;">
+                        @if($item->flat_bed || $item->long_bed)
+                            @if($item->flat_bed > 0) {{ $item->flat_bed }} FB @endif
+                            @if($item->long_bed > 0) {{ $item->long_bed }} LB @endif
+                        @elseif($item->kondisi_alat == 'Perlu Perbaikan')
+                            <span style="color:#b45309;">Perbaikan</span>
+                        @elseif($item->kondisi_alat == 'Breakdown')
+                            <span style="color:#dc2626;">Breakdown</span>
+                        @else
+                            {{ $item->catatan ?? '-' }}
+                        @endif
+                    </td>
+                </tr>
+                @endforeach
+            @endforeach
+        </tbody>
+    </table>
+
+    <div class="print-akhlak-footer">
+        <div><span style="color:#86efac;">#AKHLAK</span> - AMANAH, KOMPETEN, HARMONIS, LOYAL, ADAPTIF, KOLABORATIF</div>
+        <div>{{ $tahun }}, PT. PERKEBUNAN NUSANTARA IV REGIONAL III</div>
+    </div>
     @else
-        <div style="padding:20px;text-align:center;">Tidak ada data monitoring alat berat pada periode ini.</div>
+        <div style="padding:20px;text-align:center;font-size:11px;">Tidak ada data monitoring alat berat pada periode ini.</div>
     @endif
 </div>
 
-{{-- Header Banner Card Web --}}
-<div class="report-header-card no-print">
+
+{{-- ================================================================
+     WEB CONTAINER (Highlight Header PTPN Green + Filter + Interactive Table)
+     ================================================================ --}}
+
+{{-- Infografis Highlight Banner (PTPN Green Theme) --}}
+<div class="highlight-banner no-print">
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
         <div>
-            <h3 style="font-family:'Outfit',sans-serif;font-weight:900;margin:0 0 4px;font-size:22px;color:#ffffff;display:flex;align-items:center;gap:10px;">
-                <i class="feather-truck" style="color:#86efac;font-size:24px;"></i>
-                Report Monitoring Alat Berat
-            </h3>
-            <p style="margin:0;color:rgba(209,250,229,.9);font-size:13px;font-weight:600;">
-                Laporan operasional periodik &amp; jam kerja (HM) alat berat bulan <strong>{{ $namaBulan[(int)$bulan] }} {{ $tahun }}</strong>
-            </p>
+            <div class="highlight-title-badge">
+                <i class="feather-truck me-1"></i> REPORT MONITORING ALAT BERAT &bull; PTPN IV
+            </div>
+            <h1 class="highlight-title-main">
+                HIGHLIGHT <span>EXCAVATOR &amp; ALAT BERAT</span>
+            </h1>
+            <div class="period-pill">
+                <i class="feather-calendar"></i>
+                <span>{{ strtoupper($startDateStr) }} – {{ strtoupper($endDateStr) }}</span>
+            </div>
         </div>
-        <div>
-            <button onclick="window.print()" class="btn-ptpn" style="padding:10px 18px;font-size:13px;border-radius:12px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#ffffff;font-weight:800;">
-                <i class="feather-printer" style="font-size:14px;"></i>
-                Cetak Landscape
-            </button>
+
+        <div class="d-flex align-items-center gap-3">
+            <div class="motto-ribbon d-none d-md-block">
+                <div class="motto-ribbon-text">
+                    KOMPAK KERJA KERAS<br>HASIL JELAS!
+                </div>
+            </div>
+            <div>
+                <button onclick="window.print()" class="btn-ptpn" style="padding:12px 20px;font-size:13.5px;border-radius:14px;background:linear-gradient(135deg,#d4a017,#b45309);color:#ffffff;font-weight:900;box-shadow:0 6px 20px rgba(180,83,9,.4);border:none;">
+                    <i class="feather-printer me-1" style="font-size:16px;"></i>
+                    Cetak Landscape Infografis
+                </button>
+            </div>
         </div>
     </div>
 </div>
 
-{{-- Stat KPI Cards Web --}}
+{{-- Stat KPI Cards --}}
 <div class="row g-3 mb-4 no-print">
     <div class="col-xl-3 col-sm-6">
         <div class="rab-kpi">
             <div class="d-flex align-items-center gap-3">
-                <div style="width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;">
+                <div style="width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;">
                     <i class="feather-clock"></i>
                 </div>
                 <div>
@@ -340,7 +596,7 @@
     <div class="col-xl-3 col-sm-6">
         <div class="rab-kpi">
             <div class="d-flex align-items-center gap-3">
-                <div style="width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;background:#f0fdfa;color:#0d9488;border:1px solid #99f6e4;">
+                <div style="width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;background:#f0fdfa;color:#0d9488;border:1px solid #99f6e4;">
                     <i class="feather-grid"></i>
                 </div>
                 <div>
@@ -353,7 +609,7 @@
     <div class="col-xl-3 col-sm-6">
         <div class="rab-kpi">
             <div class="d-flex align-items-center gap-3">
-                <div style="width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;background:#fffbeb;color:#b45309;border:1px solid #fde68a;">
+                <div style="width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;background:#fffbeb;color:#b45309;border:1px solid #fde68a;">
                     <i class="feather-droplet"></i>
                 </div>
                 <div>
@@ -366,7 +622,7 @@
     <div class="col-xl-3 col-sm-6">
         <div class="rab-kpi">
             <div class="d-flex align-items-center gap-3">
-                <div style="width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;">
+                <div style="width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;">
                     <i class="feather-activity"></i>
                 </div>
                 <div>
@@ -449,130 +705,136 @@
     </form>
 </div>
 
-<!-- Table Report Web -->
-<div class="section-card no-print mb-4">
-    <div style="padding:16px 20px;border-bottom:1px solid rgba(22,163,74,.08);display:flex;align-items:center;justify-content:space-between;">
+<!-- Highlight Table Web (Identik Format Gambar + PTPN Green Palette & GPS Links) -->
+<div class="highlight-table-card no-print">
+    <div class="header-oprasional" style="padding:16px 20px;border-bottom:1px solid rgba(22,163,74,.15);display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#f0fdf4 0%,#dcfce7 100%);">
         <h4 style="font-family:'Outfit',sans-serif;font-size:15px;font-weight:800;color:#14532d;margin:0;display:flex;align-items:center;gap:8px;">
-            <i class="feather-truck" style="color:#16a34a;font-size:18px;"></i>
-            Laporan Operasional Periodik — {{ $namaBulan[(int)$bulan] }} {{ $tahun }}
+            <i class="feather-calendar" style="color:#16a34a;font-size:18px;"></i>
+            Highlight Operasional &amp; Koordinat GPS per Tanggal — {{ $namaBulan[(int)$bulan] }} {{ $tahun }}
         </h4>
-        <span class="mod-pill mod-pill-ok" style="font-size:10.5px;">
-            <i class="feather-database" style="font-size:11px;"></i>
-            {{ $summary['total_kegiatan'] }} Total Record
+        <span class="mod-pill mod-pill-ok" style="font-size:11px;">
+            <i class="feather-check-circle" style="font-size:11px;"></i>
+            {{ $summary['total_kegiatan'] }} Activity Logs
         </span>
     </div>
 
     <div class="card-body p-0">
+        @if($data->count() > 0)
         <div class="table-responsive">
-            <table class="report-table mb-0">
+            <table class="highlight-table mb-0">
                 <thead>
                     <tr>
-                        <th style="width:40px;text-align:center;">No</th>
-                        <th style="min-width:90px;">Tanggal</th>
-                        <th style="width:70px;text-align:center;">PKS</th>
-                        <th style="min-width:140px;">Kode &amp; Nama Alat</th>
-                        <th style="min-width:110px;">Operator</th>
-                        <th style="min-width:180px;">Kegiatan &amp; Lokasi</th>
-                        <th style="min-width:100px;">Flat / Long Bed</th>
-                        <th style="min-width:100px;">HM Awal-Akhir</th>
-                        <th style="min-width:90px;text-align:right;">Total HM</th>
-                        <th style="min-width:80px;text-align:right;">BBM (L)</th>
-                        <th style="width:110px;text-align:center;">Kondisi</th>
-                        <th style="min-width:140px;">Catatan</th>
+                        <th class="th-tanggal" style="width:140px;">📅 TANGGAL</th>
+                        <th class="th-asal" style="width:90px;">ASAL EXC.</th>
+                        <th class="th-kerja" style="width:90px;">KERJA EXC.</th>
+                        <th class="th-pekerjaan">⚙️ PEKERJAAN</th>
+                        <th class="th-lokasi" style="min-width:210px;">📍 LOKASI &amp; GPS MAPS</th>
+                        <th class="th-hasil" style="min-width:180px;">✔️ HASIL PEKERJAAN</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($dataByPks as $pksNama => $logsGroup)
-                        <tr class="pks-group-header">
-                            <td colspan="12">
-                                <div><i class="feather-home me-1"></i> Unit PKS: {{ $pksNama }}</div>
-                                <span class="mod-pill mod-pill-info" style="font-size:10.5px;">{{ $logsGroup->count() }} kegiatan</span>
+                    @foreach($dataByTanggal as $tgl => $itemsOnDate)
+                        @foreach($itemsOnDate as $idx => $item)
+                        <tr>
+                            @if($idx === 0)
+                                <td rowspan="{{ $itemsOnDate->count() }}" class="td-tanggal">
+                                    <i class="feather-calendar me-1" style="color:#16a34a;"></i>
+                                    {{ strtoupper(\Carbon\Carbon::parse($tgl)->translatedFormat('j F Y')) }}
+                                </td>
+                            @endif
+
+                            <td style="text-align:center;">
+                                <span class="badge-pks-asal">
+                                    {{ $item->alatBerat && $item->alatBerat->pks ? $item->alatBerat->pks->akro : ($item->pks ? $item->pks->akro : 'N/A') }}
+                                </span>
                             </td>
-                        </tr>
-                        @foreach($logsGroup as $idx => $item)
-                            <tr>
-                                <td style="text-align:center;font-weight:700;color:#9ca3af;">{{ $loop->iteration }}</td>
-                                <td>{{ \Carbon\Carbon::parse($item->tanggal)->format('d/m/Y') }}</td>
-                                <td style="text-align:center;">
-                                    <span class="pks-badge" style="display:inline-flex;align-items:center;padding:2px 8px;border-radius:6px;font-size:10.5px;font-weight:800;background:linear-gradient(135deg,#052e16,#166534);color:#86efac;">
-                                        {{ $item->pks ? $item->pks->akro : '-' }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <div style="font-weight:800;color:#16a34a;font-size:12.5px;">{{ $item->alatBerat ? $item->alatBerat->kode_alat : '-' }}</div>
-                                    <small style="color:#6b7280;font-size:11px;">{{ $item->alatBerat ? $item->alatBerat->nama_alat : '-' }}</small>
-                                </td>
-                                <td><span style="font-weight:600;color:#374151;">{{ $item->operator }}</span></td>
-                                <td>
-                                    <div style="font-weight:700;color:#14532d;">{{ $item->kegiatan }}</div>
-                                    @if($item->lokasi_blok)
-                                        <small style="color:#6b7280;font-size:11px;"><i class="feather-map-pin me-1"></i>{{ $item->lokasi_blok }}</small>
-                                    @endif
-                                    @php
-                                        $latAwal = $item->latitude_awal ?? $item->latitude;
-                                        $longAwal = $item->longitude_awal ?? $item->longitude;
-                                        $latAkhir = $item->latitude_akhir;
-                                        $longAkhir = $item->longitude_akhir;
-                                    @endphp
-                                    @if(($latAwal && $longAwal) || ($latAkhir && $longAkhir))
-                                        <div style="margin-top:4px;" class="d-flex flex-wrap gap-1">
-                                            @if($latAwal && $longAwal)
-                                                <a href="{{ $item->google_maps_url_awal }}" target="_blank" class="mod-pill mod-pill-info" style="font-size:9.5px;text-decoration:none;" title="GPS Awal Kerja">
-                                                    <i class="feather-map-pin me-1"></i>Awal: {{ number_format((float)$latAwal, 4) }}, {{ number_format((float)$longAwal, 4) }}
-                                                </a>
-                                            @endif
-                                            @if($latAkhir && $longAkhir)
-                                                <a href="{{ $item->google_maps_url_akhir }}" target="_blank" class="mod-pill mod-pill-ok" style="font-size:9.5px;text-decoration:none;" title="GPS Akhir Kerja">
-                                                    <i class="feather-map-pin me-1"></i>Akhir: {{ number_format((float)$latAkhir, 4) }}, {{ number_format((float)$longAkhir, 4) }}
-                                                </a>
-                                            @endif
-                                        </div>
-                                    @endif
-                                </td>
-                                <td>
-                                    <span class="mod-pill mod-pill-info" style="font-size:10.5px;">
-                                        F: {{ $item->flat_bed ?? 0 }} | L: {{ $item->long_bed ?? 0 }}
-                                    </span>
-                                </td>
-                                <td><small style="font-weight:600;color:#6b7280;">{{ $item->hm_awal_formatted }} - {{ $item->hm_akhir_formatted }}</small></td>
-                                <td style="text-align:right;font-weight:800;color:#16a34a;">{{ $item->total_hm_formatted }}</td>
-                                <td style="text-align:right;font-weight:800;color:#b45309;">{{ number_format($item->bbm_liter, 0) }} L</td>
-                                <td style="text-align:center;">
-                                    @if($item->kondisi_alat == 'Normal')
-                                        <span class="mod-pill mod-pill-ok" style="font-size:10.5px;">Normal</span>
+
+                            <td style="text-align:center;">
+                                @if($item->kondisi_alat == 'Breakdown' || $item->kegiatan == 'OFF')
+                                    <span class="badge-pks-off">OFF</span>
+                                @else
+                                    <span class="badge-pks-kerja">{{ $item->pks ? $item->pks->akro : '-' }}</span>
+                                @endif
+                            </td>
+
+                            <td>
+                                <div style="font-weight:700;">{{ $item->kegiatan }}</div>
+                                <small style="color:;font-size:11px;">
+                                    Unit: {{ $item->alatBerat ? $item->alatBerat->kode_alat : '-' }} ({{ $item->operator }})
+                                </small>
+                            </td>
+
+                            <td>
+                                <div style="font-weight:700;color:;">
+                                    {{ $item->lokasi_blok ?? ($item->kegiatan == 'OFF' ? 'OFF' : '-') }}
+                                </div>
+                                @php
+                                    $latAwal = $item->latitude_awal ?? $item->latitude;
+                                    $longAwal = $item->longitude_awal ?? $item->longitude;
+                                    $latAkhir = $item->latitude_akhir;
+                                    $longAkhir = $item->longitude_akhir;
+                                @endphp
+                                @if(($latAwal && $longAwal) || ($latAkhir && $longAkhir))
+                                    <div class="d-flex flex-wrap gap-1 mt-1">
+                                        @if($latAwal && $longAwal)
+                                            <a href="{{ $item->google_maps_url_awal }}" target="_blank" class="gps-link-pill" title="Buka GPS Awal di Google Maps">
+                                                <i class="feather-navigation" style="font-size:10px;"></i>
+                                                Awal: {{ number_format((float)$latAwal, 4) }}, {{ number_format((float)$longAwal, 4) }}
+                                            </a>
+                                        @endif
+                                        @if($latAkhir && $longAkhir)
+                                            <a href="{{ $item->google_maps_url_akhir }}" target="_blank" class="gps-link-pill gps-link-akhir" title="Buka GPS Akhir di Google Maps">
+                                                <i class="feather-navigation" style="font-size:10px;"></i>
+                                                Akhir: {{ number_format((float)$latAkhir, 4) }}, {{ number_format((float)$longAkhir, 4) }}
+                                            </a>
+                                        @endif
+                                    </div>
+                                @else
+                                    <small style="color:#9ca3af;font-size:10px;" class="d-block mt-0.5">GPS tidak direkam</small>
+                                @endif
+                            </td>
+
+                            <td>
+                                <div class="text-hasil">
+                                    @if($item->flat_bed || $item->long_bed)
+                                        @if($item->flat_bed > 0) <span class="badge bg-soft-info text-info me-1" style="font-size:11px;">{{ $item->flat_bed }} FB</span> @endif
+                                        @if($item->long_bed > 0) <span class="badge bg-soft-warning text-warning" style="font-size:11px;">{{ $item->long_bed }} LB</span> @endif
                                     @elseif($item->kondisi_alat == 'Perlu Perbaikan')
-                                        <span class="mod-pill mod-pill-warn" style="font-size:10.5px;">Perlu Perbaikan</span>
-                                    @else
+                                        <span class="mod-pill mod-pill-warn" style="font-size:10.5px;">Perbaikan</span>
+                                    @elseif($item->kondisi_alat == 'Breakdown')
                                         <span class="mod-pill mod-pill-err" style="font-size:10.5px;">Breakdown</span>
+                                    @else
+                                        <span style="font-size:11.5px;color:#475569;">{{ $item->catatan ?? '-' }}</span>
                                     @endif
-                                </td>
-                                <td><small style="color:#6b7280;">{{ $item->catatan ?? '-' }}</small></td>
-                            </tr>
-                        @endforeach
-                        <tr>
-                            <td colspan="6" style="text-align:right;font-weight:800;color:#14532d;background:#f0fdf4;">Subtotal {{ $pksNama }}:</td>
-                            <td style="background:#f0fdf4;"><span class="mod-pill mod-pill-ok" style="font-size:10.5px;">F: {{ $logsGroup->sum('flat_bed') }} | L: {{ $logsGroup->sum('long_bed') }}</span></td>
-                            <td colspan="2" style="text-align:right;font-weight:800;color:#16a34a;background:#f0fdf4;">{{ \App\Models\MonitoringAlatBerat::formatHm($logsGroup->sum('total_hm'), true) }}</td>
-                            <td style="text-align:right;font-weight:800;color:#b45309;background:#f0fdf4;">{{ number_format($logsGroup->sum('bbm_liter'), 0) }} L</td>
-                            <td colspan="2" style="background:#f0fdf4;"></td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="12" class="text-center py-5 text-muted">
-                                <i class="feather-inbox fs-3 d-block mb-2"></i>
-                                Tidak ada data monitoring alat berat pada periode ini.
+                                </div>
+                                <small style="color:;font-size:10.5px;" class="d-block mt-1">
+                                    HM: {{ $item->total_hm_formatted }} | BBM: {{ number_format($item->bbm_liter, 0) }}L
+                                </small>
                             </td>
                         </tr>
-                    @endforelse
+                        @endforeach
+                    @endforeach
                 </tbody>
             </table>
         </div>
+
+        <div class="akhlak-footer no-print">
+            <div><span class="akhlak-tag">#AKHLAK</span> - AMANAH, KOMPETEN, HARMONIS, LOYAL, ADAPTIF, KOLABORATIF</div>
+            <div>{{ $tahun }}, PT. PERKEBUNAN NUSANTARA IV REGIONAL III</div>
+        </div>
+        @else
+        <div class="empty-report">
+            <i class="feather-inbox fs-3 d-block mb-2"></i>
+            Tidak ada data monitoring alat berat pada periode ini.
+        </div>
+        @endif
     </div>
 </div>
+
 @endsection
 
 @section('scripts')
-<script src="{{ asset('duraluxadmin/assets/vendors/js/select2.min.js') }}"></script>
+<!-- <script src="{{ asset('duraluxadmin/assets/vendors/js/select2.min.js') }}"></script> -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         if (typeof $ !== 'undefined' && $.fn.select2) {

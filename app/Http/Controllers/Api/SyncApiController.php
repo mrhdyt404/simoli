@@ -26,11 +26,18 @@ class SyncApiController extends Controller
         }
 
         $token = str_replace('Bearer ', '', $authHeader);
-        $decoded = base64_decode($token);
+        $decoded = base64_decode($token, true);
+        if ($decoded === false) {
+            return null;
+        }
+
         $parts = explode(':', $decoded);
 
         if (count($parts) >= 2) {
-            return User::with('pks')->find($parts[0]);
+            $user = User::with('pks')->find($parts[0]);
+            if ($user && $user->username === $parts[1]) {
+                return $user;
+            }
         }
 
         return null;
@@ -43,9 +50,16 @@ class SyncApiController extends Controller
     {
         try {
             $user = $this->getAuthenticatedUser($request);
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthenticated. Silakan login terlebih dahulu.',
+                ], 401);
+            }
+
             $idPks = $request->input('id_pks');
 
-            if ($user && $user->isUnit()) {
+            if ($user->isUnit() || $user->isFieldUser()) {
                 $idPks = $user->id_pks;
             }
 
@@ -109,17 +123,23 @@ class SyncApiController extends Controller
      */
     public function push(Request $request)
     {
+        $user = $this->getAuthenticatedUser($request);
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated. Silakan login terlebih dahulu.',
+            ], 401);
+        }
+
         $request->validate([
             'items' => 'required|array|min:1',
             'items.*.uuid' => 'required|string',
             'items.*.alat_berat_id' => 'required',
             'items.*.tanggal' => 'required',
-            'items.*.operator' => 'required',
             'items.*.kegiatan' => 'required',
         ]);
 
-        $user = $this->getAuthenticatedUser($request);
-        $defaultPksId = $user ? $user->id_pks : null;
+        $defaultPksId = $user->id_pks;
         $deviceId = $request->header('X-Device-ID') ?? $request->input('device_id', 'unknown-device');
 
         $uploadDir = public_path('gallery');
@@ -134,7 +154,10 @@ class SyncApiController extends Controller
         try {
             foreach ($request->input('items') as $index => $item) {
                 $uuid = $item['uuid'] ?? (string) Str::uuid();
-                $idPks = $item['id_pks'] ?? $defaultPksId;
+                $idPks = ($user->isUnit() || $user->isFieldUser()) && $user->id_pks ? $user->id_pks : ($item['id_pks'] ?? $defaultPksId);
+
+                // Enforce authenticated user identity: non-admin users cannot spoof other operator names
+                $operatorName = ($user->isAdmin() && !empty($item['operator'])) ? $item['operator'] : $user->username;
 
                 // Handle Photo Sebelum (Base64 or existing filename)
                 $fotoSebelumName = $item['foto_sebelum'] ?? null;
@@ -180,7 +203,7 @@ class SyncApiController extends Controller
                         'id_pks' => $idPks,
                         'alat_berat_id' => $item['alat_berat_id'],
                         'tanggal' => $item['tanggal'],
-                        'operator' => $item['operator'],
+                        'operator' => $operatorName,
                         'kegiatan' => $item['kegiatan'],
                         'lokasi_blok' => $item['lokasi_blok'] ?? null,
                         'no_bak' => $item['no_bak'] ?? null,

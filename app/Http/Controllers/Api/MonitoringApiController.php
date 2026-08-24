@@ -22,12 +22,19 @@ class MonitoringApiController extends Controller
         }
 
         $token = str_replace('Bearer ', '', $authHeader);
-        $decoded = base64_decode($token);
+        $decoded = base64_decode($token, true);
+        if ($decoded === false) return null;
+
         $parts = explode(':', $decoded);
 
         if (count($parts) < 2) return null;
 
-        return User::with('pks')->find($parts[0]);
+        $user = User::with('pks')->find($parts[0]);
+        if ($user && $user->username === $parts[1]) {
+            return $user;
+        }
+
+        return null;
     }
 
     public function dashboardStats(Request $request)

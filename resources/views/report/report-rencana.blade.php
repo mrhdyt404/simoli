@@ -337,7 +337,7 @@
                 <select name="id_pks" class="form-select" data-select2-selector="status">
                     <option value="">Semua PKS</option>
                     @foreach($pksList as $pks)
-                    <option value="{{ $pks->ID }}" {{ request('id_pks') == $pks->ID ? 'selected' : '' }}>{{ $pks->nama }} ({{ $pks->akro }})</option>
+                    <option value="{{ $pks->id_pks }}" {{ request('id_pks') == $pks->id_pks ? 'selected' : '' }}>{{ $pks->nama }} ({{ $pks->akro }})</option>
                     @endforeach
                 </select>
             </div>
@@ -448,7 +448,7 @@
 @endsection
 
 @section('scripts')
-<script src="{{ asset('duraluxadmin/assets/vendors/js/select2.min.js') }}"></script>
+<!-- <script src="{{ asset('duraluxadmin/assets/vendors/js/select2.min.js') }}"></script> -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         if (typeof $ !== 'undefined' && $.fn.select2) {
