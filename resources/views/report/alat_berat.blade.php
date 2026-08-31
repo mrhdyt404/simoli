@@ -62,6 +62,43 @@
     }
     .rab-kpi:hover { transform: translateY(-3px); box-shadow: 0 10px 26px rgba(22,163,74,.12); }
 
+    .rab-kpi-icon {
+        width: 46px;
+        height: 46px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        flex-shrink: 0;
+    }
+    .rab-kpi-icon.icon-green { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+    .rab-kpi-icon.icon-teal  { background: #f0fdfa; color: #0d9488; border: 1px solid #99f6e4; }
+    .rab-kpi-icon.icon-amber { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+    .rab-kpi-icon.icon-blue  { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+
+    .rab-kpi-val {
+        font-family: 'Outfit', sans-serif;
+        font-weight: 900;
+        margin: 0 0 2px;
+    }
+    .rab-kpi-val.val-green { color: #14532d; }
+    .rab-kpi-val.val-teal  { color: #0d9488; }
+    .rab-kpi-val.val-amber { color: #b45309; }
+    .rab-kpi-val.val-blue  { color: #1d4ed8; }
+
+    .rab-kpi-label {
+        font-size: 11.5px;
+        color: #6b7280;
+        font-weight: 600;
+        display: block;
+    }
+    .rab-kpi-sub {
+        font-size: 11px;
+        color: #6b7280;
+        font-weight: 600;
+    }
+
     /* === FILTER CARD === */
     .filter-card {
         background: #ffffff;
@@ -80,6 +117,7 @@
         padding: 9px 14px;
         transition: all .2s ease;
         background: #f9fafb;
+        color: #1a2e22;
     }
 
     .filter-card .form-control:focus,
@@ -103,7 +141,7 @@
         height: 42px; border-radius: 12px; border: 1.5px solid #e5e7eb;
         background: #f9fafb; padding: 6px 12px;
     }
-    .filter-card .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 28px; font-size: 13px; }
+    .filter-card .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 28px; font-size: 13px; color: #1a2e22; }
     .filter-card .select2-container--default .select2-selection--single .select2-selection__arrow { height: 40px; }
 
     /* === DATA TABLE SECTION === */
@@ -115,17 +153,35 @@
         overflow: hidden;
     }
 
+    .section-card-header {
+        padding: 16px 20px;
+        border-bottom: 1px solid rgba(22,163,74,.08);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .section-card-title {
+        font-family: 'Outfit', sans-serif;
+        font-size: 15px;
+        font-weight: 800;
+        color: #14532d;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
     .pks-group-header {
         background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-        padding: 12px 20px;
         font-weight: 800;
         font-size: 13px;
         color: #166534;
         border-top: 1px solid #bbf7d0;
         border-bottom: 1px solid #bbf7d0;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
+    }
+    .pks-group-header td {
+        padding: 12px 20px !important;
     }
 
     .report-table {
@@ -151,32 +207,187 @@
         padding: 10px 14px;
         border-bottom: 1px solid rgba(22,163,74,.07);
         vertical-align: middle;
+        color: #374151;
     }
 
     .report-table tbody tr:hover td { background: rgba(22,163,74,.03); }
 
-    .report-table tfoot td {
+    .pks-subtotal-row td {
         background: #f0fdf4;
-        border-top: 2px solid #bbf7d0;
+        border-top: 1px solid #bbf7d0;
+        border-bottom: 1px solid #bbf7d0;
         font-weight: 800;
         color: #14532d;
         padding: 11px 14px;
-        font-size: 12.5px;
     }
 
-    .empty-report { padding: 60px 20px; text-align: center; }
-    .empty-report i { font-size: 56px; color: #d1d5db; margin-bottom: 12px; }
+    /* Module Pill */
+    .mod-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 9px;
+        border-radius: 50px;
+        font-size: 10.5px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+    .mod-pill-ok   { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+    .mod-pill-info { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+    .mod-pill-warn { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+    .mod-pill-err  { background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; }
 
-    /* Dark mode */
+    /* Specific Table Data Styles */
+    .tbl-code { font-weight: 800; color: #16a34a; font-size: 12.5px; }
+    .tbl-name { color: #6b7280; font-size: 11px; }
+    .tbl-operator { font-weight: 600; color: #374151; }
+    .tbl-kegiatan { font-weight: 700; color: #14532d; }
+    .tbl-subtext { color: #6b7280; font-size: 11px; }
+    .tbl-hm-range { font-weight: 600; color: #6b7280; }
+    .tbl-hm-total { font-weight: 800; color: #16a34a; }
+    .tbl-bbm-val { font-weight: 800; color: #b45309; }
+    .tbl-catatan { color: #6b7280; }
+
+    .pks-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-size: 10.5px;
+        font-weight: 800;
+        background: linear-gradient(135deg, #052e16, #166534);
+        color: #86efac;
+        border: 1px solid rgba(134,239,172,.2);
+    }
+
+    /* ================================================================
+       DARK MODE OVERRIDES
+       ================================================================ */
     html.app-skin-dark .filter-card,
     html.app-skin-dark .rab-kpi,
-    html.app-skin-dark .section-card { background:#0a2317 !important; border-color:rgba(34,197,94,.15) !important; }
+    html.app-skin-dark .section-card {
+        background: #0a2317 !important;
+        border-color: rgba(34,197,94,.18) !important;
+    }
+
+    html.app-skin-dark .rab-kpi:hover {
+        box-shadow: 0 10px 26px rgba(0,0,0,.4) !important;
+    }
+
+    /* KPI in Dark Mode */
+    html.app-skin-dark .rab-kpi-val.val-green { color: #4ade80 !important; }
+    html.app-skin-dark .rab-kpi-val.val-teal  { color: #2dd4bf !important; }
+    html.app-skin-dark .rab-kpi-val.val-amber { color: #fbbf24 !important; }
+    html.app-skin-dark .rab-kpi-val.val-blue  { color: #60a5fa !important; }
+    html.app-skin-dark .rab-kpi-label,
+    html.app-skin-dark .rab-kpi-sub { color: #9ca3af !important; }
+
+    html.app-skin-dark .rab-kpi-icon.icon-green { background: rgba(34,197,94,.15) !important; border-color: rgba(34,197,94,.3) !important; color: #4ade80 !important; }
+    html.app-skin-dark .rab-kpi-icon.icon-teal  { background: rgba(20,184,166,.15) !important; border-color: rgba(20,184,166,.3) !important; color: #2dd4bf !important; }
+    html.app-skin-dark .rab-kpi-icon.icon-amber { background: rgba(245,158,11,.15) !important; border-color: rgba(245,158,11,.3) !important; color: #fbbf24 !important; }
+    html.app-skin-dark .rab-kpi-icon.icon-blue  { background: rgba(59,130,246,.15) !important; border-color: rgba(59,130,246,.3) !important; color: #60a5fa !important; }
+
+    /* Filter in Dark Mode */
+    html.app-skin-dark .filter-card label.form-label { color: #86efac !important; }
     html.app-skin-dark .filter-card .form-control,
-    html.app-skin-dark .filter-card .form-select { background:#0e3b26;border-color:rgba(34,197,94,.2);color:#d1fae5; }
-    html.app-skin-dark .pks-group-header { background:linear-gradient(135deg,#0e3b26,#052e16);border-color:rgba(34,197,94,.15);color:#86efac; }
-    html.app-skin-dark .report-table thead th { background:#021a0b !important; }
-    html.app-skin-dark .report-table tbody td { border-color:rgba(34,197,94,.07) !important; color:#d1fae5; }
-    html.app-skin-dark .report-table tfoot td { background:#0e3b26;border-color:rgba(34,197,94,.2);color:#86efac; }
+    html.app-skin-dark .filter-card .form-select {
+        background: #0e3b26 !important;
+        border-color: rgba(34,197,94,.25) !important;
+        color: #d1fae5 !important;
+    }
+    html.app-skin-dark .filter-card .form-select option {
+        background: #0a2317 !important;
+        color: #d1fae5 !important;
+    }
+
+    /* Select2 in Dark Mode */
+    html.app-skin-dark .select2-container--default .select2-selection--single {
+        background: #0e3b26 !important;
+        border-color: rgba(34,197,94,.25) !important;
+    }
+    html.app-skin-dark .select2-container--default .select2-selection--single .select2-selection__rendered {
+        color: #d1fae5 !important;
+    }
+    html.app-skin-dark .select2-container--default .select2-selection--single .select2-selection__arrow b {
+        border-color: #86efac transparent transparent transparent !important;
+    }
+    html.app-skin-dark .select2-dropdown {
+        background-color: #0a2317 !important;
+        border-color: rgba(34,197,94,.3) !important;
+        color: #d1fae5 !important;
+    }
+    html.app-skin-dark .select2-container--default .select2-search--dropdown .select2-search__field {
+        background-color: #0e3b26 !important;
+        border-color: rgba(34,197,94,.25) !important;
+        color: #d1fae5 !important;
+    }
+    html.app-skin-dark .select2-container--default .select2-results__option {
+        color: #d1fae5 !important;
+    }
+    html.app-skin-dark .select2-container--default .select2-results__option--highlighted[aria-selected] {
+        background-color: #166534 !important;
+        color: #ffffff !important;
+    }
+    html.app-skin-dark .select2-container--default .select2-results__option[aria-selected=true] {
+        background-color: #0e3b26 !important;
+        color: #86efac !important;
+    }
+
+    /* Section Card Header */
+    html.app-skin-dark .section-card-header { border-bottom-color: rgba(34,197,94,.12) !important; }
+    html.app-skin-dark .section-card-title { color: #d1fae5 !important; }
+
+    /* Table in Dark Mode */
+    html.app-skin-dark .pks-group-header {
+        background: linear-gradient(135deg, #0e3b26 0%, #052e16 100%) !important;
+        border-color: rgba(34,197,94,.2) !important;
+        color: #86efac !important;
+    }
+    html.app-skin-dark .report-table thead th { background: #021a0b !important; }
+    html.app-skin-dark .report-table tbody td {
+        border-color: rgba(34,197,94,.08) !important;
+        color: #d1fae5 !important;
+    }
+    html.app-skin-dark .report-table tbody tr:hover td { background: rgba(34,197,94,.05) !important; }
+
+    html.app-skin-dark .pks-subtotal-row td {
+        background: #0e3b26 !important;
+        border-color: rgba(34,197,94,.25) !important;
+        color: #86efac !important;
+    }
+
+    /* Row Text in Dark Mode */
+    html.app-skin-dark .tbl-code { color: #4ade80 !important; }
+    html.app-skin-dark .tbl-name { color: #9ca3af !important; }
+    html.app-skin-dark .tbl-operator { color: #e2f5ea !important; }
+    html.app-skin-dark .tbl-kegiatan { color: #86efac !important; }
+    html.app-skin-dark .tbl-subtext { color: #9ca3af !important; }
+    html.app-skin-dark .tbl-hm-range { color: #d1fae5 !important; }
+    html.app-skin-dark .tbl-hm-total { color: #4ade80 !important; }
+    html.app-skin-dark .tbl-bbm-val { color: #fbbf24 !important; }
+    html.app-skin-dark .tbl-catatan { color: #9ca3af !important; }
+
+    /* Mod Pills in Dark Mode */
+    html.app-skin-dark .mod-pill-ok {
+        background: rgba(34,197,94,.18) !important;
+        color: #86efac !important;
+        border-color: rgba(34,197,94,.35) !important;
+    }
+    html.app-skin-dark .mod-pill-info {
+        background: rgba(59,130,246,.18) !important;
+        color: #93c5fd !important;
+        border-color: rgba(59,130,246,.35) !important;
+    }
+    html.app-skin-dark .mod-pill-warn {
+        background: rgba(245,158,11,.18) !important;
+        color: #fde047 !important;
+        border-color: rgba(245,158,11,.35) !important;
+    }
+    html.app-skin-dark .mod-pill-err {
+        background: rgba(239,68,68,.18) !important;
+        color: #fca5a5 !important;
+        border-color: rgba(239,68,68,.35) !important;
+    }
 
     /* === PRINT === */
     @media print {
@@ -327,12 +538,12 @@
     <div class="col-xl-3 col-sm-6">
         <div class="rab-kpi">
             <div class="d-flex align-items-center gap-3">
-                <div style="width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;">
+                <div class="rab-kpi-icon icon-green">
                     <i class="feather-clock"></i>
                 </div>
                 <div>
-                    <h3 style="font-family:'Outfit',sans-serif;font-weight:900;color:#14532d;margin:0 0 2px;">{{ \App\Models\MonitoringAlatBerat::formatHm($summary['total_hm'], true) }}</h3>
-                    <span style="font-size:11.5px;color:#6b7280;font-weight:600;">Total Jam Kerja (HM)</span>
+                    <h3 class="rab-kpi-val val-green">{{ \App\Models\MonitoringAlatBerat::formatHm($summary['total_hm'], true) }}</h3>
+                    <span class="rab-kpi-label">Total Jam Kerja (HM)</span>
                 </div>
             </div>
         </div>
@@ -340,12 +551,12 @@
     <div class="col-xl-3 col-sm-6">
         <div class="rab-kpi">
             <div class="d-flex align-items-center gap-3">
-                <div style="width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;background:#f0fdfa;color:#0d9488;border:1px solid #99f6e4;">
+                <div class="rab-kpi-icon icon-teal">
                     <i class="feather-grid"></i>
                 </div>
                 <div>
-                    <h3 style="font-family:'Outfit',sans-serif;font-weight:900;color:#0d9488;margin:0 0 2px;">{{ number_format($summary['total_bed'] ?? 0) }} <span style="font-size:12px;font-weight:600;color:#6b7280;">Bed</span></h3>
-                    <span style="font-size:11px;color:#6b7280;font-weight:600;">Flat: {{ number_format($summary['total_flat_bed'] ?? 0) }} | Long: {{ number_format($summary['total_long_bed'] ?? 0) }}</span>
+                    <h3 class="rab-kpi-val val-teal">{{ number_format($summary['total_bed'] ?? 0) }} <span class="rab-kpi-sub">Bed</span></h3>
+                    <span class="rab-kpi-sub d-block">Flat: {{ number_format($summary['total_flat_bed'] ?? 0) }} | Long: {{ number_format($summary['total_long_bed'] ?? 0) }}</span>
                 </div>
             </div>
         </div>
@@ -353,12 +564,12 @@
     <div class="col-xl-3 col-sm-6">
         <div class="rab-kpi">
             <div class="d-flex align-items-center gap-3">
-                <div style="width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;background:#fffbeb;color:#b45309;border:1px solid #fde68a;">
+                <div class="rab-kpi-icon icon-amber">
                     <i class="feather-droplet"></i>
                 </div>
                 <div>
-                    <h3 style="font-family:'Outfit',sans-serif;font-weight:900;color:#b45309;margin:0 0 2px;">{{ number_format($summary['total_bbm'], 0) }} <span style="font-size:12px;font-weight:600;color:#6b7280;">L</span></h3>
-                    <span style="font-size:11.5px;color:#6b7280;font-weight:600;">Total Konsumsi BBM</span>
+                    <h3 class="rab-kpi-val val-amber">{{ number_format($summary['total_bbm'], 0) }} <span class="rab-kpi-sub">L</span></h3>
+                    <span class="rab-kpi-label">Total Konsumsi BBM</span>
                 </div>
             </div>
         </div>
@@ -366,12 +577,12 @@
     <div class="col-xl-3 col-sm-6">
         <div class="rab-kpi">
             <div class="d-flex align-items-center gap-3">
-                <div style="width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;">
+                <div class="rab-kpi-icon icon-blue">
                     <i class="feather-activity"></i>
                 </div>
                 <div>
-                    <h3 style="font-family:'Outfit',sans-serif;font-weight:900;color:#1d4ed8;margin:0 0 2px;">{{ $summary['total_kegiatan'] }} <span style="font-size:12px;font-weight:600;color:#6b7280;">Log</span></h3>
-                    <span style="font-size:11.5px;color:#6b7280;font-weight:600;">Total Log Kegiatan</span>
+                    <h3 class="rab-kpi-val val-blue">{{ $summary['total_kegiatan'] }} <span class="rab-kpi-sub">Log</span></h3>
+                    <span class="rab-kpi-label">Total Log Kegiatan</span>
                 </div>
             </div>
         </div>
@@ -451,8 +662,8 @@
 
 <!-- Table Report Web -->
 <div class="section-card no-print mb-4">
-    <div style="padding:16px 20px;border-bottom:1px solid rgba(22,163,74,.08);display:flex;align-items:center;justify-content:space-between;">
-        <h4 style="font-family:'Outfit',sans-serif;font-size:15px;font-weight:800;color:#14532d;margin:0;display:flex;align-items:center;gap:8px;">
+    <div class="section-card-header">
+        <h4 class="section-card-title">
             <i class="feather-truck" style="color:#16a34a;font-size:18px;"></i>
             Laporan Operasional Periodik — {{ $namaBulan[(int)$bulan] }} {{ $tahun }}
         </h4>
@@ -485,28 +696,30 @@
                     @forelse($dataByPks as $pksNama => $logsGroup)
                         <tr class="pks-group-header">
                             <td colspan="12">
-                                <div><i class="feather-home me-1"></i> Unit PKS: {{ $pksNama }}</div>
-                                <span class="mod-pill mod-pill-info" style="font-size:10.5px;">{{ $logsGroup->count() }} kegiatan</span>
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div><i class="feather-home me-1"></i> Unit PKS: {{ $pksNama }}</div>
+                                    <span class="mod-pill mod-pill-info" style="font-size:10.5px;">{{ $logsGroup->count() }} kegiatan</span>
+                                </div>
                             </td>
                         </tr>
                         @foreach($logsGroup as $idx => $item)
                             <tr>
-                                <td style="text-align:center;font-weight:700;color:#9ca3af;">{{ $loop->iteration }}</td>
+                                <td style="text-align:center;font-weight:700;" class="tbl-subtext">{{ $loop->iteration }}</td>
                                 <td>{{ \Carbon\Carbon::parse($item->tanggal)->format('d/m/Y') }}</td>
                                 <td style="text-align:center;">
-                                    <span class="pks-badge" style="display:inline-flex;align-items:center;padding:2px 8px;border-radius:6px;font-size:10.5px;font-weight:800;background:linear-gradient(135deg,#052e16,#166534);color:#86efac;">
+                                    <span class="pks-badge">
                                         {{ $item->pks ? $item->pks->akro : '-' }}
                                     </span>
                                 </td>
                                 <td>
-                                    <div style="font-weight:800;color:#16a34a;font-size:12.5px;">{{ $item->alatBerat ? $item->alatBerat->kode_alat : '-' }}</div>
-                                    <small style="color:#6b7280;font-size:11px;">{{ $item->alatBerat ? $item->alatBerat->nama_alat : '-' }}</small>
+                                    <div class="tbl-code">{{ $item->alatBerat ? $item->alatBerat->kode_alat : '-' }}</div>
+                                    <small class="tbl-name">{{ $item->alatBerat ? $item->alatBerat->nama_alat : '-' }}</small>
                                 </td>
-                                <td><span style="font-weight:600;color:#374151;">{{ $item->operator }}</span></td>
+                                <td><span class="tbl-operator">{{ $item->operator }}</span></td>
                                 <td>
-                                    <div style="font-weight:700;color:#14532d;">{{ $item->kegiatan }}</div>
+                                    <div class="tbl-kegiatan">{{ $item->kegiatan }}</div>
                                     @if($item->lokasi_blok)
-                                        <small style="color:#6b7280;font-size:11px;"><i class="feather-map-pin me-1"></i>{{ $item->lokasi_blok }}</small>
+                                        <small class="tbl-subtext"><i class="feather-map-pin me-1"></i>{{ $item->lokasi_blok }}</small>
                                     @endif
                                     @php
                                         $latAwal = $item->latitude_awal ?? $item->latitude;
@@ -534,9 +747,9 @@
                                         F: {{ $item->flat_bed ?? 0 }} | L: {{ $item->long_bed ?? 0 }}
                                     </span>
                                 </td>
-                                <td><small style="font-weight:600;color:#6b7280;">{{ $item->hm_awal_formatted }} - {{ $item->hm_akhir_formatted }}</small></td>
-                                <td style="text-align:right;font-weight:800;color:#16a34a;">{{ $item->total_hm_formatted }}</td>
-                                <td style="text-align:right;font-weight:800;color:#b45309;">{{ number_format($item->bbm_liter, 0) }} L</td>
+                                <td><small class="tbl-hm-range">{{ $item->hm_awal_formatted }} - {{ $item->hm_akhir_formatted }}</small></td>
+                                <td style="text-align:right;" class="tbl-hm-total">{{ $item->total_hm_formatted }}</td>
+                                <td style="text-align:right;" class="tbl-bbm-val">{{ number_format($item->bbm_liter, 0) }} L</td>
                                 <td style="text-align:center;">
                                     @if($item->kondisi_alat == 'Normal')
                                         <span class="mod-pill mod-pill-ok" style="font-size:10.5px;">Normal</span>
@@ -546,15 +759,15 @@
                                         <span class="mod-pill mod-pill-err" style="font-size:10.5px;">Breakdown</span>
                                     @endif
                                 </td>
-                                <td><small style="color:#6b7280;">{{ $item->catatan ?? '-' }}</small></td>
+                                <td><small class="tbl-catatan">{{ $item->catatan ?? '-' }}</small></td>
                             </tr>
                         @endforeach
-                        <tr>
-                            <td colspan="6" style="text-align:right;font-weight:800;color:#14532d;background:#f0fdf4;">Subtotal {{ $pksNama }}:</td>
-                            <td style="background:#f0fdf4;"><span class="mod-pill mod-pill-ok" style="font-size:10.5px;">F: {{ $logsGroup->sum('flat_bed') }} | L: {{ $logsGroup->sum('long_bed') }}</span></td>
-                            <td colspan="2" style="text-align:right;font-weight:800;color:#16a34a;background:#f0fdf4;">{{ \App\Models\MonitoringAlatBerat::formatHm($logsGroup->sum('total_hm'), true) }}</td>
-                            <td style="text-align:right;font-weight:800;color:#b45309;background:#f0fdf4;">{{ number_format($logsGroup->sum('bbm_liter'), 0) }} L</td>
-                            <td colspan="2" style="background:#f0fdf4;"></td>
+                        <tr class="pks-subtotal-row">
+                            <td colspan="6" style="text-align:right;">Subtotal {{ $pksNama }}:</td>
+                            <td><span class="mod-pill mod-pill-ok" style="font-size:10.5px;">F: {{ $logsGroup->sum('flat_bed') }} | L: {{ $logsGroup->sum('long_bed') }}</span></td>
+                            <td colspan="2" style="text-align:right;" class="tbl-hm-total">{{ \App\Models\MonitoringAlatBerat::formatHm($logsGroup->sum('total_hm'), true) }}</td>
+                            <td style="text-align:right;" class="tbl-bbm-val">{{ number_format($logsGroup->sum('bbm_liter'), 0) }} L</td>
+                            <td colspan="2"></td>
                         </tr>
                     @empty
                         <tr>

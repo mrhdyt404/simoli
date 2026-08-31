@@ -136,13 +136,27 @@
 
     /* Dark mode */
     html.app-skin-dark .ab-filter,
-    html.app-skin-dark .ab-table-card { background:#0a2317 !important; border-color:rgba(34,197,94,.15) !important; }
+    html.app-skin-dark .ab-table-card { background:#0a2317 !important; border-color:rgba(34,197,94,.18) !important; }
     html.app-skin-dark .ab-table-title { color:#d1fae5 !important; }
+    html.app-skin-dark .ab-filter label { color:#86efac !important; }
     html.app-skin-dark .ab-table thead th { background:#021a0b !important; }
-    html.app-skin-dark .ab-table tbody td { border-color:rgba(34,197,94,.07) !important; color:#d1fae5; }
-    html.app-skin-dark .ab-table tbody tr:hover td { background:rgba(34,197,94,.04) !important; }
+    html.app-skin-dark .ab-table tbody td { border-color:rgba(34,197,94,.08) !important; color:#d1fae5; }
+    html.app-skin-dark .ab-table tbody tr:hover td { background:rgba(34,197,94,.05) !important; }
+    html.app-skin-dark .ab-name { color:#86efac !important; }
+    html.app-skin-dark .ab-merk { color:#e2f5ea !important; }
+    html.app-skin-dark .ab-year { color:#9ca3af !important; }
+    html.app-skin-dark .ab-desc { color:#9ca3af !important; }
     html.app-skin-dark .ab-filter .form-control,
-    html.app-skin-dark .ab-filter .form-select { background:#0e3b26;border-color:rgba(34,197,94,.2);color:#d1fae5; }
+    html.app-skin-dark .ab-filter .form-select {
+        background:#0e3b26 !important;
+        border-color:rgba(34,197,94,.25) !important;
+        color:#d1fae5 !important;
+        color-scheme: dark !important;
+    }
+    html.app-skin-dark .ab-filter .form-select option {
+        background:#0a2317 !important;
+        color:#d1fae5 !important;
+    }
 </style>
 @endsection
 
@@ -263,7 +277,7 @@
                         </td>
 
                         <td>
-                            <span style="font-weight:700;color:#14532d;font-size:13px;">{{ $item->nama_alat }}</span>
+                            <span class="ab-name" style="font-weight:700;color:#14532d;font-size:13px;">{{ $item->nama_alat }}</span>
                         </td>
 
                         <td>
@@ -271,11 +285,11 @@
                         </td>
 
                         <td>
-                            <span style="font-weight:600;color:#374151;">{{ $item->merk_tipe ?? '-' }}</span>
+                            <span class="ab-merk" style="font-weight:600;color:#374151;">{{ $item->merk_tipe ?? '-' }}</span>
                         </td>
 
                         <td style="text-align:center;">
-                            <span style="font-weight:700;color:#6b7280;">{{ $item->tahun_pengadaan ?? '-' }}</span>
+                            <span class="ab-year" style="font-weight:700;color:#6b7280;">{{ $item->tahun_pengadaan ?? '-' }}</span>
                         </td>
 
                         <td style="text-align:center;">
@@ -288,12 +302,12 @@
                             @elseif($item->status == 'Rolling')
                                 <span class="mod-pill mod-pill-info" style="font-size:10.5px;">Rolling</span>
                             @else
-                                <span class="mod-pill" style="font-size:10.5px;background:#f3f4f6;color:#6b7280;">Standby</span>
+                                <span class="mod-pill mod-pill-standby" style="font-size:10.5px;">Standby</span>
                             @endif
                         </td>
 
                         <td>
-                            <small style="color:#6b7280;">{{ $item->keterangan ?? '-' }}</small>
+                            <small class="ab-desc" style="color:#6b7280;">{{ $item->keterangan ?? '-' }}</small>
                         </td>
 
                         <td style="text-align:center;">

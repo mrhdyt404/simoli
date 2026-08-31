@@ -170,14 +170,31 @@
     /* Dark mode */
     html.app-skin-dark .usr-kpi,
     html.app-skin-dark .usr-filter,
-    html.app-skin-dark .usr-table-card { background:#0a2317 !important; border-color:rgba(34,197,94,.15) !important; }
-    html.app-skin-dark .usr-table-title,
-    html.app-skin-dark .usr-kpi-value { color:#d1fae5 !important; }
+    html.app-skin-dark .usr-table-card { background:#0a2317 !important; border-color:rgba(34,197,94,.18) !important; }
+    html.app-skin-dark .usr-table-title { color:#d1fae5 !important; }
+    html.app-skin-dark .usr-kpi-label { color:#9ca3af !important; }
+    html.app-skin-dark .usr-filter label { color:#86efac !important; }
     html.app-skin-dark .usr-table thead th { background:#021a0b !important; }
-    html.app-skin-dark .usr-table tbody td { border-color:rgba(34,197,94,.07) !important; color:#d1fae5; }
-    html.app-skin-dark .usr-table tbody tr:hover td { background:rgba(34,197,94,.04) !important; }
+    html.app-skin-dark .usr-table tbody td { border-color:rgba(34,197,94,.08) !important; color:#d1fae5; }
+    html.app-skin-dark .usr-table tbody tr:hover td { background:rgba(34,197,94,.05) !important; }
     html.app-skin-dark .usr-filter .form-control,
-    html.app-skin-dark .usr-filter .form-select { background:#0e3b26;border-color:rgba(34,197,94,.2);color:#d1fae5; }
+    html.app-skin-dark .usr-filter .form-select {
+        background:#0e3b26 !important;
+        border-color:rgba(34,197,94,.25) !important;
+        color:#d1fae5 !important;
+        color-scheme: dark !important;
+    }
+    html.app-skin-dark .usr-filter .form-select option {
+        background:#0a2317 !important;
+        color:#d1fae5 !important;
+    }
+    html.app-skin-dark .tbl-action-edit { background:rgba(59,130,246,.15) !important; color:#93c5fd !important; border-color:rgba(59,130,246,.3) !important; }
+    html.app-skin-dark .tbl-action-delete { background:rgba(239,68,68,.15) !important; color:#fca5a5 !important; border-color:rgba(239,68,68,.3) !important; }
+    html.app-skin-dark .kpi-icon-g { background:rgba(34,197,94,.15) !important; color:#4ade80 !important; border-color:rgba(34,197,94,.3) !important; }
+    html.app-skin-dark .kpi-icon-a { background:rgba(245,158,11,.15) !important; color:#fbbf24 !important; border-color:rgba(245,158,11,.3) !important; }
+    html.app-skin-dark .kpi-icon-t { background:rgba(20,184,166,.15) !important; color:#2dd4bf !important; border-color:rgba(20,184,166,.3) !important; }
+    html.app-skin-dark .kpi-icon-p { background:rgba(124,58,237,.15) !important; color:#c084fc !important; border-color:rgba(124,58,237,.3) !important; }
+    html.app-skin-dark .kpi-icon-b { background:rgba(59,130,246,.15) !important; color:#60a5fa !important; border-color:rgba(59,130,246,.3) !important; }
 </style>
 @endsection
 

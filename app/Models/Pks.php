@@ -47,4 +47,20 @@ class Pks extends Model
     {
         return $this->hasMany(MonitoringAlatBerat::class, 'id_pks', 'id_pks');
     }
+
+    public function perizinanLa()
+    {
+        return $this->hasOne(PerizinanLa::class, 'id_pks', 'id_pks')->latest('tanggal_terbit');
+    }
+
+    public function daftarPerizinanLa()
+    {
+        return $this->hasMany(PerizinanLa::class, 'id_pks', 'id_pks');
+    }
+
+    public function petaBlokLa()
+    {
+        return $this->hasMany(PetaBlokLa::class, 'id_pks', 'id_pks');
+    }
 }
+
