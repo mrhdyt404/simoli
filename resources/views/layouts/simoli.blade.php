@@ -1017,397 +1017,339 @@
         }
 
         /* ================================================================
-           COMPREHENSIVE GLOBAL DARK MODE SYSTEM (ALL ELEMENTS)
+           DARK MODE SUPPORT (GLOBAL)
            ================================================================ */
-        html.app-skin-dark body,
-        html[data-bs-theme="dark"] body,
-        [data-theme="dark"] body,
-        body.dark-mode {
-            background: #030d07 !important;
-            color: #e2f5ea !important;
+        html.app-skin-dark {
+            color-scheme: dark !important;
         }
 
-        /* Topbar & Header */
-        html.app-skin-dark .simoli-header,
-        html[data-bs-theme="dark"] .simoli-header,
-        [data-theme="dark"] .simoli-header {
-            background: rgba(5, 46, 22, 0.95) !important;
-            border-bottom-color: rgba(34, 197, 94, 0.18) !important;
+        html.app-skin-dark body {
+            background: #030d07;
+            color: #e2f5ea;
+        }
+
+        html.app-skin-dark .simoli-header {
+            background: rgba(5, 46, 22, 0.92) !important;
+            border-bottom-color: rgba(34, 197, 94, 0.15) !important;
         }
 
         html.app-skin-dark .header-page-label,
-        html.app-skin-dark .hdr-user-name,
-        html[data-bs-theme="dark"] .header-page-label,
-        html[data-bs-theme="dark"] .hdr-user-name {
-            color: #e2f5ea !important;
-        }
+        html.app-skin-dark .hdr-user-name { color: #e2f5ea; }
 
-        /* Cards, Panels, Infographics, Section Cards & Filters */
-        html.app-skin-dark .card,
         html.app-skin-dark .simoli-card,
-        html.app-skin-dark .section-card,
-        html.app-skin-dark .filter-card,
-        html.app-skin-dark .stat-card,
-        html.app-skin-dark .infografis-card,
-        html.app-skin-dark .user-dropdown-menu,
-        html[data-bs-theme="dark"] .card,
-        html[data-bs-theme="dark"] .simoli-card,
-        html[data-bs-theme="dark"] .section-card,
-        html[data-bs-theme="dark"] .filter-card,
-        html[data-bs-theme="dark"] .stat-card,
-        html[data-bs-theme="dark"] .infografis-card,
-        html[data-bs-theme="dark"] .user-dropdown-menu,
-        [data-theme="dark"] .card,
-        [data-theme="dark"] .simoli-card,
-        [data-theme="dark"] .section-card,
-        [data-theme="dark"] .filter-card,
-        [data-theme="dark"] .stat-card,
-        [data-theme="dark"] .infografis-card,
-        [data-theme="dark"] .user-dropdown-menu {
+        html.app-skin-dark .card,
+        html.app-skin-dark .user-dropdown-menu {
             background: #0a2317 !important;
-            border-color: rgba(34, 197, 94, 0.18) !important;
-            color: #e2f5ea !important;
+            border-color: rgba(34, 197, 94, 0.15) !important;
         }
 
-        html.app-skin-dark .card-header,
         html.app-skin-dark .simoli-card-header,
-        html.app-skin-dark .card-footer,
-        html[data-bs-theme="dark"] .card-header,
-        html[data-bs-theme="dark"] .simoli-card-header,
-        html[data-bs-theme="dark"] .card-footer,
-        [data-theme="dark"] .card-header,
-        [data-theme="dark"] .simoli-card-header,
-        [data-theme="dark"] .card-footer {
-            background: #0e3b26 !important;
-            border-color: rgba(34, 197, 94, 0.15) !important;
-            color: #d1fae5 !important;
+        html.app-skin-dark .card-header {
+            border-bottom-color: rgba(34, 197, 94, 0.1) !important;
+            background: transparent !important;
         }
 
         html.app-skin-dark .simoli-card-title,
         html.app-skin-dark .card-title,
-        html.app-skin-dark .page-hero-strip h1,
-        html[data-bs-theme="dark"] .simoli-card-title,
-        html[data-bs-theme="dark"] .card-title,
-        html[data-bs-theme="dark"] .page-hero-strip h1 {
-            color: #d1fae5 !important;
-        }
+        html.app-skin-dark .page-hero-strip h1 { color: #d1fae5; }
 
-        /* Form Controls & Inputs */
+        /* Global Form Controls & Select Options */
         html.app-skin-dark .form-control,
         html.app-skin-dark .form-select,
         html.app-skin-dark .form-simoli-control,
-        html[data-bs-theme="dark"] .form-control,
-        html[data-bs-theme="dark"] .form-select,
-        html[data-bs-theme="dark"] .form-simoli-control,
-        [data-theme="dark"] .form-control,
-        [data-theme="dark"] .form-select,
-        [data-theme="dark"] .form-simoli-control {
+        html.app-skin-dark select,
+        html.app-skin-dark input,
+        html.app-skin-dark textarea {
             background-color: #0e3b26 !important;
             border-color: rgba(34, 197, 94, 0.25) !important;
             color: #d1fae5 !important;
+            color-scheme: dark !important;
         }
 
         html.app-skin-dark .form-control:focus,
         html.app-skin-dark .form-select:focus,
-        html[data-bs-theme="dark"] .form-control:focus,
-        html[data-bs-theme="dark"] .form-select:focus {
-            border-color: #22c55e !important;
-            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.25) !important;
-        }
-
-        html.app-skin-dark .form-label,
-        html.app-skin-dark .form-simoli-label,
-        html[data-bs-theme="dark"] .form-label,
-        html[data-bs-theme="dark"] .form-simoli-label {
-            color: #a7f3d0 !important;
-        }
-
-        /* Tables & Grids */
-        html.app-skin-dark .table,
-        html.app-skin-dark .table-simoli,
-        html.app-skin-dark .table-simoli-report,
-        html.app-skin-dark .report-table,
-        html[data-bs-theme="dark"] .table,
-        html[data-bs-theme="dark"] .table-simoli,
-        html[data-bs-theme="dark"] .table-simoli-report,
-        html[data-bs-theme="dark"] .report-table,
-        [data-theme="dark"] .table,
-        [data-theme="dark"] .table-simoli,
-        [data-theme="dark"] .table-simoli-report,
-        [data-theme="dark"] .report-table {
-            background: #0a2317 !important;
-            color: #d1fae5 !important;
-            border-color: rgba(34, 197, 94, 0.12) !important;
-        }
-
-        html.app-skin-dark .table td,
-        html.app-skin-dark .table th,
-        html.app-skin-dark .table-simoli td,
-        html.app-skin-dark .table-simoli-report td,
-        html.app-skin-dark .report-table td,
-        html.app-skin-dark .report-table th,
-        html[data-bs-theme="dark"] .table td,
-        html[data-bs-theme="dark"] .table th,
-        html[data-bs-theme="dark"] .table-simoli td,
-        html[data-bs-theme="dark"] .table-simoli-report td,
-        html[data-bs-theme="dark"] .report-table td,
-        html[data-bs-theme="dark"] .report-table th {
-            color: #d1fae5 !important;
-            border-color: rgba(34, 197, 94, 0.1) !important;
-        }
-
-        html.app-skin-dark .table tbody tr:nth-child(even),
-        html.app-skin-dark .table-simoli tbody tr:nth-child(even),
-        html.app-skin-dark .table-simoli-report tbody tr:nth-child(even),
-        html.app-skin-dark .report-table tbody tr:nth-child(even),
-        html[data-bs-theme="dark"] .table tbody tr:nth-child(even),
-        html[data-bs-theme="dark"] .table-simoli tbody tr:nth-child(even),
-        html[data-bs-theme="dark"] .table-simoli-report tbody tr:nth-child(even),
-        html[data-bs-theme="dark"] .report-table tbody tr:nth-child(even) {
-            background-color: #0e3b26 !important;
-        }
-
-        html.app-skin-dark .table tbody tr:hover td,
-        html.app-skin-dark .table-simoli tbody tr:hover td,
-        html.app-skin-dark .table-simoli-report tbody tr:hover td,
-        html.app-skin-dark .report-table tbody tr:hover td,
-        html[data-bs-theme="dark"] .table tbody tr:hover td,
-        html[data-bs-theme="dark"] .table-simoli tbody tr:hover td,
-        html[data-bs-theme="dark"] .table-simoli-report tbody tr:hover td,
-        html[data-bs-theme="dark"] .report-table tbody tr:hover td {
-            background: rgba(34, 197, 94, 0.08) !important;
-        }
-
-        /* Table Footers */
-        html.app-skin-dark .report-table tfoot td,
-        html[data-bs-theme="dark"] .report-table tfoot td {
-            background: #0e3b26 !important;
-            color: #4ade80 !important;
-            border-color: rgba(34, 197, 94, 0.2) !important;
-        }
-
-        /* PKS Group Headers & Cells */
-        html.app-skin-dark .pks-group-header,
-        html[data-bs-theme="dark"] .pks-group-header {
-            background: linear-gradient(135deg, #0e3b26, #052e16) !important;
-            color: #4ade80 !important;
-            border-color: rgba(34, 197, 94, 0.15) !important;
-        }
-
-        html.app-skin-dark .pks-cell,
-        html[data-bs-theme="dark"] .pks-cell,
-        [data-theme="dark"] .pks-cell {
-            color: #d1fae5 !important;
-        }
-
-        /* Navigation Tabs Custom System */
-        html.app-skin-dark .nav-tabs-custom,
-        html[data-bs-theme="dark"] .nav-tabs-custom,
-        [data-theme="dark"] .nav-tabs-custom,
-        body.dark-mode .nav-tabs-custom {
-            border-bottom-color: rgba(34, 197, 94, 0.25) !important;
-        }
-
-        html.app-skin-dark .nav-tabs-custom .nav-link,
-        html[data-bs-theme="dark"] .nav-tabs-custom .nav-link,
-        [data-theme="dark"] .nav-tabs-custom .nav-link,
-        body.dark-mode .nav-tabs-custom .nav-link {
-            background: #0a2317 !important;
-            border-color: rgba(34, 197, 94, 0.25) !important;
-            color: #a7f3d0 !important;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
-        }
-
-        html.app-skin-dark .nav-tabs-custom .nav-link:hover,
-        html[data-bs-theme="dark"] .nav-tabs-custom .nav-link:hover,
-        [data-theme="dark"] .nav-tabs-custom .nav-link:hover,
-        body.dark-mode .nav-tabs-custom .nav-link:hover {
-            background: #0e3b26 !important;
-            border-color: #22c55e !important;
-            color: #6ee7b7 !important;
-        }
-
-        html.app-skin-dark .nav-tabs-custom .nav-link.active,
-        html[data-bs-theme="dark"] .nav-tabs-custom .nav-link.active,
-        [data-theme="dark"] .nav-tabs-custom .nav-link.active,
-        body.dark-mode .nav-tabs-custom .nav-link.active {
-            background: linear-gradient(135deg, #15803d 0%, #052e16 100%) !important;
+        html.app-skin-dark .form-simoli-control:focus,
+        html.app-skin-dark select:focus,
+        html.app-skin-dark input:focus,
+        html.app-skin-dark textarea:focus {
+            background-color: #0a2317 !important;
             border-color: #22c55e !important;
             color: #ffffff !important;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), 0 0 12px rgba(34, 197, 94, 0.4) !important;
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2) !important;
         }
 
-        html.app-skin-dark .nav-tabs-custom .nav-link.active i,
-        html[data-bs-theme="dark"] .nav-tabs-custom .nav-link.active i,
-        [data-theme="dark"] .nav-tabs-custom .nav-link.active i,
-        body.dark-mode .nav-tabs-custom .nav-link.active i {
-            color: #4ade80 !important;
+        html.app-skin-dark select option,
+        html.app-skin-dark .form-select option,
+        html.app-skin-dark .form-control option,
+        html.app-skin-dark option {
+            background-color: #0a2317 !important;
+            color: #d1fae5 !important;
         }
 
-        html.app-skin-dark .nav-tabs-custom .nav-link i.text-primary,
-        html[data-bs-theme="dark"] .nav-tabs-custom .nav-link i.text-primary,
-        [data-theme="dark"] .nav-tabs-custom .nav-link i.text-primary {
-            color: #4ade80 !important;
+        html.app-skin-dark select option:checked,
+        html.app-skin-dark .form-select option:checked {
+            background-color: #166534 !important;
+            color: #ffffff !important;
         }
 
-        html.app-skin-dark .nav-tabs-custom .nav-link i.text-success,
-        html[data-bs-theme="dark"] .nav-tabs-custom .nav-link i.text-success,
-        [data-theme="dark"] .nav-tabs-custom .nav-link i.text-success {
-            color: #2dd4bf !important;
+        html.app-skin-dark .form-control::placeholder,
+        html.app-skin-dark .form-simoli-control::placeholder,
+        html.app-skin-dark input::placeholder,
+        html.app-skin-dark textarea::placeholder {
+            color: rgba(209, 250, 229, 0.45) !important;
         }
 
-        /* Modals & Dropdowns */
-        html.app-skin-dark .modal-content,
-        html[data-bs-theme="dark"] .modal-content,
-        [data-theme="dark"] .modal-content {
+        html.app-skin-dark .input-group-text {
+            background-color: #052e16 !important;
+            border-color: rgba(34, 197, 94, 0.25) !important;
+            color: #86efac !important;
+        }
+
+        html.app-skin-dark .form-check-input {
+            background-color: #0e3b26 !important;
+            border-color: rgba(34, 197, 94, 0.3) !important;
+        }
+
+        html.app-skin-dark .form-check-input:checked {
+            background-color: #16a34a !important;
+            border-color: #16a34a !important;
+        }
+
+        /* Select2 Global Dark Mode */
+        html.app-skin-dark .select2-container--default .select2-selection--single {
+            background-color: #0e3b26 !important;
+            border-color: rgba(34, 197, 94, 0.25) !important;
+        }
+        html.app-skin-dark .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: #d1fae5 !important;
+        }
+        html.app-skin-dark .select2-container--default .select2-selection--single .select2-selection__arrow b {
+            border-color: #86efac transparent transparent transparent !important;
+        }
+        html.app-skin-dark .select2-dropdown {
+            background-color: #0a2317 !important;
+            border-color: rgba(34, 197, 94, 0.3) !important;
+            color: #d1fae5 !important;
+        }
+        html.app-skin-dark .select2-container--default .select2-search--dropdown .select2-search__field {
+            background-color: #0e3b26 !important;
+            border-color: rgba(34, 197, 94, 0.25) !important;
+            color: #d1fae5 !important;
+        }
+        html.app-skin-dark .select2-container--default .select2-results__option {
+            color: #d1fae5 !important;
+            background-color: transparent !important;
+        }
+        html.app-skin-dark .select2-container--default .select2-results__option--highlighted[aria-selected] {
+            background-color: #166534 !important;
+            color: #ffffff !important;
+        }
+        html.app-skin-dark .select2-container--default .select2-results__option[aria-selected=true] {
+            background-color: #0e3b26 !important;
+            color: #86efac !important;
+        }
+
+        /* Tables Global Dark Mode */
+        html.app-skin-dark .table-simoli tbody td,
+        html.app-skin-dark .table tbody td {
+            color: #d1fae5 !important;
+            border-bottom-color: rgba(34, 197, 94, 0.1) !important;
+        }
+
+        html.app-skin-dark .table-simoli tbody tr:hover td,
+        html.app-skin-dark .table tbody tr:hover td {
+            background: rgba(34, 197, 94, 0.05) !important;
+        }
+
+        html.app-skin-dark .hdr-icon-btn {
+            background: rgba(34, 197, 94, 0.08);
+            border-color: rgba(34, 197, 94, 0.2);
+            color: var(--ptpn-400);
+        }
+
+        html.app-skin-dark .hdr-user-trigger {
+            background: rgba(34, 197, 94, 0.08);
+            border-color: rgba(34, 197, 94, 0.2);
+        }
+
+        /* Modals & SweetAlert in Dark Mode */
+        html.app-skin-dark .modal-content {
             background-color: #0a2317 !important;
             border-color: rgba(34, 197, 94, 0.2) !important;
             color: #e2f5ea !important;
         }
-
-        html.app-skin-dark .modal-header,
-        html.app-skin-dark .modal-footer,
-        html[data-bs-theme="dark"] .modal-header,
-        html[data-bs-theme="dark"] .modal-footer {
-            border-color: rgba(34, 197, 94, 0.15) !important;
+        html.app-skin-dark .modal-header {
+            border-bottom-color: rgba(34, 197, 94, 0.12) !important;
         }
-
-        html.app-skin-dark .dropdown-menu,
-        html[data-bs-theme="dark"] .dropdown-menu {
+        html.app-skin-dark .modal-footer {
+            border-top-color: rgba(34, 197, 94, 0.12) !important;
+        }
+        html.app-skin-dark .swal2-popup {
             background-color: #0a2317 !important;
-            border-color: rgba(34, 197, 94, 0.2) !important;
+            color: #e2f5ea !important;
+            border: 1px solid rgba(34, 197, 94, 0.2) !important;
+        }
+        html.app-skin-dark .swal2-title,
+        html.app-skin-dark .swal2-html-container {
+            color: #e2f5ea !important;
         }
 
-        html.app-skin-dark .dropdown-item,
-        html[data-bs-theme="dark"] .dropdown-item {
-            color: #d1fae5 !important;
+        /* Action Buttons Global Dark Mode */
+        html.app-skin-dark .tbl-action-view {
+            background-color: rgba(34, 197, 94, 0.18) !important;
+            border-color: rgba(34, 197, 94, 0.35) !important;
+            color: #4ade80 !important;
+        }
+        html.app-skin-dark .tbl-action-view:hover {
+            background-color: #16a34a !important;
+            color: #ffffff !important;
+            border-color: #4ade80 !important;
+        }
+        html.app-skin-dark .tbl-action-edit {
+            background-color: rgba(59, 130, 246, 0.18) !important;
+            border-color: rgba(59, 130, 246, 0.35) !important;
+            color: #60a5fa !important;
+        }
+        html.app-skin-dark .tbl-action-edit:hover {
+            background-color: #1d4ed8 !important;
+            color: #ffffff !important;
+            border-color: #60a5fa !important;
+        }
+        html.app-skin-dark .tbl-action-delete {
+            background-color: rgba(239, 68, 68, 0.18) !important;
+            border-color: rgba(239, 68, 68, 0.35) !important;
+            color: #f87171 !important;
+        }
+        html.app-skin-dark .tbl-action-delete:hover {
+            background-color: #dc2626 !important;
+            color: #ffffff !important;
+            border-color: #f87171 !important;
         }
 
-        html.app-skin-dark .dropdown-item:hover,
-        html[data-bs-theme="dark"] .dropdown-item:hover {
+        /* Status Pills Global Dark Mode */
+        html.app-skin-dark .mod-pill-ok {
+            background-color: rgba(34, 197, 94, 0.18) !important;
+            color: #86efac !important;
+            border-color: rgba(34, 197, 94, 0.35) !important;
+        }
+        html.app-skin-dark .mod-pill-info {
+            background-color: rgba(59, 130, 246, 0.18) !important;
+            color: #93c5fd !important;
+            border-color: rgba(59, 130, 246, 0.35) !important;
+        }
+        html.app-skin-dark .mod-pill-warn {
+            background-color: rgba(245, 158, 11, 0.18) !important;
+            color: #fde047 !important;
+            border-color: rgba(245, 158, 11, 0.35) !important;
+        }
+        html.app-skin-dark .mod-pill-err {
+            background-color: rgba(239, 68, 68, 0.18) !important;
+            color: #fca5a5 !important;
+            border-color: rgba(239, 68, 68, 0.35) !important;
+        }
+        html.app-skin-dark .mod-pill-standby,
+        html.app-skin-dark .mod-pill-neutral {
+            background-color: rgba(107, 114, 128, 0.25) !important;
+            color: #d1d5db !important;
+            border-color: rgba(156, 163, 175, 0.35) !important;
+        }
+
+        /* Global Table Text & Subtitle Contrast */
+        html.app-skin-dark td small,
+        html.app-skin-dark .text-muted,
+        html.app-skin-dark .text-secondary {
+            color: #9ca3af !important;
+        }
+
+        /* Global Pagination Dark Mode */
+        html.app-skin-dark .pagination {
+            margin-bottom: 0 !important;
+            gap: 4px;
+        }
+        html.app-skin-dark .pagination .page-item .page-link,
+        html.app-skin-dark .page-link {
             background-color: #0e3b26 !important;
+            border: 1px solid rgba(34, 197, 94, 0.25) !important;
+            color: #d1fae5 !important;
+            border-radius: 8px !important;
+            font-weight: 700;
+            font-size: 12px;
+            min-width: 32px;
+            height: 32px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px 10px;
+            box-shadow: none !important;
+        }
+        html.app-skin-dark .pagination .page-item.active .page-link,
+        html.app-skin-dark .page-item.active .page-link {
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%) !important;
+            border-color: #22c55e !important;
+            color: #ffffff !important;
+            font-weight: 800;
+            box-shadow: 0 2px 8px rgba(22, 163, 74, 0.35) !important;
+        }
+        html.app-skin-dark .pagination .page-item:not(.active):not(.disabled) .page-link:hover,
+        html.app-skin-dark .page-link:hover {
+            background-color: #166534 !important;
+            border-color: #22c55e !important;
             color: #ffffff !important;
         }
-
-        /* Footer & Badges */
-        html.app-skin-dark .info-footer-bg,
-        html[data-bs-theme="dark"] .info-footer-bg {
-            background: linear-gradient(180deg, #0a2317, #052e16) !important;
+        html.app-skin-dark .pagination .page-item.disabled .page-link,
+        html.app-skin-dark .page-item.disabled .page-link {
+            background-color: rgba(14, 59, 38, 0.5) !important;
             border-color: rgba(34, 197, 94, 0.1) !important;
+            color: rgba(209, 250, 229, 0.3) !important;
+            cursor: not-allowed;
         }
 
-        html.app-skin-dark .akhlak-company,
-        html[data-bs-theme="dark"] .akhlak-company {
+        /* Global Nav Tabs Dark Mode */
+        html.app-skin-dark .nav-tabs,
+        html.app-skin-dark .nav-tabs-custom {
+            border-bottom: 2px solid rgba(34, 197, 94, 0.2) !important;
+        }
+        html.app-skin-dark .nav-tabs .nav-link,
+        html.app-skin-dark .nav-tabs-custom .nav-link {
+            background-color: rgba(14, 59, 38, 0.6) !important;
+            border: 1px solid rgba(34, 197, 94, 0.18) !important;
+            border-bottom: none !important;
+            color: #9ca3af !important;
+            border-radius: 12px 12px 0 0 !important;
+            transition: all 0.2s ease;
+        }
+        html.app-skin-dark .nav-tabs .nav-link:hover,
+        html.app-skin-dark .nav-tabs-custom .nav-link:hover {
+            background-color: rgba(22, 163, 74, 0.2) !important;
+            color: #d1fae5 !important;
+            border-color: rgba(34, 197, 94, 0.3) !important;
+        }
+        html.app-skin-dark .nav-tabs .nav-link.active,
+        html.app-skin-dark .nav-tabs-custom .nav-link.active {
+            background: linear-gradient(135deg, #0e3b26 0%, #052e16 100%) !important;
+            color: #86efac !important;
+            border: 1.5px solid rgba(34, 197, 94, 0.35) !important;
+            border-bottom: 2px solid #0a2317 !important;
+            box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.3) !important;
+            font-weight: 800 !important;
+        }
+        html.app-skin-dark .nav-tabs .nav-link.active i,
+        html.app-skin-dark .nav-tabs-custom .nav-link.active i {
+            color: #4ade80 !important;
+        }
+        html.app-skin-dark .nav-tabs .nav-link:not(.active) i.text-primary,
+        html.app-skin-dark .nav-tabs-custom .nav-link:not(.active) i.text-primary {
+            color: #60a5fa !important;
+        }
+        html.app-skin-dark .nav-tabs .nav-link:not(.active) i.text-success,
+        html.app-skin-dark .nav-tabs-custom .nav-link:not(.active) i.text-success {
             color: #4ade80 !important;
         }
 
-        html.app-skin-dark .hdr-icon-btn,
-        html.app-skin-dark .hdr-user-trigger {
-            background: rgba(34, 197, 94, 0.08) !important;
-            border-color: rgba(34, 197, 94, 0.2) !important;
-        }
-
-        html.app-skin-dark .mod-pill,
-        html[data-bs-theme="dark"] .mod-pill {
-            background: #0e3b26 !important;
-            color: #a7f3d0 !important;
-            border-color: rgba(34, 197, 94, 0.2) !important;
-        }
-
-        /* Pagination protection & styling */
+        /* Pagination protection */
         .pagination svg, .page-item svg {
             max-width: 16px !important; max-height: 16px !important;
             width: 16px !important; height: 16px !important;
-        }
-
-        .pagination {
-            display: flex !important;
-            padding-left: 0 !important;
-            list-style: none !important;
-            border-radius: var(--pill-radius) !important;
-            gap: 4px !important;
-            margin-bottom: 0 !important;
-        }
-
-        .pagination .page-link {
-            border-radius: 10px !important;
-            font-size: 12.5px !important;
-            font-weight: 700 !important;
-            padding: 7px 12px !important;
-            color: #166534 !important;
-            background-color: #ffffff !important;
-            border: 1px solid #bbf7d0 !important;
-            transition: all 0.2s ease !important;
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            min-width: 34px !important;
-            height: 34px !important;
-            text-decoration: none !important;
-        }
-
-        .pagination .page-item:not(.active):not(.disabled) .page-link:hover {
-            background-color: #f0fdf4 !important;
-            color: #15803d !important;
-            border-color: #86efac !important;
-            transform: translateY(-1px);
-        }
-
-        .pagination .page-item.active .page-link {
-            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%) !important;
-            border-color: #16a34a !important;
-            color: #ffffff !important;
-            font-weight: 800 !important;
-            box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3) !important;
-        }
-
-        .pagination .page-item.disabled .page-link {
-            background-color: #f9fafb !important;
-            border-color: #e5e7eb !important;
-            color: #9ca3af !important;
-            opacity: 0.7 !important;
-            cursor: not-allowed !important;
-        }
-
-        /* --- Dark Mode Pagination --- */
-        html.app-skin-dark .pagination .page-link,
-        html[data-bs-theme="dark"] .pagination .page-link,
-        [data-theme="dark"] .pagination .page-link,
-        body.dark-mode .pagination .page-link {
-            background-color: #0e3b26 !important;
-            border-color: rgba(34, 197, 94, 0.25) !important;
-            color: #a7f3d0 !important;
-        }
-
-        html.app-skin-dark .pagination .page-item:not(.active):not(.disabled) .page-link:hover,
-        html[data-bs-theme="dark"] .pagination .page-item:not(.active):not(.disabled) .page-link:hover,
-        [data-theme="dark"] .pagination .page-item:not(.active):not(.disabled) .page-link:hover,
-        body.dark-mode .pagination .page-item:not(.active):not(.disabled) .page-link:hover {
-            background-color: #15803d !important;
-            border-color: #22c55e !important;
-            color: #ffffff !important;
-            box-shadow: 0 2px 8px rgba(34, 197, 94, 0.2) !important;
-        }
-
-        html.app-skin-dark .pagination .page-item.active .page-link,
-        html[data-bs-theme="dark"] .pagination .page-item.active .page-link,
-        [data-theme="dark"] .pagination .page-item.active .page-link,
-        body.dark-mode .pagination .page-item.active .page-link {
-            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%) !important;
-            border-color: #4ade80 !important;
-            color: #ffffff !important;
-            font-weight: 800 !important;
-            box-shadow: 0 4px 14px rgba(34, 197, 94, 0.45) !important;
-        }
-
-        html.app-skin-dark .pagination .page-item.disabled .page-link,
-        html[data-bs-theme="dark"] .pagination .page-item.disabled .page-link,
-        [data-theme="dark"] .pagination .page-item.disabled .page-link,
-        body.dark-mode .pagination .page-item.disabled .page-link {
-            background-color: #051a10 !important;
-            border-color: rgba(34, 197, 94, 0.1) !important;
-            color: #4b6354 !important;
-            opacity: 0.55 !important;
         }
 
         /* Print override */
@@ -1465,21 +1407,35 @@
                 {{-- Section: Monitoring (Admin) --}}
                 <li class="nav-section-label">Laporan & Monitoring</li>
 
-                <li class="nxl-hasmenu {{ request()->is('report-pengaliran*','report-pemeliharaan*','report-rencana*','report-alat-berat*','monitoring-alat-berat*') ? 'active' : '' }}">
+                <li class="nxl-hasmenu {{ request()->is('report-pengaliran*','report-pemeliharaan*','report-rencana*','report-alat-berat*','monitoring-alat-berat*','pemetaan-la*','perizinan-la*') ? 'active' : '' }}">
                     <a href="javascript:void(0);" class="nav-link-simoli
-                        {{ request()->is('report-pengaliran*','report-pemeliharaan*','report-rencana*','report-alat-berat*','monitoring-alat-berat*') ? 'active' : '' }}"
+                        {{ request()->is('report-pengaliran*','report-pemeliharaan*','report-rencana*','report-alat-berat*','monitoring-alat-berat*','pemetaan-la*','perizinan-la*') ? 'active' : '' }}"
                        data-bs-toggle="collapse" data-bs-target="#submenu-laporan">
                         <span class="nav-icon-pill"><i class="feather-bar-chart-2"></i></span>
                         <span class="nav-label-text">Laporan SIMOLI</span>
                         <i class="feather-chevron-right nav-arrow"></i>
                     </a>
-                    <ul class="nav-submenu collapse {{ request()->is('report-pengaliran*','report-pemeliharaan*','report-rencana*','report-alat-berat*','monitoring-alat-berat*') ? 'show' : '' }}"
+                    <ul class="nav-submenu collapse {{ request()->is('report-pengaliran*','report-pemeliharaan*','report-rencana*','report-alat-berat*','monitoring-alat-berat*','pemetaan-la*','perizinan-la*') ? 'show' : '' }}"
                         id="submenu-laporan">
                         <li>
                             <a class="nav-link-simoli {{ request()->is('report-pengaliran*') ? 'active' : '' }}"
                                href="{{ route('report-pengaliran') }}">
                                 <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-droplet"></i></span>
                                 <span class="nav-label-text">Pengaliran LA</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="nav-link-simoli {{ request()->is('pemetaan-la*') ? 'active' : '' }}"
+                               href="{{ route('pemetaan-la.index') }}">
+                                <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-map-pin"></i></span>
+                                <span class="nav-label-text">Pemetaan GIS LA</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="nav-link-simoli {{ request()->is('perizinan-la*') ? 'active' : '' }}"
+                               href="{{ route('perizinan-la.index') }}">
+                                <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-shield"></i></span>
+                                <span class="nav-label-text">Perizinan & SK LA</span>
                             </a>
                         </li>
                         <li>
@@ -1547,21 +1503,35 @@
                 {{-- Section: Unit Operasional --}}
                 <li class="nav-section-label">Operasional Unit</li>
 
-                <li class="nxl-hasmenu {{ request()->is('pengaliran*','pemeliharaan*','rencana*','alat-berat*','monitoring-alat-berat*') ? 'active' : '' }}">
+                <li class="nxl-hasmenu {{ request()->is('pengaliran*','pemeliharaan*','rencana*','alat-berat*','monitoring-alat-berat*','pemetaan-la*','perizinan-la*') ? 'active' : '' }}">
                     <a href="javascript:void(0);" class="nav-link-simoli
-                        {{ request()->is('pengaliran*','pemeliharaan*','rencana*','alat-berat*','monitoring-alat-berat*') ? 'active' : '' }}"
+                        {{ request()->is('pengaliran*','pemeliharaan*','rencana*','alat-berat*','monitoring-alat-berat*','pemetaan-la*','perizinan-la*') ? 'active' : '' }}"
                        data-bs-toggle="collapse" data-bs-target="#submenu-input">
                         <span class="nav-icon-pill"><i class="feather-edit-3"></i></span>
-                        <span class="nav-label-text">Input Laporan</span>
+                        <span class="nav-label-text">Input & Monitoring</span>
                         <i class="feather-chevron-right nav-arrow"></i>
                     </a>
-                    <ul class="nav-submenu collapse {{ request()->is('pengaliran*','pemeliharaan*','rencana*','alat-berat*','monitoring-alat-berat*') ? 'show' : '' }}"
+                    <ul class="nav-submenu collapse {{ request()->is('pengaliran*','pemeliharaan*','rencana*','alat-berat*','monitoring-alat-berat*','pemetaan-la*','perizinan-la*') ? 'show' : '' }}"
                         id="submenu-input">
                         <li>
                             <a class="nav-link-simoli {{ request()->is('pengaliran*') ? 'active' : '' }}"
                                href="{{ route('pengaliran.index') }}">
                                 <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-droplet"></i></span>
                                 <span class="nav-label-text">Pengaliran LA</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="nav-link-simoli {{ request()->is('pemetaan-la*') ? 'active' : '' }}"
+                               href="{{ route('pemetaan-la.index') }}">
+                                <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-map-pin"></i></span>
+                                <span class="nav-label-text">Peta Spasial LA</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="nav-link-simoli {{ request()->is('perizinan-la*') ? 'active' : '' }}"
+                               href="{{ route('perizinan-la.index') }}">
+                                <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-shield"></i></span>
+                                <span class="nav-label-text">Izin & Regulasi LA</span>
                             </a>
                         </li>
                         <li>

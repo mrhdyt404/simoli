@@ -13,6 +13,8 @@ use App\Http\Controllers\ReportPemeliharaanController;
 use App\Http\Controllers\AlatBeratController;
 use App\Http\Controllers\MonitoringAlatBeratController;
 use App\Http\Controllers\ReportAlatBeratController;
+use App\Http\Controllers\PerizinanLaController;
+use App\Http\Controllers\PemetaanLaController;
 
 // Login Routes
 Route::get('/', fn() => redirect('/login'));
@@ -23,6 +25,14 @@ Route::match(['get', 'post'], 'logout', [LoginController::class, 'logout'])->nam
 // Protected Routes (harus login)
 Route::middleware('auth')->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Pemetaan Spasial GIS Land Application
+    Route::get('pemetaan-la', [PemetaanLaController::class, 'index'])->name('pemetaan-la.index');
+    Route::get('pemetaan-la/geo-data/{idPks}', [PemetaanLaController::class, 'getPksGeoData'])->name('pemetaan-la.geo-data');
+    Route::get('pemetaan-la/peta-digital/{idPks}', [PemetaanLaController::class, 'petaDigital'])->name('pemetaan-la.peta-digital');
+
+    // Perizinan Land Application CRUD
+    Route::resource('perizinan-la', PerizinanLaController::class);
 
     // Pengaliran CRUD
     Route::resource('pengaliran', PengaliranController::class);
