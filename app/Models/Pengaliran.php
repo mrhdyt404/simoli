@@ -24,7 +24,19 @@ class Pengaliran extends Model
         'id_pks',
         'tags',
         'foto',
+        'kesesuaian_izin',
+        'alasan_tidak_sesuai_izin',
     ];
+
+    public function isDiLuarIzin(): bool
+    {
+        return $this->kesesuaian_izin === 'Di Luar Izin';
+    }
+
+    public function isSesuaiIzin(): bool
+    {
+        return $this->kesesuaian_izin === 'Sesuai Izin' || empty($this->kesesuaian_izin);
+    }
 
     protected $casts = [
         'tanggal' => 'date',

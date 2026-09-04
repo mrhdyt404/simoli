@@ -43,11 +43,14 @@ class LoginController extends Controller
             Auth::login($userByUsername, $request->filled('remember'));
             $request->session()->regenerate();
 
+            // Bersihkan intended url agar tidak terarah ke background pre-cached route
+            $request->session()->forget('url.intended');
+
             if ($userByUsername->isFieldUser()) {
                 return redirect()->route('operator.index');
             }
 
-            return redirect()->intended('/dashboard');
+            return redirect()->route('dashboard');
         }
 
         // Username salah, Password benar

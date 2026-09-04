@@ -103,6 +103,11 @@ const SimoliSync = (() => {
 
     // --- 3. Pre-cache Operator Pages into Service Worker Cache ---
     async function precacheOperatorPages() {
+        // Skip pre-cache jika berada di halaman login atau belum terautentikasi
+        if (window.location.pathname === '/login' || window.location.pathname === '/') {
+            return;
+        }
+
         if ('caches' in window && navigator.onLine) {
             try {
                 const cache = await caches.open('simoli-pwa-v6');

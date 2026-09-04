@@ -355,6 +355,15 @@
                     <input type="date" name="sampai_tanggal" class="form-control" value="{{ request('sampai_tanggal') }}">
                 </div>
 
+                <div class="col-lg-2 col-md-3 col-6">
+                    <label><i class="feather-shield me-1" style="color:#16a34a;"></i> Status Izin LA</label>
+                    <select name="kesesuaian_izin" class="form-select">
+                        <option value="">Semua Status</option>
+                        <option value="Sesuai Izin" {{ request('kesesuaian_izin') == 'Sesuai Izin' ? 'selected' : '' }}>✅ Sesuai Izin</option>
+                        <option value="Di Luar Izin" {{ request('kesesuaian_izin') == 'Di Luar Izin' ? 'selected' : '' }}>⚠️ Di Luar Izin</option>
+                    </select>
+                </div>
+
                 <div class="col-lg-2 col-md-3">
                     <label>&nbsp;</label>
                     <div class="d-flex gap-2">
@@ -404,9 +413,10 @@
                         @endif
                         <th style="min-width:110px;">Block Pengaliran</th>
                         <th style="min-width:130px;">Bak Distribusi</th>
+                        <th style="width:110px;text-align:center;">Status Izin</th>
                         <th style="width:100px;text-align:center;">Bed Dialirkan</th>
                         <th style="min-width:130px;">Vol. Dialirkan</th>
-                        <th style="min-width:180px;">Keterangan</th>
+                        <th style="min-width:160px;">Keterangan</th>
                         <th style="width:90px;text-align:center;">Aksi</th>
                     </tr>
                 </thead>
@@ -446,6 +456,23 @@
                         </td>
 
                         <td style="text-align:center;">
+                            @if($item->kesesuaian_izin === 'Di Luar Izin')
+                                <span class="badge bg-warning text-dark d-inline-flex align-items-center gap-1 px-2 py-1 shadow-sm"
+                                      style="font-size:10.5px;font-weight:800;border-radius:6px;cursor:pointer;"
+                                      title="{{ $item->alasan_tidak_sesuai_izin ? 'Alasan: ' . $item->alasan_tidak_sesuai_izin : 'Pengaliran di luar blok/bak izin SK' }}">
+                                    <i class="feather-alert-triangle" style="font-size:11px;"></i>
+                                    Di Luar Izin
+                                </span>
+                            @else
+                                <span class="badge bg-success-subtle text-success d-inline-flex align-items-center gap-1 px-2 py-1"
+                                      style="font-size:10.5px;font-weight:800;border-radius:6px;background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d;">
+                                    <i class="feather-check-circle" style="font-size:11px;"></i>
+                                    Sesuai Izin
+                                </span>
+                            @endif
+                        </td>
+
+                        <td style="text-align:center;">
                             <span style="font-family:'Outfit',sans-serif;font-size:16px;font-weight:900;color:#16a34a;">
                                 {{ number_format($item->flat_bed ?? 0, 0, ',', '.') }}
                             </span>
@@ -462,10 +489,16 @@
                         </td>
 
                         <td>
-                            <small style="color:#6b7280;font-size:11.5px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px;"
+                            <small style="color:#6b7280;font-size:11.5px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px;"
                                    title="{{ $item->keterangan }}">
                                 {{ $item->keterangan ?? 'Pengaliran Limbah lancar' }}
                             </small>
+                            @if($item->kesesuaian_izin === 'Di Luar Izin' && $item->alasan_tidak_sesuai_izin)
+                            <small style="color:#c2410c;font-size:10.5px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px;"
+                                   title="Alasan di luar izin: {{ $item->alasan_tidak_sesuai_izin }}">
+                                ⚠️ {{ $item->alasan_tidak_sesuai_izin }}
+                            </small>
+                            @endif
                         </td>
 
                         <td style="text-align:center;" onclick="event.stopPropagation();">

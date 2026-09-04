@@ -53,6 +53,11 @@ class PengaliranController extends Controller
             $query->whereYear('tanggal', $request->tahun);
         }
 
+        // Filter by Kesesuaian Izin
+        if ($request->filled('kesesuaian_izin')) {
+            $query->where('kesesuaian_izin', $request->kesesuaian_izin);
+        }
+
         $pengaliran = $query->orderBy('tanggal', 'desc')->paginate(15)->withQueryString();
 
         $pksList = Pks::orderBy('NAMA')->get();
@@ -63,6 +68,9 @@ class PengaliranController extends Controller
             $statsQuery->where('id_pks', $user->id_pks);
         } elseif ($request->filled('id_pks')) {
             $statsQuery->where('id_pks', $request->id_pks);
+        }
+        if ($request->filled('kesesuaian_izin')) {
+            $statsQuery->where('kesesuaian_izin', $request->kesesuaian_izin);
         }
 
         $totalRecords = $statsQuery->count();
@@ -174,14 +182,163 @@ class PengaliranController extends Controller
         ];
     }
 
+    /**
+     * Map master peta blok LA berizin per PKS untuk kebutuhan frontend validasi
+     */
+    public function getPksBlokMap(): array
+    {
+        return Pks::with(['petaBlokLa' => function($q) {
+            $q->where('status_aktif', true)->orderBy('nama_blok');
+        }, 'perizinanLa'])->get()->mapWithKeys(function($pks) {
+            $izin = $pks->perizinanLa;
+            return [$pks->id_pks => [
+                'nomor_sk' => $izin ? $izin->nomor_sk : null,
+                'status_izin' => $izin ? $izin->status_izin : 'Belum Ada SK',
+                'bloks' => $pks->petaBlokLa->map(function($b) {
+                    return [
+                        'nama_blok' => $b->nama_blok,
+                        'clean_blok' => strtoupper(preg_replace('/[^A-Z0-9]/', '', $b->nama_blok)),
+                        'afdeling' => $b->afdeling,
+                        'no_bak_awal' => $b->no_bak_awal,
+                        'no_bak_akhir' => $b->no_bak_akhir,
+                        'jumlah_bak' => $b->jumlah_bak,
+                        'luas_ha' => $b->luas_ha,
+                        'flat_bed' => $b->jumlah_flat_bed,
+                    ];
+                })->values()->all(),
+            ]];
+        })->toArray();
+    }
+
+    /**
+     * Evaluasi apakah blok dan bak berada dalam izin Land Application PKS
+     */
+    public function evaluasiKesesuaianIzin($idPks, $inputBlok, $inputBak): array
+    {
+        $idPks = (int) $idPks;
+        $activeBloks = \App\Models\PetaBlokLa::where('id_pks', $idPks)
+            ->where('status_aktif', true)
+            ->get();
+
+        // Jika PKS belum memiliki konfigurasi master peta blok, default sesuai izin
+        if ($activeBloks->isEmpty()) {
+            return [
+                'sesuai' => true,
+                'pesan' => 'PKS belum memiliki master blok LA resmi di sistem.',
+                'matched_bloks' => [],
+            ];
+        }
+
+        // 1. Ekstrak nama blok input (pisahkan koma, slash, spasi, kata 'dan', '&')
+        $rawBlokTokens = preg_split('/[\/,\s;&+]+|(?:\bdan\b)/i', (string) $inputBlok, -1, PREG_SPLIT_NO_EMPTY);
+        $cleanBlokInputList = [];
+        foreach ($rawBlokTokens as $token) {
+            $cleaned = strtoupper(preg_replace('/^(BLOK|BLOCK|AFD\.?|AFDELING)\s*/i', '', trim($token)));
+            $cleaned = preg_replace('/[^A-Z0-9]/', '', $cleaned);
+            if ($cleaned !== '' && !in_array($cleaned, $cleanBlokInputList)) {
+                $cleanBlokInputList[] = $cleaned;
+            }
+        }
+
+        if (empty($cleanBlokInputList)) {
+            return [
+                'sesuai' => false,
+                'pesan' => 'Nama blok pengaliran tidak terisi atau format tidak dikenali.',
+                'matched_bloks' => [],
+            ];
+        }
+
+        // 2. Ekstrak nomor bak
+        preg_match_all('/\d+/', (string) $inputBak, $bakMatches);
+        $inputBakNumbers = array_map('intval', $bakMatches[0] ?? []);
+
+        // 3. Cocokkan blok input dengan peta_blok_la
+        $matchedBlokModels = [];
+        $unmatchedBloks = [];
+
+        foreach ($cleanBlokInputList as $inputBlokItem) {
+            $found = null;
+            foreach ($activeBloks as $blokModel) {
+                $dbNamaBlok = strtoupper(preg_replace('/[^A-Z0-9]/', '', $blokModel->nama_blok));
+                if ($dbNamaBlok === $inputBlokItem) {
+                    $found = $blokModel;
+                    break;
+                }
+            }
+
+            if ($found) {
+                $matchedBlokModels[] = $found;
+            } else {
+                $unmatchedBloks[] = $inputBlokItem;
+            }
+        }
+
+        // Jika ada blok yang tidak terdaftar
+        if (!empty($unmatchedBloks)) {
+            return [
+                'sesuai' => false,
+                'pesan' => 'Blok [' . implode(', ', $unmatchedBloks) . '] tidak tercantum dalam Surat Izin / Peta Land Application.',
+                'matched_bloks' => $matchedBlokModels,
+                'unmatched_bloks' => $unmatchedBloks,
+            ];
+        }
+
+        // 4. Validasi nomor bak terhadap rentang no_bak_awal & no_bak_akhir
+        if (!empty($inputBakNumbers)) {
+            $invalidBaks = [];
+            foreach ($inputBakNumbers as $bakNo) {
+                $bakValid = false;
+                foreach ($matchedBlokModels as $bModel) {
+                    $minBak = $bModel->no_bak_awal !== null ? (int) $bModel->no_bak_awal : null;
+                    $maxBak = $bModel->no_bak_akhir !== null ? (int) $bModel->no_bak_akhir : null;
+
+                    if ($minBak !== null && $maxBak !== null) {
+                        if ($bakNo >= min($minBak, $maxBak) && $bakNo <= max($minBak, $maxBak)) {
+                            $bakValid = true;
+                            break;
+                        }
+                    } elseif ($minBak !== null) {
+                        if ($bakNo == $minBak) {
+                            $bakValid = true;
+                            break;
+                        }
+                    } else {
+                        $bakValid = true;
+                        break;
+                    }
+                }
+
+                if (!$bakValid) {
+                    $invalidBaks[] = $bakNo;
+                }
+            }
+
+            if (!empty($invalidBaks)) {
+                return [
+                    'sesuai' => false,
+                    'pesan' => 'Bak No. [' . implode(', ', $invalidBaks) . '] berada di luar rentang bak resmi blok yang dipilih.',
+                    'matched_bloks' => $matchedBlokModels,
+                    'invalid_baks' => $invalidBaks,
+                ];
+            }
+        }
+
+        return [
+            'sesuai' => true,
+            'pesan' => 'Sesuai dengan Surat Izin & Peta Land Application',
+            'matched_bloks' => $matchedBlokModels,
+        ];
+    }
+
     public function create()
     {
         $user = Auth::user();
         $pksList = Pks::orderBy('NAMA')->get();
         $defaultPksId = $user->id_pks ?: ($pksList->first() ? $pksList->first()->id_pks : 1);
         $pksProgress = $this->getPksProgress($defaultPksId);
+        $pksBlokMap = $this->getPksBlokMap();
 
-        return view('pengaliran.create', compact('pksList', 'user', 'pksProgress'));
+        return view('pengaliran.create', compact('pksList', 'user', 'pksProgress', 'pksBlokMap'));
     }
 
     public function store(Request $request)
@@ -201,6 +358,7 @@ class PengaliranController extends Controller
                 'keterangan' => 'nullable|string',
                 'id_pks' => 'required|integer',
                 'foto' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+                'alasan_tidak_sesuai_izin' => 'nullable|string',
             ],
             [
                 'foto.image' => 'File yang diunggah harus berupa gambar.',
@@ -215,6 +373,22 @@ class PengaliranController extends Controller
             $validated['id_pks'] = $user->id_pks;
         }
 
+        // Pengecekan kesesuaian izin Land Application
+        $evaluasi = $this->evaluasiKesesuaianIzin($validated['id_pks'], $validated['blok'], $validated['no_bak']);
+        if (!$evaluasi['sesuai']) {
+            $alasan = trim((string) $request->input('alasan_tidak_sesuai_izin', ''));
+            if ($alasan === '') {
+                return back()->withErrors([
+                    'alasan_tidak_sesuai_izin' => '⚠️ ' . $evaluasi['pesan'] . ' Anda wajib memberikan alasan kenapa pengaliran dilakukan di luar surat izin Land Application.'
+                ])->withInput();
+            }
+            $validated['kesesuaian_izin'] = 'Di Luar Izin';
+            $validated['alasan_tidak_sesuai_izin'] = $alasan;
+        } else {
+            $validated['kesesuaian_izin'] = 'Sesuai Izin';
+            $validated['alasan_tidak_sesuai_izin'] = null;
+        }
+
         if ($request->hasFile('foto')) {
             $file = $request->file('foto');
             $filename = time() . '_' . $file->getClientOriginalName();
@@ -225,7 +399,7 @@ class PengaliranController extends Controller
         Pengaliran::create($validated);
 
         return redirect()->route('pengaliran.index')
-            ->with('success', 'Data pengaliran berhasil ditambahkan!');
+            ->with('success', 'Data pengaliran berhasil ditambahkan! (Status: ' . $validated['kesesuaian_izin'] . ')');
     }
 
     public function edit($id)
@@ -240,8 +414,9 @@ class PengaliranController extends Controller
 
         $pksList = Pks::orderBy('NAMA')->get();
         $pksProgress = $this->getPksProgress($pengaliran->id_pks);
+        $pksBlokMap = $this->getPksBlokMap();
 
-        return view('pengaliran.edit', compact('pengaliran', 'pksList', 'user', 'pksProgress'));
+        return view('pengaliran.edit', compact('pengaliran', 'pksList', 'user', 'pksProgress', 'pksBlokMap'));
     }
 
     public function update(Request $request, $id)
@@ -269,6 +444,7 @@ class PengaliranController extends Controller
                 'keterangan' => 'nullable|string',
                 'id_pks' => 'required|integer',
                 'foto' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+                'alasan_tidak_sesuai_izin' => 'nullable|string',
             ],
             [
                 'foto.image' => 'File yang diunggah harus berupa gambar.',
@@ -277,6 +453,27 @@ class PengaliranController extends Controller
             ]
         );
 
+        // Unit user: otomatis set id_pks ke ID user sendiri
+        if ($user->isUnit()) {
+            $validated['id_pks'] = $user->id_pks;
+        }
+
+        // Pengecekan kesesuaian izin Land Application
+        $evaluasi = $this->evaluasiKesesuaianIzin($validated['id_pks'], $validated['blok'], $validated['no_bak']);
+        if (!$evaluasi['sesuai']) {
+            $alasan = trim((string) $request->input('alasan_tidak_sesuai_izin', ''));
+            if ($alasan === '') {
+                return back()->withErrors([
+                    'alasan_tidak_sesuai_izin' => '⚠️ ' . $evaluasi['pesan'] . ' Anda wajib memberikan alasan kenapa pengaliran dilakukan di luar surat izin Land Application.'
+                ])->withInput();
+            }
+            $validated['kesesuaian_izin'] = 'Di Luar Izin';
+            $validated['alasan_tidak_sesuai_izin'] = $alasan;
+        } else {
+            $validated['kesesuaian_izin'] = 'Sesuai Izin';
+            $validated['alasan_tidak_sesuai_izin'] = null;
+        }
+
         if ($request->hasFile('foto')) {
             $file = $request->file('foto');
             $filename = time() . '_' . $file->getClientOriginalName();
@@ -284,15 +481,10 @@ class PengaliranController extends Controller
             $validated['foto'] = $filename;
         }
 
-        // Unit user: otomatis set id_pks ke ID user sendiri
-        if ($user->isUnit()) {
-            $validated['id_pks'] = $user->id_pks;
-        }
-
         $pengaliran->update($validated);
 
         return redirect()->route('pengaliran.index')
-            ->with('success', 'Data pengaliran berhasil diperbarui!');
+            ->with('success', 'Data pengaliran berhasil diperbarui! (Status: ' . $validated['kesesuaian_izin'] . ')');
     }
 
     public function destroy($id)

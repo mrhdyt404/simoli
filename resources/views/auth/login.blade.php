@@ -587,9 +587,7 @@
     </aside>
 </div>
 
-<!-- PWA Scripts -->
-<script src="{{ asset('js/simoli-offline-db.js') }}"></script>
-<script src="{{ asset('js/simoli-sync-manager.js') }}"></script>
+<!-- PWA Service Worker Registration -->
 <script>
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', function() {

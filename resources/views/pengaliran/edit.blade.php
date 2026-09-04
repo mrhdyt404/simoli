@@ -64,7 +64,97 @@
         color: #92400e;
     }
 
-    .current-photo { max-width: 180px; border-radius: 12px; border: 2px solid rgba(22,163,74,.2); margin-bottom: 10px; }
+    /* === PERMIT COMPLIANCE STYLES === */
+    .permit-status-card {
+        border-radius: 14px;
+        padding: 14px 18px;
+        margin-top: 14px;
+        transition: all .3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: none;
+    }
+    .permit-status-card.active { display: block; animation: fadeUpCard .3s ease-out; }
+    .permit-card-sesuai {
+        background: #f0fdf4;
+        border: 1.5px solid #86efac;
+        color: #14532d;
+    }
+    .permit-card-luar {
+        background: #fffbeb;
+        border: 1.5px solid #f59e0b;
+        color: #78350f;
+    }
+    .permit-card-title {
+        font-size: 13px;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 4px;
+    }
+    .permit-card-desc {
+        font-size: 11.5px;
+        line-height: 1.45;
+    }
+
+    /* Blok Quick Chips */
+    .blok-chips-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 8px;
+        margin-bottom: 6px;
+        max-height: 120px;
+        overflow-y: auto;
+        padding: 2px;
+    }
+    .blok-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 4px 10px;
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 700;
+        cursor: pointer;
+        border: 1px solid #bbf7d0;
+        background: #ffffff;
+        color: #15803d;
+        transition: all .15s ease;
+    }
+    .blok-chip:hover {
+        background: #16a34a;
+        color: #ffffff;
+        border-color: #16a34a;
+        transform: translateY(-1px);
+    }
+    .blok-chip-bak {
+        font-size: 9.5px;
+        opacity: .85;
+        font-weight: 600;
+    }
+
+    /* Alasan Luar Izin Animated Box */
+    .alasan-luar-izin-box {
+        background: #fff7ed;
+        border: 1.5px dashed #f97316;
+        border-radius: 14px;
+        padding: 16px 18px;
+        margin-top: 14px;
+        animation: fadeUpCard .3s ease-out;
+        display: none;
+    }
+    .alasan-luar-izin-box.show { display: block; }
+    .alasan-luar-izin-box label {
+        color: #9a3412 !important;
+        font-weight: 800 !important;
+    }
+
+    html.app-skin-dark .permit-card-sesuai { background: #062b16; border-color: #16a34a; color: #86efac; }
+    html.app-skin-dark .permit-card-luar   { background: #261704; border-color: #d97706; color: #fde68a; }
+    html.app-skin-dark .blok-chip { background: #0e3b26; border-color: rgba(34,197,94,.3); color: #86efac; }
+    html.app-skin-dark .blok-chip:hover { background: #16a34a; color: #fff; }
+    html.app-skin-dark .alasan-luar-izin-box { background: #261405; border-color: #ea580c; }
+    html.app-skin-dark .alasan-luar-izin-box label { color: #fdba74 !important; }
 
     html.app-skin-dark .form-card { background:#0a2317 !important;border-color:rgba(34,197,94,.15) !important; }
     html.app-skin-dark .form-label { color:#d1fae5 !important; }
@@ -174,27 +264,68 @@
             <div class="form-card">
                 <div class="form-section-title"><i class="feather-map-pin"></i> Detail Lokasi Pengaliran Land Aplikasi</div>
                 <div class="row g-3">
-                    <div class="col-md-4">
+                    <div class="col-md-5">
                         <label class="form-label">Block Pengaliran <span class="text-danger">*</span></label>
-                        <input type="text" name="blok" class="form-control @error('blok') is-invalid @enderror"
-                            value="{{ old('blok', $pengaliran->blok) }}" placeholder="Contoh: F4, L25, 22K" required>
+                        <input type="text" name="blok" id="blok_input" class="form-control @error('blok') is-invalid @enderror"
+                            value="{{ old('blok', $pengaliran->blok) }}" placeholder="Contoh: E25, L25, F26" required
+                            autocomplete="off">
                         <small class="text-muted" style="font-size:11px;">Blok area pengaliran lahan</small>
                         @error('blok') <div class="invalid-feedback">{{ $message }}</div> @enderror
+
+                        {{-- Quick Chips Blok Berizin --}}
+                        <div class="mt-2">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <span style="font-size:10.5px;font-weight:700;color:#6b7280;text-transform:uppercase;">Blok Berizin PKS Ini:</span>
+                                <span id="sk_info_badge" class="badge bg-light text-muted" style="font-size:10px;"></span>
+                            </div>
+                            <div class="blok-chips-container" id="blok_chips_container">
+                                <span class="text-muted" style="font-size:11px;font-style:italic;">Memuat data blok berizin...</span>
+                            </div>
+                        </div>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Bak Distribusi <span class="text-danger">*</span></label>
-                        <input type="text" name="no_bak" class="form-control @error('no_bak') is-invalid @enderror"
-                            value="{{ old('no_bak', $pengaliran->no_bak) }}" placeholder="Contoh: 11, 12 atau 5, 6" required>
+                        <input type="text" name="no_bak" id="no_bak_input" class="form-control @error('no_bak') is-invalid @enderror"
+                            value="{{ old('no_bak', $pengaliran->no_bak) }}" placeholder="Contoh: 1, 2 atau 5-6" required
+                            autocomplete="off">
                         <small class="text-muted" style="font-size:11px;">Nomor bak distribusi limbah</small>
                         @error('no_bak') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <label class="form-label">Rotasi</label>
                         <input type="text" name="rotasi" class="form-control @error('rotasi') is-invalid @enderror"
                             value="{{ old('rotasi', $pengaliran->rotasi) }}" placeholder="Contoh: 7 Hari">
                         <small class="text-muted" style="font-size:11px;">Siklus rotasi pengaliran</small>
                         @error('rotasi') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
+                </div>
+
+                {{-- Live Permit Status Card --}}
+                <div id="permit_status_card" class="permit-status-card">
+                    <div class="permit-card-title">
+                        <span id="permit_status_icon"></span>
+                        <span id="permit_status_title"></span>
+                    </div>
+                    <div id="permit_status_desc" class="permit-card-desc"></div>
+                </div>
+
+                {{-- Alasan Pengaliran di Luar Izin --}}
+                <div id="alasan_luar_izin_box" class="alasan-luar-izin-box @if(old('alasan_tidak_sesuai_izin', $pengaliran->alasan_tidak_sesuai_izin) || $errors->has('alasan_tidak_sesuai_izin') || $pengaliran->isDiLuarIzin()) show @endif">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <i class="feather-alert-triangle" style="font-size:16px;color:#ea580c;"></i>
+                        <label class="form-label mb-0" for="alasan_field">
+                            Alasan Pengaliran di Luar Izin <span class="text-danger">*</span>
+                        </label>
+                    </div>
+                    <p style="font-size:11.5px;color:#c2410c;margin-bottom:8px;">
+                        Karena pengaliran dilakukan di luar surat izin Land Application resmi PKS ini, Anda <strong>wajib</strong> menyertakan alasan operasional/teknis:
+                    </p>
+                    <textarea name="alasan_tidak_sesuai_izin" id="alasan_field" rows="3"
+                        class="form-control @error('alasan_tidak_sesuai_izin') is-invalid @enderror"
+                        placeholder="Tuliskan alasan pengaliran dilakukan di luar izin...">{{ old('alasan_tidak_sesuai_izin', $pengaliran->alasan_tidak_sesuai_izin) }}</textarea>
+                    @error('alasan_tidak_sesuai_izin')
+                        <div class="invalid-feedback d-block mt-1 fw-bold">{{ $message }}</div>
+                    @enderror
                 </div>
             </div>
 
@@ -251,7 +382,7 @@
             <div class="form-card">
                 <div class="form-section-title"><i class="feather-home"></i> Unit PKS</div>
                 @if($user->isAdmin())
-                    <select name="id_pks" class="form-control @error('id_pks') is-invalid @enderror" data-select2-selector="status" required>
+                    <select name="id_pks" id="pks_select" class="form-control @error('id_pks') is-invalid @enderror" data-select2-selector="status" required>
                         <option value="">— Pilih PKS —</option>
                         @foreach($pksList as $pks)
                         <option value="{{ $pks->id_pks }}" {{ old('id_pks', $pengaliran->id_pks) == $pks->id_pks ? 'selected' : '' }}>
@@ -261,7 +392,7 @@
                     </select>
                     @error('id_pks') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 @else
-                    <input type="hidden" name="id_pks" value="{{ $user->id_pks }}">
+                    <input type="hidden" name="id_pks" id="pks_select" value="{{ $user->id_pks }}">
                     <div class="pks-display">
                         <i class="feather-map-pin" style="color:#16a34a;font-size:18px;flex-shrink:0;"></i>
                         <div>
@@ -319,12 +450,197 @@
 <script src="{{ asset('duraluxadmin/assets/vendors/js/select2.min.js') }}"></script>
 <script src="{{ asset('duraluxadmin/assets/vendors/js/select2-active.min.js') }}"></script>
 <script>
+    const PKS_BLOK_MAP = @json($pksBlokMap ?? []);
+
     function setKeterangan(text) {
         document.getElementById('keterangan_field').value = text;
     }
+
+    function getSelectedPksId() {
+        const pksEl = document.getElementById('pks_select');
+        return pksEl ? pksEl.value : null;
+    }
+
+    function renderBlokChips(idPks) {
+        const container = document.getElementById('blok_chips_container');
+        const skBadge = document.getElementById('sk_info_badge');
+        if (!container) return;
+
+        const pksData = PKS_BLOK_MAP[idPks];
+        if (!pksData || !pksData.bloks || pksData.bloks.length === 0) {
+            container.innerHTML = '<span class="text-muted" style="font-size:11px;font-style:italic;">Belum ada master peta blok LA terdaftar untuk PKS ini.</span>';
+            if (skBadge) skBadge.textContent = 'Belum Ada Master Blok';
+            return;
+        }
+
+        if (skBadge) {
+            skBadge.textContent = pksData.nomor_sk ? ('SK: ' + pksData.nomor_sk) : 'Master Blok Terdaftar';
+        }
+
+        let html = '';
+        pksData.bloks.forEach(b => {
+            const bakText = (b.no_bak_awal && b.no_bak_akhir)
+                ? (b.no_bak_awal === b.no_bak_akhir ? `(Bak ${b.no_bak_awal})` : `(Bak ${b.no_bak_awal}-${b.no_bak_akhir})`)
+                : '';
+            html += `
+                <button type="button" class="blok-chip" onclick="selectBlokChip('${b.nama_blok}', '${b.no_bak_awal || ''}', '${b.no_bak_akhir || ''}')">
+                    <span>${b.nama_blok}</span>
+                    ${bakText ? `<span class="blok-chip-bak">${bakText}</span>` : ''}
+                </button>
+            `;
+        });
+        container.innerHTML = html;
+    }
+
+    function selectBlokChip(namaBlok, bakAwal, bakAkhir) {
+        const blokInput = document.getElementById('blok_input');
+        const bakInput = document.getElementById('no_bak_input');
+        if (blokInput) {
+            blokInput.value = namaBlok;
+        }
+        if (bakInput && bakAwal) {
+            if (bakAwal === bakAkhir || !bakAkhir) {
+                bakInput.value = bakAwal;
+            } else {
+                bakInput.value = `${bakAwal}, ${bakAkhir}`;
+            }
+        }
+        checkPermitCompliance();
+    }
+
+    function checkPermitCompliance() {
+        const idPks = getSelectedPksId();
+        const blokInput = document.getElementById('blok_input');
+        const bakInput = document.getElementById('no_bak_input');
+        const statusCard = document.getElementById('permit_status_card');
+        const statusIcon = document.getElementById('permit_status_icon');
+        const statusTitle = document.getElementById('permit_status_title');
+        const statusDesc = document.getElementById('permit_status_desc');
+        const alasanBox = document.getElementById('alasan_luar_izin_box');
+        const alasanField = document.getElementById('alasan_field');
+
+        if (!blokInput || !statusCard) return;
+
+        const rawBlok = blokInput.value.trim();
+        const rawBak = bakInput ? bakInput.value.trim() : '';
+
+        if (!rawBlok) {
+            statusCard.className = 'permit-status-card';
+            if (alasanBox && !alasanField.value.trim()) {
+                alasanBox.classList.remove('show');
+            }
+            return;
+        }
+
+        const pksData = PKS_BLOK_MAP[idPks];
+        if (!pksData || !pksData.bloks || pksData.bloks.length === 0) {
+            statusCard.className = 'permit-status-card permit-card-sesuai active';
+            statusIcon.innerHTML = '<i class="feather-info" style="color:#16a34a;"></i>';
+            statusTitle.textContent = 'PKS Belum Memiliki Master Peta Blok';
+            statusDesc.textContent = 'Data pengaliran akan disimpan langsung ke sistem.';
+            if (alasanBox) alasanBox.classList.remove('show');
+            return;
+        }
+
+        // Parse input tokens
+        const rawTokens = rawBlok.split(/[\/,\s;&+]+|(?:\bdan\b)/i);
+        const cleanTokens = [];
+        rawTokens.forEach(t => {
+            const clean = t.replace(/^(BLOK|BLOCK|AFD\.?|AFDELING)\s*/i, '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+            if (clean && !cleanTokens.includes(clean)) cleanTokens.push(clean);
+        });
+
+        const bakNumbers = (rawBak.match(/\d+/g) || []).map(Number);
+
+        const matchedBloks = [];
+        const unmatchedBloks = [];
+
+        cleanTokens.forEach(token => {
+            const found = pksData.bloks.find(b => b.clean_blok === token);
+            if (found) {
+                matchedBloks.push(found);
+            } else {
+                unmatchedBloks.push(token);
+            }
+        });
+
+        let isCompliant = true;
+        let reasonMsg = '';
+
+        if (unmatchedBloks.length > 0) {
+            isCompliant = false;
+            reasonMsg = `Blok [${unmatchedBloks.join(', ')}] tidak tercantum dalam Surat Keputusan Izin LA resmi PKS ini.`;
+        } else if (cleanTokens.length === 0) {
+            isCompliant = false;
+            reasonMsg = 'Format blok pengaliran tidak dikenali.';
+        } else if (bakNumbers.length > 0) {
+            const invalidBaks = [];
+            bakNumbers.forEach(bakNo => {
+                const validInAny = matchedBloks.some(b => {
+                    const min = b.no_bak_awal !== null ? Number(b.no_bak_awal) : null;
+                    const max = b.no_bak_akhir !== null ? Number(b.no_bak_akhir) : null;
+                    if (min !== null && max !== null) {
+                        return bakNo >= Math.min(min, max) && bakNo <= Math.max(min, max);
+                    } else if (min !== null) {
+                        return bakNo === min;
+                    }
+                    return true;
+                });
+                if (!validInAny) invalidBaks.push(bakNo);
+            });
+
+            if (invalidBaks.length > 0) {
+                isCompliant = false;
+                reasonMsg = `Bak No. [${invalidBaks.join(', ')}] berada di luar rentang bak resmi untuk blok (${cleanTokens.join(', ')}).`;
+            }
+        }
+
+        if (isCompliant) {
+            statusCard.className = 'permit-status-card permit-card-sesuai active';
+            statusIcon.innerHTML = '<i class="feather-check-circle" style="color:#16a34a;font-size:16px;"></i>';
+            statusTitle.textContent = '✅ Sesuai Izin Land Application';
+            statusDesc.textContent = `Blok ${cleanTokens.join(', ')} terdaftar resmi pada Surat Izin LA (${pksData.nomor_sk || 'Terverifikasi'}).`;
+            if (alasanBox) {
+                alasanBox.classList.remove('show');
+            }
+        } else {
+            statusCard.className = 'permit-status-card permit-card-luar active';
+            statusIcon.innerHTML = '<i class="feather-alert-triangle" style="color:#f59e0b;font-size:16px;"></i>';
+            statusTitle.textContent = '⚠️ DI LUAR IZIN LAND APLIKASI TERDETEKSI';
+            statusDesc.textContent = `${reasonMsg} Sistem mewajibkan Anda mengisi alasan pengaliran di bawah ini.`;
+            if (alasanBox) {
+                alasanBox.classList.add('show');
+            }
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         if (typeof $ !== 'undefined' && $.fn.select2) {
             $('[data-select2-selector]').select2({ width: '100%' });
+            $('#pks_select').on('change', function() {
+                renderBlokChips(this.value);
+                checkPermitCompliance();
+            });
+        }
+
+        const initialPks = getSelectedPksId();
+        if (initialPks) {
+            renderBlokChips(initialPks);
+        }
+
+        const blokInput = document.getElementById('blok_input');
+        const bakInput = document.getElementById('no_bak_input');
+
+        if (blokInput) {
+            blokInput.addEventListener('input', checkPermitCompliance);
+        }
+        if (bakInput) {
+            bakInput.addEventListener('input', checkPermitCompliance);
+        }
+
+        // Jalankan pengecekan awal saat edit page dimuat
+        if (blokInput && blokInput.value.trim()) {
+            checkPermitCompliance();
         }
     });
 </script>
