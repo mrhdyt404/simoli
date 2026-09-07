@@ -323,39 +323,6 @@
     <div class="row g-4">
         <div class="col-lg-8">
 
-            {{-- Status Kesesuaian Izin LA --}}
-            <div class="detail-card mb-4" style="border-left: 4px solid {{ $data->isDiLuarIzin() ? '#f59e0b' : '#16a34a' }};">
-                <div class="detail-card-header" style="background: {{ $data->isDiLuarIzin() ? '#fffbeb' : '#f0fdf4' }};">
-                    <i class="feather-{{ $data->isDiLuarIzin() ? 'alert-triangle' : 'shield' }}"
-                       style="color:{{ $data->isDiLuarIzin() ? '#d97706' : '#16a34a' }};font-size:18px;"></i>
-                    <h3 class="detail-card-title" style="color:{{ $data->isDiLuarIzin() ? '#92400e' : '#14532d' }};">
-                        Status Kepatuhan Izin Land Application
-                    </h3>
-                    <span class="badge {{ $data->isDiLuarIzin() ? 'bg-warning text-dark' : 'bg-success' }} ms-auto"
-                          style="font-size:11.5px;font-weight:800;padding:6px 12px;border-radius:50px;">
-                        {{ $data->kesesuaian_izin ?? 'Sesuai Izin' }}
-                    </span>
-                </div>
-                <div class="detail-card-body">
-                    @if($data->isDiLuarIzin())
-                        <div class="alert alert-warning d-flex align-items-start gap-2 mb-0" style="border-radius:12px;background:#fef3c7;border:1px solid #fde68a;">
-                            <i class="feather-alert-circle text-warning fs-5 flex-shrink-0 mt-0.5"></i>
-                            <div>
-                                <strong class="d-block mb-1 text-dark">Alasan Pengaliran di Luar Izin:</strong>
-                                <span class="text-dark" style="font-size:13.5px;line-height:1.5;">
-                                    {{ $data->alasan_tidak_sesuai_izin ?: 'Tidak ada alasan terlampir.' }}
-                                </span>
-                            </div>
-                        </div>
-                    @else
-                        <div class="d-flex align-items-center gap-2 text-success" style="font-size:13px;font-weight:600;">
-                            <i class="feather-check-circle" style="font-size:16px;"></i>
-                            <span>Pengaliran pada Blok <strong>{{ $data->blok }}</strong> (Bak {{ $data->no_bak }}) terdaftar resmi dalam Surat Izin &amp; Peta Land Application PKS.</span>
-                        </div>
-                    @endif
-                </div>
-            </div>
-
             {{-- Informasi Umum --}}
             <div class="detail-card mb-4">
                 <div class="detail-card-header">

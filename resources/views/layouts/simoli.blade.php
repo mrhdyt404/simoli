@@ -1427,15 +1427,15 @@
                         <li>
                             <a class="nav-link-simoli {{ request()->is('pemetaan-la*') ? 'active' : '' }}"
                                href="{{ route('pemetaan-la.index') }}">
-                                <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-map-pin"></i></span>
-                                <span class="nav-label-text">Pemetaan GIS LA</span>
+                                <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-map"></i></span>
+                                <span class="nav-label-text">Arsip Peta LA</span>
                             </a>
                         </li>
                         <li>
                             <a class="nav-link-simoli {{ request()->is('perizinan-la*') ? 'active' : '' }}"
                                href="{{ route('perizinan-la.index') }}">
-                                <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-shield"></i></span>
-                                <span class="nav-label-text">Perizinan & SK LA</span>
+                                <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-file-text"></i></span>
+                                <span class="nav-label-text">Arsip SK Izin LA</span>
                             </a>
                         </li>
                         <li>
@@ -1523,15 +1523,15 @@
                         <li>
                             <a class="nav-link-simoli {{ request()->is('pemetaan-la*') ? 'active' : '' }}"
                                href="{{ route('pemetaan-la.index') }}">
-                                <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-map-pin"></i></span>
-                                <span class="nav-label-text">Peta Spasial LA</span>
+                                <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-map"></i></span>
+                                <span class="nav-label-text">Arsip Peta LA</span>
                             </a>
                         </li>
                         <li>
                             <a class="nav-link-simoli {{ request()->is('perizinan-la*') ? 'active' : '' }}"
                                href="{{ route('perizinan-la.index') }}">
-                                <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-shield"></i></span>
-                                <span class="nav-label-text">Izin & Regulasi LA</span>
+                                <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-file-text"></i></span>
+                                <span class="nav-label-text">Arsip SK Izin LA</span>
                             </a>
                         </li>
                         <li>

@@ -3,24 +3,22 @@
 namespace App\Http\Controllers;
 
 use App\Models\PerizinanLa;
-use App\Models\PerizinanSumurPantau;
 use App\Models\Pks;
-use App\Models\Pengaliran;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 
 class PerizinanLaController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Tampilan Utama Arsip Surat Keputusan (SK) Izin Land Application
      */
     public function index(Request $request)
     {
         $user = Auth::user();
-        $query = PerizinanLa::with(['pks', 'sumurPantau']);
+        $query = PerizinanLa::with('pks');
 
+        // Jika bukan admin, hanya lihat arsip milik PKS-nya sendiri
         if (!$user->isAdmin()) {
             $query->where('id_pks', $user->id_pks);
         } elseif ($request->filled('id_pks')) {
@@ -39,54 +37,34 @@ class PerizinanLaController extends Controller
                   ->orWhere('tentang', 'like', "%{$search}%")
                   ->orWhereHas('pks', function($qp) use ($search) {
                       $qp->where('nama', 'like', "%{$search}%")
-                         ->orWhere('kode', 'like', "%{$search}%");
+                         ->orWhere('kode', 'like', "%{$search}%")
+                         ->orWhere('akro', 'like', "%{$search}%");
                   });
             });
         }
 
-        $perizinanList = $query->orderBy('tanggal_terbit', 'desc')->paginate(10)->withQueryString();
+        $perizinanList = $query->orderBy('tanggal_terbit', 'desc')->paginate(12)->withQueryString();
 
-        // Summary KPI Counts
-        $totalIzin = PerizinanLa::count();
-        $totalPks = Pks::whereNotIn('id_pks', [13, 14, 15])->count();
-        $izinAktif = PerizinanLa::where('status_izin', 'Aktif')->count();
-        $izinPerpanjangan = PerizinanLa::where('status_izin', 'Proses Perpanjangan')->count();
-        $izinKedaluwarsa = PerizinanLa::where('status_izin', 'Kedaluwarsa')->count();
-
-        // Kepatuhan Debit Pengaliran Terakhir (Compliance Check)
-        // Periksa apakah ada pengaliran dalam 30 hari terakhir yang melebihi debit harian izin
-        $complianceAlerts = [];
-        $recentOverDebits = Pengaliran::with('pks')
-            ->where('tanggal', '>=', Carbon::now()->subDays(30))
-            ->whereNotNull('vol_limbah_dialirkan')
-            ->where('vol_limbah_dialirkan', '>', 0)
-            ->get()
-            ->filter(function($item) {
-                $pksIzin = PerizinanLa::where('id_pks', $item->id_pks)->first();
-                if ($pksIzin && $item->vol_limbah_dialirkan > $pksIzin->debit_maksimal_harian) {
-                    $item->debit_izin = $pksIzin->debit_maksimal_harian;
-                    $item->kelebihan = $item->vol_limbah_dialirkan - $pksIzin->debit_maksimal_harian;
-                    return true;
-                }
-                return false;
-            });
+        // KPI Ringkasan Arsip
+        $totalArsip = PerizinanLa::count();
+        $arsipAktif = PerizinanLa::where('status_izin', 'Aktif')->count();
+        $arsipPerpanjangan = PerizinanLa::where('status_izin', 'Proses Perpanjangan')->count();
+        $arsipKedaluwarsa = PerizinanLa::where('status_izin', 'Kedaluwarsa')->count();
 
         $daftarPks = Pks::whereNotIn('id_pks', [13, 14, 15])->get();
 
         return view('perizinan_la.index', compact(
             'perizinanList',
-            'totalIzin',
-            'totalPks',
-            'izinAktif',
-            'izinPerpanjangan',
-            'izinKedaluwarsa',
-            'recentOverDebits',
+            'totalArsip',
+            'arsipAktif',
+            'arsipPerpanjangan',
+            'arsipKedaluwarsa',
             'daftarPks'
         ));
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Form Unggah Arsip SK Baru
      */
     public function create()
     {
@@ -97,30 +75,53 @@ class PerizinanLaController extends Controller
             $daftarPks = Pks::whereNotIn('id_pks', [13, 14, 15])->get();
         }
 
-        return view('perizinan_la.create', compact('daftarPks'));
+        return view('perizinan_la.create', compact('daftarPks', 'user'));
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Simpan Unggahan Dokumen SK
      */
     public function store(Request $request)
     {
+        $user = Auth::user();
+
         $request->validate([
             'id_pks' => 'required|exists:pks,id_pks',
-            'nomor_sk' => 'required|string|max:100',
+            'nomor_sk' => 'required|string|max:150',
+            'tentang' => 'nullable|string|max:255',
             'instansi_penerbit' => 'required|string|max:150',
+            'debit_maksimal_harian' => 'required|numeric|min:1',
             'tanggal_terbit' => 'required|date',
             'tanggal_berakhir' => 'nullable|date|after_or_equal:tanggal_terbit',
-            'bod_maksimal' => 'required|numeric',
-            'ph_min' => 'required|numeric',
-            'ph_max' => 'required|numeric',
-            'debit_maksimal_harian' => 'required|numeric',
-            'luas_areal_izin' => 'required|numeric',
-            'file_sk' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
-            'file_peta' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'file_sk' => 'required|file|mimes:pdf,jpg,jpeg,png|max:20480',
+            'keterangan' => 'nullable|string',
+        ], [
+            'debit_maksimal_harian.required' => 'Wajib memasukkan batas maksimal debit pengaliran harian yang tertera pada SK izin.',
+            'debit_maksimal_harian.numeric' => 'Batas debit maksimal harian harus berupa angka.',
+            'debit_maksimal_harian.min' => 'Batas debit maksimal harian minimal 1 m³/hari.',
+            'file_sk.required' => 'Wajib mengunggah berkas salinan SK (PDF / Scan).',
+            'file_sk.mimes' => 'Format berkas harus PDF, JPG, atau PNG.',
+            'file_sk.max' => 'Ukuran berkas maksimal 20 MB.',
         ]);
 
-        $data = $request->except(['file_sk', 'file_peta', 'sumur_nama', 'sumur_jenis', 'sumur_blok', 'sumur_lat', 'sumur_long', 'sumur_text']);
+        $data = [
+            'id_pks' => $user->isAdmin() ? $request->id_pks : $user->id_pks,
+            'nomor_sk' => $request->nomor_sk,
+            'tentang' => $request->tentang ?: 'Izin Pembuangan Air Limbah Pada Tanah (Land Application)',
+            'instansi_penerbit' => $request->instansi_penerbit,
+            'debit_maksimal_harian' => $request->debit_maksimal_harian,
+            'tanggal_terbit' => $request->tanggal_terbit,
+            'tanggal_berakhir' => $request->tanggal_berakhir,
+            'status_izin' => $request->status_izin ?? 'Aktif',
+            'keterangan' => $request->keterangan,
+        ];
+
+        // Hitung masa berlaku otomatis jika ada tanggal
+        if ($request->filled('tanggal_terbit') && $request->filled('tanggal_berakhir')) {
+            $tglAwal = Carbon::parse($request->tanggal_terbit);
+            $tglAkhir = Carbon::parse($request->tanggal_berakhir);
+            $data['masa_berlaku_tahun'] = max(1, round($tglAwal->diffInYears($tglAkhir)));
+        }
 
         if ($request->hasFile('file_sk')) {
             $file = $request->file('file_sk');
@@ -129,61 +130,38 @@ class PerizinanLaController extends Controller
             $data['file_sk'] = $filename;
         }
 
-        if ($request->hasFile('file_peta')) {
-            $file = $request->file('file_peta');
-            $filename = 'PETA_LA_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path('uploads/perizinan_la'), $filename);
-            $data['file_peta'] = $filename;
-        }
-
-        $perizinan = PerizinanLa::create($data);
-
-        // Simpan titik sumur pantau jika diisi
-        if ($request->has('sumur_nama') && is_array($request->sumur_nama)) {
-            foreach ($request->sumur_nama as $index => $namaSumur) {
-                if (!empty($namaSumur)) {
-                    PerizinanSumurPantau::create([
-                        'perizinan_la_id' => $perizinan->id,
-                        'nama_sumur' => $namaSumur,
-                        'jenis_sumur' => $request->sumur_jenis[$index] ?? 'Sumur Pantau Aplikasi',
-                        'lokasi_blok' => $request->sumur_blok[$index] ?? null,
-                        'latitude' => $request->sumur_lat[$index] ?? null,
-                        'longitude' => $request->sumur_long[$index] ?? null,
-                        'koordinat_text' => $request->sumur_text[$index] ?? null,
-                        'frekuensi_pantau' => '6 bulan sekali',
-                        'parameter_pantau' => 'BOD, DO, pH, NO3, NH3-N, Logam Berat',
-                    ]);
-                }
-            }
-        }
+        PerizinanLa::create($data);
 
         return redirect()->route('perizinan-la.index')
-            ->with('success', 'Data Perizinan Land Application berhasil ditambahkan.');
+            ->with('success', 'Arsip Dokumen SK Perizinan LA berhasil diunggah dan disimpan.');
     }
 
     /**
-     * Display the specified resource.
+     * Lihat Detail & Salinan Dokumen SK
      */
     public function show(string $id)
     {
-        $perizinan = PerizinanLa::with(['pks.petaBlokLa', 'sumurPantau'])->findOrFail($id);
+        $perizinan = PerizinanLa::with('pks')->findOrFail($id);
+        $user = Auth::user();
 
-        // Riwayat pengaliran terbaru untuk PKS ini
-        $recentPengaliran = Pengaliran::where('id_pks', $perizinan->id_pks)
-            ->orderBy('tanggal', 'desc')
-            ->limit(10)
-            ->get();
+        if (!$user->isAdmin() && $perizinan->id_pks != $user->id_pks) {
+            abort(403, 'Anda tidak memiliki akses ke berkas arsip PKS ini.');
+        }
 
-        return view('perizinan_la.show', compact('perizinan', 'recentPengaliran'));
+        return view('perizinan_la.show', compact('perizinan'));
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Form Edit Metadata & Berkas Arsip SK
      */
     public function edit(string $id)
     {
-        $perizinan = PerizinanLa::with('sumurPantau')->findOrFail($id);
+        $perizinan = PerizinanLa::findOrFail($id);
         $user = Auth::user();
+
+        if (!$user->isAdmin() && $perizinan->id_pks != $user->id_pks) {
+            abort(403, 'Anda tidak memiliki hak untuk mengedit arsip izin unit PKS lain.');
+        }
 
         if (!$user->isAdmin()) {
             $daftarPks = Pks::where('id_pks', $user->id_pks)->get();
@@ -191,32 +169,54 @@ class PerizinanLaController extends Controller
             $daftarPks = Pks::whereNotIn('id_pks', [13, 14, 15])->get();
         }
 
-        return view('perizinan_la.edit', compact('perizinan', 'daftarPks'));
+        return view('perizinan_la.edit', compact('perizinan', 'daftarPks', 'user'));
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update Metadata & Berkas Arsip SK
      */
     public function update(Request $request, string $id)
     {
         $perizinan = PerizinanLa::findOrFail($id);
+        $user = Auth::user();
+
+        if (!$user->isAdmin() && $perizinan->id_pks != $user->id_pks) {
+            abort(403, 'Anda tidak memiliki hak untuk memperbarui arsip izin unit PKS lain.');
+        }
 
         $request->validate([
             'id_pks' => 'required|exists:pks,id_pks',
-            'nomor_sk' => 'required|string|max:100',
+            'nomor_sk' => 'required|string|max:150',
+            'tentang' => 'nullable|string|max:255',
             'instansi_penerbit' => 'required|string|max:150',
+            'debit_maksimal_harian' => 'required|numeric|min:1',
             'tanggal_terbit' => 'required|date',
             'tanggal_berakhir' => 'nullable|date|after_or_equal:tanggal_terbit',
-            'bod_maksimal' => 'required|numeric',
-            'ph_min' => 'required|numeric',
-            'ph_max' => 'required|numeric',
-            'debit_maksimal_harian' => 'required|numeric',
-            'luas_areal_izin' => 'required|numeric',
-            'file_sk' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
-            'file_peta' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'file_sk' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:20480',
+            'keterangan' => 'nullable|string',
+        ], [
+            'debit_maksimal_harian.required' => 'Wajib memasukkan batas maksimal debit pengaliran harian yang tertera pada SK izin.',
+            'debit_maksimal_harian.numeric' => 'Batas debit maksimal harian harus berupa angka.',
+            'debit_maksimal_harian.min' => 'Batas debit maksimal harian minimal 1 m³/hari.',
         ]);
 
-        $data = $request->except(['file_sk', 'file_peta', 'sumur_id', 'sumur_nama', 'sumur_jenis', 'sumur_blok', 'sumur_lat', 'sumur_long', 'sumur_text']);
+        $data = [
+            'id_pks' => $user->isAdmin() ? $request->id_pks : $user->id_pks,
+            'nomor_sk' => $request->nomor_sk,
+            'tentang' => $request->tentang ?: $perizinan->tentang,
+            'instansi_penerbit' => $request->instansi_penerbit,
+            'debit_maksimal_harian' => $request->debit_maksimal_harian,
+            'tanggal_terbit' => $request->tanggal_terbit,
+            'tanggal_berakhir' => $request->tanggal_berakhir,
+            'status_izin' => $request->status_izin ?? $perizinan->status_izin,
+            'keterangan' => $request->keterangan,
+        ];
+
+        if ($request->filled('tanggal_terbit') && $request->filled('tanggal_berakhir')) {
+            $tglAwal = Carbon::parse($request->tanggal_terbit);
+            $tglAkhir = Carbon::parse($request->tanggal_berakhir);
+            $data['masa_berlaku_tahun'] = max(1, round($tglAwal->diffInYears($tglAkhir)));
+        }
 
         if ($request->hasFile('file_sk')) {
             if ($perizinan->file_sk && file_exists(public_path('uploads/perizinan_la/' . $perizinan->file_sk))) {
@@ -228,62 +228,31 @@ class PerizinanLaController extends Controller
             $data['file_sk'] = $filename;
         }
 
-        if ($request->hasFile('file_peta')) {
-            if ($perizinan->file_peta && file_exists(public_path('uploads/perizinan_la/' . $perizinan->file_peta))) {
-                @unlink(public_path('uploads/perizinan_la/' . $perizinan->file_peta));
-            }
-            $file = $request->file('file_peta');
-            $filename = 'PETA_LA_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path('uploads/perizinan_la'), $filename);
-            $data['file_peta'] = $filename;
-        }
-
         $perizinan->update($data);
 
-        // Update / create sumur pantau
-        if ($request->has('sumur_nama') && is_array($request->sumur_nama)) {
-            // Hapus titik sumur lama lalu insert ulang data yang dikirim
-            PerizinanSumurPantau::where('perizinan_la_id', $perizinan->id)->delete();
-
-            foreach ($request->sumur_nama as $index => $namaSumur) {
-                if (!empty($namaSumur)) {
-                    PerizinanSumurPantau::create([
-                        'perizinan_la_id' => $perizinan->id,
-                        'nama_sumur' => $namaSumur,
-                        'jenis_sumur' => $request->sumur_jenis[$index] ?? 'Sumur Pantau Aplikasi',
-                        'lokasi_blok' => $request->sumur_blok[$index] ?? null,
-                        'latitude' => $request->sumur_lat[$index] ?? null,
-                        'longitude' => $request->sumur_long[$index] ?? null,
-                        'koordinat_text' => $request->sumur_text[$index] ?? null,
-                        'frekuensi_pantau' => '6 bulan sekali',
-                        'parameter_pantau' => 'BOD, DO, pH, NO3, NH3-N, Logam Berat',
-                    ]);
-                }
-            }
-        }
-
         return redirect()->route('perizinan-la.show', $perizinan->id)
-            ->with('success', 'Data Perizinan Land Application berhasil diperbarui.');
+            ->with('success', 'Arsip Dokumen SK Perizinan LA berhasil diperbarui.');
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Hapus Arsip Dokumen SK
      */
     public function destroy(string $id)
     {
         $perizinan = PerizinanLa::findOrFail($id);
+        $user = Auth::user();
+
+        if (!$user->isAdmin() && $perizinan->id_pks != $user->id_pks) {
+            abort(403, 'Anda tidak memiliki hak untuk menghapus arsip unit PKS lain.');
+        }
 
         if ($perizinan->file_sk && file_exists(public_path('uploads/perizinan_la/' . $perizinan->file_sk))) {
             @unlink(public_path('uploads/perizinan_la/' . $perizinan->file_sk));
         }
 
-        if ($perizinan->file_peta && file_exists(public_path('uploads/perizinan_la/' . $perizinan->file_peta))) {
-            @unlink(public_path('uploads/perizinan_la/' . $perizinan->file_peta));
-        }
-
         $perizinan->delete();
 
         return redirect()->route('perizinan-la.index')
-            ->with('success', 'Data Perizinan Land Application berhasil dihapus.');
+            ->with('success', 'Arsip Dokumen SK Perizinan LA berhasil dihapus.');
     }
 }

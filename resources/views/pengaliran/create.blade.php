@@ -236,104 +236,7 @@
     /* Numeric input highlight */
     input[type="number"].form-control { font-weight: 800; font-size: 15px; }
 
-    /* === PERMIT COMPLIANCE STYLES === */
-    .permit-status-card {
-        border-radius: 14px;
-        padding: 14px 18px;
-        margin-top: 14px;
-        transition: all .3s cubic-bezier(0.4, 0, 0.2, 1);
-        display: none;
-    }
-    .permit-status-card.active { display: block; animation: fadeUpCard .3s ease-out; }
-    .permit-card-sesuai {
-        background: #f0fdf4;
-        border: 1.5px solid #86efac;
-        color: #14532d;
-    }
-    .permit-card-luar {
-        background: #fffbeb;
-        border: 1.5px solid #f59e0b;
-        color: #78350f;
-    }
-    .permit-card-title {
-        font-size: 13px;
-        font-weight: 800;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 4px;
-    }
-    .permit-card-desc {
-        font-size: 11.5px;
-        line-height: 1.45;
-    }
-
-    /* Blok Quick Chips */
-    .blok-chips-container {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
-        margin-top: 8px;
-        margin-bottom: 6px;
-        max-height: 120px;
-        overflow-y: auto;
-        padding: 2px;
-    }
-    .blok-chip {
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        padding: 4px 10px;
-        border-radius: 8px;
-        font-size: 11px;
-        font-weight: 700;
-        cursor: pointer;
-        border: 1px solid #bbf7d0;
-        background: #ffffff;
-        color: #15803d;
-        transition: all .15s ease;
-    }
-    .blok-chip:hover {
-        background: #16a34a;
-        color: #ffffff;
-        border-color: #16a34a;
-        transform: translateY(-1px);
-    }
-    .blok-chip.selected {
-        background: #16a34a;
-        color: #ffffff;
-        border-color: #15803d;
-        box-shadow: 0 2px 6px rgba(22,163,74,.3);
-    }
-    .blok-chip-bak {
-        font-size: 9.5px;
-        opacity: .85;
-        font-weight: 600;
-    }
-
-    /* Alasan Luar Izin Animated Box */
-    .alasan-luar-izin-box {
-        background: #fff7ed;
-        border: 1.5px dashed #f97316;
-        border-radius: 14px;
-        padding: 16px 18px;
-        margin-top: 14px;
-        animation: fadeUpCard .3s ease-out;
-        display: none;
-    }
-    .alasan-luar-izin-box.show { display: block; }
-    .alasan-luar-izin-box label {
-        color: #9a3412 !important;
-        font-weight: 800 !important;
-    }
-
     /* Dark mode */
-    html.app-skin-dark .permit-card-sesuai { background: #062b16; border-color: #16a34a; color: #86efac; }
-    html.app-skin-dark .permit-card-luar   { background: #261704; border-color: #d97706; color: #fde68a; }
-    html.app-skin-dark .blok-chip { background: #0e3b26; border-color: rgba(34,197,94,.3); color: #86efac; }
-    html.app-skin-dark .blok-chip:hover, html.app-skin-dark .blok-chip.selected { background: #16a34a; color: #fff; }
-    html.app-skin-dark .alasan-luar-izin-box { background: #261405; border-color: #ea580c; }
-    html.app-skin-dark .alasan-luar-izin-box label { color: #fdba74 !important; }
     html.app-skin-dark .form-card {
         background: #0a2317 !important;
         border-color: rgba(34,197,94,.15) !important;
@@ -428,13 +331,40 @@
         {{-- ============ LEFT COLUMN ============ --}}
         <div class="col-lg-8">
 
-            {{-- Waktu Operasional --}}
+            {{-- 1. Unit PKS & Waktu Operasional --}}
             <div class="form-card">
                 <div class="form-section-title">
                     <i class="feather-clock"></i>
-                    Informasi Waktu Operasional
+                    Unit PKS &amp; Waktu Operasional
                 </div>
                 <div class="row g-3">
+                    @if($user->isAdmin())
+                    <div class="col-12">
+                        <label class="form-label">Unit PKS <span class="text-danger">*</span></label>
+                        <select name="id_pks" id="pks_selector" class="form-control @error('id_pks') is-invalid @enderror"
+                            data-select2-selector="status" required>
+                            <option value="">— Pilih PKS —</option>
+                            @foreach($pksList as $pks)
+                                <option value="{{ $pks->id_pks }}" {{ old('id_pks', $user->id_pks) == $pks->id_pks ? 'selected' : '' }}>
+                                    {{ $pks->nama }} ({{ $pks->akro }})
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('id_pks') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+                    @else
+                    <input type="hidden" name="id_pks" id="pks_selector" value="{{ $user->id_pks }}">
+                    <div class="col-12">
+                        <div class="pks-display">
+                            <i class="feather-map-pin" style="color:#16a34a;font-size:18px;flex-shrink:0;"></i>
+                            <div>
+                                <div style="font-size:14px;font-weight:800;">{{ $user->pks ? $user->pks->nama : 'PKS' }}</div>
+                                <div style="font-size:11px;font-weight:600;color:#6b7280;">Unit Pabrik Kelapa Sawit ({{ $user->pks ? $user->pks->akro : '' }})</div>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+
                     <div class="col-md-4">
                         <label class="form-label">Tanggal <span class="text-danger">*</span></label>
                         <input type="date" name="tanggal"
@@ -459,88 +389,48 @@
                 </div>
             </div>
 
-            {{-- Lokasi Pengaliran & Deteksi Kesesuaian Izin LA --}}
+            {{-- 2. Lokasi Pengaliran --}}
             <div class="form-card">
                 <div class="form-section-title">
                     <i class="feather-map-pin"></i>
                     Detail Lokasi Pengaliran Land Aplikasi
                 </div>
                 <div class="row g-3">
-                    <div class="col-md-5">
+                    <div class="col-md-4">
                         <label class="form-label">Block Pengaliran <span class="text-danger">*</span></label>
-                        <input type="text" name="blok" id="blok_input"
+                        <input type="text" name="blok"
                             class="form-control @error('blok') is-invalid @enderror"
-                            value="{{ old('blok') }}" placeholder="Contoh: E25, L25, F26" required
-                            autocomplete="off">
-                        <small class="text-muted" style="font-size:11px;">Ketik nama blok atau pilih dari daftar blok berizin di bawah</small>
+                            value="{{ old('blok') }}" placeholder="Contoh: F4, L25, 22K" required>
+                        <small class="text-muted" style="font-size:11px;">Blok area pengaliran lahan</small>
                         @error('blok') <div class="invalid-feedback">{{ $message }}</div> @enderror
-
-                        {{-- Quick Chips Blok Berizin --}}
-                        <div class="mt-2">
-                            <div class="d-flex align-items-center justify-content-between">
-                                <span style="font-size:10.5px;font-weight:700;color:#6b7280;text-transform:uppercase;">Blok Berizin PKS Ini:</span>
-                                <span id="sk_info_badge" class="badge bg-light text-muted" style="font-size:10px;"></span>
-                            </div>
-                            <div class="blok-chips-container" id="blok_chips_container">
-                                <span class="text-muted" style="font-size:11px;font-style:italic;">Memuat data blok berizin...</span>
-                            </div>
-                        </div>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Bak Distribusi <span class="text-danger">*</span></label>
-                        <input type="text" name="no_bak" id="no_bak_input"
+                        <input type="text" name="no_bak"
                             class="form-control @error('no_bak') is-invalid @enderror"
-                            value="{{ old('no_bak') }}" placeholder="Contoh: 1, 2 atau 5-6" required
-                            autocomplete="off">
-                        <small class="text-muted" style="font-size:11px;">Nomor bak distribusi limbah</small>
+                            value="{{ old('no_bak') }}" placeholder="Contoh: 11, 12 atau 5, 6" required>
+                        <small class="text-muted" style="font-size:11px;">Nomor bak distribusi</small>
                         @error('no_bak') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-4">
                         <label class="form-label">Rotasi</label>
                         <input type="text" name="rotasi"
                             class="form-control @error('rotasi') is-invalid @enderror"
                             value="{{ old('rotasi') }}" placeholder="Contoh: 7 Hari">
-                        <small class="text-muted" style="font-size:11px;">Siklus rotasi</small>
+                        <small class="text-muted" style="font-size:11px;">Siklus rotasi pengaliran</small>
                         @error('rotasi') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
                 </div>
-
-                {{-- Live Permit Status Card --}}
-                <div id="permit_status_card" class="permit-status-card">
-                    <div class="permit-card-title">
-                        <span id="permit_status_icon"></span>
-                        <span id="permit_status_title"></span>
-                    </div>
-                    <div id="permit_status_desc" class="permit-card-desc"></div>
-                </div>
-
-                {{-- Alasan Pengaliran di Luar Izin (Muncul otomatis jika Di Luar Izin) --}}
-                <div id="alasan_luar_izin_box" class="alasan-luar-izin-box @if(old('alasan_tidak_sesuai_izin') || $errors->has('alasan_tidak_sesuai_izin')) show @endif">
-                    <div class="d-flex align-items-center gap-2 mb-2">
-                        <i class="feather-alert-triangle" style="font-size:16px;color:#ea580c;"></i>
-                        <label class="form-label mb-0" for="alasan_field">
-                            Alasan Pengaliran di Luar Izin <span class="text-danger">*</span>
-                        </label>
-                    </div>
-                    <p style="font-size:11.5px;color:#c2410c;margin-bottom:8px;">
-                        Karena blok/bak yang dipilih berada di luar izin Land Application resmi PKS ini, Anda <strong>wajib</strong> menyertakan alasan operasional/teknis kenapa pengaliran dilakukan di luar surat izin:
-                    </p>
-                    <textarea name="alasan_tidak_sesuai_izin" id="alasan_field" rows="3"
-                        class="form-control @error('alasan_tidak_sesuai_izin') is-invalid @enderror"
-                        placeholder="Contoh: Pipa distribusi utama ke Blok E25 sedang dalam perbaikan kebocoran pipa, sehingga dialirkan sementara ke blok terdekat...">{{ old('alasan_tidak_sesuai_izin') }}</textarea>
-                    @error('alasan_tidak_sesuai_izin')
-                        <div class="invalid-feedback d-block mt-1 fw-bold">{{ $message }}</div>
-                    @enderror
-                </div>
             </div>
 
-            {{-- Data Bed & Volume --}}
+            {{-- 3. Data Bed & Volume Limbah --}}
             <div class="form-card">
                 <div class="form-section-title">
                     <i class="feather-droplet"></i>
                     Data Bed &amp; Volume Limbah
                 </div>
                 <div class="row g-3">
+                    {{-- 1. Bed di alirkan --}}
                     <div class="col-md-3">
                         <label class="form-label" style="color:#16a34a;">
                             Bed di alirkan <span class="text-danger">*</span>
@@ -556,27 +446,28 @@
                         @error('flat_bed') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
 
+                    {{-- 2. Vol. Dialirkan --}}
                     <div class="col-md-3">
                         <label class="form-label" style="color:#059669;">
                             Vol. Dialirkan <span class="text-danger">*</span>
                         </label>
                         <div class="input-group">
-                            <input type="number" name="vol_limbah_dialirkan"
+                            <input type="number" name="vol_limbah_dialirkan" id="vol_dialirkan_input"
                                 class="form-control @error('vol_limbah_dialirkan') is-invalid @enderror"
                                 style="color:#059669;"
                                 value="{{ old('vol_limbah_dialirkan', 0) }}" min="0" step="1" required>
                             <span class="input-group-text">m³</span>
                         </div>
-                        <small class="text-muted" style="font-size:11px;">Debit limbah ke LA</small>
+                        <small id="vol_dialirkan_hint" class="text-muted" style="font-size:11px;">Debit limbah ke LA</small>
                         @error('vol_limbah_dialirkan') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
 
+                    {{-- 3. Vol. Dihasilkan --}}
                     <div class="col-md-3">
                         <label class="form-label">Vol. Dihasilkan <span class="text-danger">*</span></label>
                         <div class="input-group">
-                            <input type="number" name="vol_limbah_dihasilkan"
+                            <input type="number" name="vol_limbah_dihasilkan" id="vol_dihasilkan_input"
                                 class="form-control @error('vol_limbah_dihasilkan') is-invalid @enderror"
-                                style="color:#059669;"
                                 value="{{ old('vol_limbah_dihasilkan', 0) }}" min="0" step="1" required>
                             <span class="input-group-text">m³</span>
                         </div>
@@ -584,6 +475,7 @@
                         @error('vol_limbah_dihasilkan') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
 
+                    {{-- 4. Luas Area --}}
                     <div class="col-md-3">
                         <label class="form-label">Luas Area <span class="text-danger">*</span></label>
                         <div class="input-group">
@@ -592,79 +484,74 @@
                                 value="{{ old('luas_area', 0) }}" min="0" step="1" required>
                             <span class="input-group-text">Ha</span>
                         </div>
-                        <small class="text-muted" style="font-size:11px;">Luas area pengaliran</small>
+                        <small class="text-muted" style="font-size:11px;">Luasan area pengaliran</small>
                         @error('luas_area') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
                 </div>
-            </div>
 
-            {{-- Jam Operasional Pompa --}}
-            <div class="form-card">
-                <div class="form-section-title">
-                    <i class="feather-activity"></i>
-                    Operasional Pompa Limbah
-                </div>
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label">Jam Pompa Mulai</label>
-                        <input type="time" name="jam_pompa_mulai" class="form-control"
-                            value="{{ old('jam_pompa_mulai', '07:00') }}">
-                        <small class="text-muted" style="font-size:11px;">Waktu pompa limbah mulai beroperasi</small>
+                {{-- INFO KUOTA MAKSIMAL SK IZIN LA --}}
+                <div id="sk_quota_info_banner" class="mt-3 p-2.5 px-3 rounded-3 d-flex align-items-center justify-content-between flex-wrap gap-2" style="background: #f0fdf4; border: 1.5px solid #bbf7d0; display: none; transition: all .3s ease;">
+                    <div class="d-flex align-items-center gap-2.5">
+                        <div id="sk_quota_icon_wrap" style="width: 32px; height: 32px; border-radius: 9px; background: #dcfce7; color: #16a34a; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;">
+                            <i id="sk_quota_icon" class="feather-shield"></i>
+                        </div>
+                        <div>
+                            <div class="d-flex align-items-center gap-1.5 flex-wrap">
+                                <span style="font-size: 12px; font-weight: 800; color: #14532d;">Kuota Maksimal Harian Berdasarkan SK Izin LA:</span>
+                                <span id="sk_quota_val_text" style="font-size: 13.5px; font-weight: 900; color: #15803d;">-</span>
+                            </div>
+                            <small id="sk_quota_subtext" class="text-muted" style="font-size: 11px;">Debit pengaliran per hari tidak boleh melampaui batas yang tertera pada arsip izin LA.</small>
+                        </div>
                     </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Jam Pompa Selesai</label>
-                        <input type="time" name="jam_pompa_selesai" class="form-control"
-                            value="{{ old('jam_pompa_selesai', '18:00') }}">
-                        <small class="text-muted" style="font-size:11px;">Waktu pompa limbah berhenti beroperasi</small>
+                    <div>
+                        <span id="sk_quota_status_pill" class="badge bg-success text-white px-3 py-1.5 rounded-pill" style="font-size: 11px; font-weight: 700;">
+                            Batas Aman
+                        </span>
+                    </div>
+                </div>
+
+                {{-- REAL-TIME VOLUME DETECTION BANNER & COMPLIANCE WIDGET --}}
+                <div id="volume_detection_card" style="margin-top:16px;display:none;border-radius:14px;padding:16px;transition:all .3s ease;">
+                    <div class="d-flex align-items-start gap-3">
+                        <div id="detection_icon_wrap" style="width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">
+                            <i id="detection_icon" class="feather-info"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-1">
+                                <h6 id="detection_title" style="margin:0;font-size:13.5px;font-weight:800;">Analisis Pengaliran</h6>
+                                <span id="detection_ratio_badge" style="font-size:11px;font-weight:800;padding:3px 10px;border-radius:50px;">Rasio: 0%</span>
+                            </div>
+                            <p id="detection_desc" style="margin:0 0 10px 0;font-size:12.5px;line-height:1.4;"></p>
+                            
+                            {{-- Chips Rekomendasi Alasan/Justifikasi --}}
+                            <div id="detection_suggestions" style="display:none;">
+                                <div style="font-size:11px;font-weight:800;margin-bottom:6px;text-transform:uppercase;letter-spacing:.3px;">
+                                    ⚡ Rekomendasi Keterangan/Alasan (Klik untuk mengisi):
+                                </div>
+                                <div id="suggestion_chips_container" class="d-flex flex-wrap gap-2"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-
         </div>
 
         {{-- ============ RIGHT COLUMN ============ --}}
         <div class="col-lg-4">
 
-            {{-- Unit PKS --}}
-            <div class="form-card">
-                <div class="form-section-title">
-                    <i class="feather-home"></i>
-                    Unit PKS
-                </div>
-                @if($user->isAdmin())
-                    <select name="id_pks" id="pks_select" class="form-control @error('id_pks') is-invalid @enderror"
-                        data-select2-selector="status" required>
-                        <option value="">— Pilih Unit PKS —</option>
-                        @foreach($pksList as $pks)
-                        <option value="{{ $pks->id_pks }}"
-                            {{ old('id_pks', $defaultPksId ?? $user->id_pks) == $pks->id_pks ? 'selected' : '' }}>
-                            {{ $pks->nama }} ({{ $pks->akro }})
-                        </option>
-                        @endforeach
-                    </select>
-                    @error('id_pks') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                @else
-                    <input type="hidden" name="id_pks" id="pks_select" value="{{ $user->id_pks }}">
-                    <div class="pks-display">
-                        <i class="feather-map-pin" style="color:#16a34a;font-size:18px;flex-shrink:0;"></i>
-                        <div>
-                            <div style="font-size:14px;font-weight:800;">{{ $user->pks ? $user->pks->nama : 'PKS' }}</div>
-                            <div style="font-size:11px;font-weight:600;color:#6b7280;">{{ $user->pks ? $user->pks->akro : '' }}</div>
-                        </div>
+            {{-- Keterangan / Alasan Deviasi --}}
+            <div class="form-card" id="keterangan_card">
+                <div class="form-section-title d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="feather-message-square"></i>
+                        <span id="keterangan_card_title">Keterangan &amp; Alasan</span>
                     </div>
-                @endif
-            </div>
-
-            {{-- Keterangan --}}
-            <div class="form-card">
-                <div class="form-section-title">
-                    <i class="feather-message-square"></i>
-                    Keterangan Status Pengaliran
+                    <span id="keterangan_required_badge" class="badge bg-danger" style="display:none;font-size:10px;">Wajib Diisi</span>
                 </div>
 
                 <div style="margin-bottom:12px;">
                     <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;">
-                        Pilihan Cepat:
+                        Pilihan Cepat Standar:
                     </div>
                     <div class="d-flex flex-wrap gap-2">
                         <button type="button" class="keterangan-chip"
@@ -728,10 +615,12 @@
 <script src="{{ asset('duraluxadmin/assets/vendors/js/select2.min.js') }}"></script>
 <script src="{{ asset('duraluxadmin/assets/vendors/js/select2-active.min.js') }}"></script>
 <script>
-    const PKS_BLOK_MAP = @json($pksBlokMap ?? []);
+    const perizinanMap = @json($perizinanMap ?? []);
 
     function setKeterangan(text) {
-        document.getElementById('keterangan_field').value = text;
+        const field = document.getElementById('keterangan_field');
+        field.value = text;
+        field.focus();
     }
 
     function updateFileLabel(input) {
@@ -745,191 +634,257 @@
         }
     }
 
-    function getSelectedPksId() {
-        const pksEl = document.getElementById('pks_select');
-        return pksEl ? pksEl.value : null;
-    }
+    // REAL-TIME VOLUME DETECTION LOGIC
+    function checkVolumeDetection() {
+        const volDialirkanInput = document.getElementById('vol_dialirkan_input');
+        const volDihasilkanInput = document.getElementById('vol_dihasilkan_input');
+        const pksSelector = document.getElementById('pks_selector');
+        const skLimitBadge = document.getElementById('sk_limit_badge');
+        
+        if (!volDialirkanInput || !volDihasilkanInput) return;
 
-    function renderBlokChips(idPks) {
-        const container = document.getElementById('blok_chips_container');
-        const skBadge = document.getElementById('sk_info_badge');
-        if (!container) return;
+        const volDialirkan = parseFloat(volDialirkanInput.value) || 0;
+        const volDihasilkan = parseFloat(volDihasilkanInput.value) || 0;
+        const idPks = pksSelector ? pksSelector.value : null;
+        
+        const card = document.getElementById('volume_detection_card');
+        const iconWrap = document.getElementById('detection_icon_wrap');
+        const icon = document.getElementById('detection_icon');
+        const title = document.getElementById('detection_title');
+        const badge = document.getElementById('detection_ratio_badge');
+        const desc = document.getElementById('detection_desc');
+        const suggestionsBox = document.getElementById('detection_suggestions');
+        const chipsContainer = document.getElementById('suggestion_chips_container');
+        const ketField = document.getElementById('keterangan_field');
+        const ketReqBadge = document.getElementById('keterangan_required_badge');
+        const ketCard = document.getElementById('keterangan_card');
 
-        const pksData = PKS_BLOK_MAP[idPks];
-        if (!pksData || !pksData.bloks || pksData.bloks.length === 0) {
-            container.innerHTML = '<span class="text-muted" style="font-size:11px;font-style:italic;">Belum ada data blok LA resmi terdaftar untuk PKS ini.</span>';
-            if (skBadge) skBadge.textContent = 'Belum Ada Master Peta Blok';
+        // Update SK limit banner display (di luar form input)
+        const skQuotaBanner = document.getElementById('sk_quota_info_banner');
+        const skQuotaValText = document.getElementById('sk_quota_val_text');
+        const skQuotaStatusPill = document.getElementById('sk_quota_status_pill');
+        const skQuotaIconWrap = document.getElementById('sk_quota_icon_wrap');
+        const skQuotaSubtext = document.getElementById('sk_quota_subtext');
+
+        let debitIzin = null;
+        if (idPks && perizinanMap[idPks] && perizinanMap[idPks].debit_maksimal_harian) {
+            debitIzin = parseFloat(perizinanMap[idPks].debit_maksimal_harian);
+        }
+
+        if (skQuotaBanner) {
+            if (debitIzin && debitIzin > 0) {
+                skQuotaBanner.style.display = 'flex';
+                skQuotaValText.textContent = `${debitIzin.toLocaleString()} m³/hari`;
+                
+                if (volDialirkan > debitIzin) {
+                    const overVal = volDialirkan - debitIzin;
+                    skQuotaBanner.style.background = '#fef2f2';
+                    skQuotaBanner.style.borderColor = '#fca5a5';
+                    if (skQuotaIconWrap) {
+                        skQuotaIconWrap.style.background = '#fee2e2';
+                        skQuotaIconWrap.style.color = '#dc2626';
+                    }
+                    if (skQuotaStatusPill) {
+                        skQuotaStatusPill.className = 'badge bg-danger text-white px-3 py-1.5 rounded-pill';
+                        skQuotaStatusPill.textContent = `⛔ Melebihi Kuota (+${overVal.toLocaleString()} m³)`;
+                    }
+                    if (skQuotaSubtext) {
+                        skQuotaSubtext.textContent = 'Peringatan: Debit yang dialirkan hari ini melebihi ambang batas izin SK!';
+                        skQuotaSubtext.className = 'text-danger fw-bold';
+                    }
+                } else {
+                    skQuotaBanner.style.background = '#f0fdf4';
+                    skQuotaBanner.style.borderColor = '#bbf7d0';
+                    if (skQuotaIconWrap) {
+                        skQuotaIconWrap.style.background = '#dcfce7';
+                        skQuotaIconWrap.style.color = '#16a34a';
+                    }
+                    if (skQuotaStatusPill) {
+                        skQuotaStatusPill.className = 'badge bg-success text-white px-3 py-1.5 rounded-pill';
+                        skQuotaStatusPill.textContent = `✅ Batas Aman (${volDialirkan.toLocaleString()} / ${debitIzin.toLocaleString()} m³)`;
+                    }
+                    if (skQuotaSubtext) {
+                        skQuotaSubtext.textContent = 'Debit pengaliran per hari berada dalam kuota aman yang tertera pada arsip izin LA.';
+                        skQuotaSubtext.className = 'text-muted';
+                    }
+                }
+            } else {
+                skQuotaBanner.style.display = 'none';
+            }
+        }
+
+        // Jika kedua input masih 0 dan kosong, sembunyikan card deteksi
+        if (volDialirkan === 0 && volDihasilkan === 0) {
+            card.style.display = 'none';
+            ketReqBadge.style.display = 'none';
+            ketField.required = false;
+            volDialirkanInput.style.borderColor = '';
             return;
         }
 
-        if (skBadge) {
-            skBadge.textContent = pksData.nomor_sk ? ('SK: ' + pksData.nomor_sk) : 'Master Blok Terdaftar';
-        }
+        card.style.display = 'block';
 
-        let html = '';
-        pksData.bloks.forEach(b => {
-            const bakText = (b.no_bak_awal && b.no_bak_akhir)
-                ? (b.no_bak_awal === b.no_bak_akhir ? `(Bak ${b.no_bak_awal})` : `(Bak ${b.no_bak_awal}-${b.no_bak_akhir})`)
-                : '';
-            html += `
-                <button type="button" class="blok-chip" onclick="selectBlokChip('${b.nama_blok}', '${b.no_bak_awal || ''}', '${b.no_bak_akhir || ''}')">
-                    <span>${b.nama_blok}</span>
-                    ${bakText ? `<span class="blok-chip-bak">${bakText}</span>` : ''}
+        const ratio = volDihasilkan > 0 ? ((volDialirkan / volDihasilkan) * 100).toFixed(1) : 0;
+        const selisih = volDialirkan - volDihasilkan;
+
+        // KASUS 1: MELAMPAUI KUOTA SK IZIN LA (OVER-QUOTA SK KRITIS)
+        if (debitIzin && volDialirkan > debitIzin) {
+            const kelebihanSk = volDialirkan - debitIzin;
+            card.style.background = '#fef2f2';
+            card.style.border = '2px solid #ef4444';
+            iconWrap.style.background = '#fee2e2';
+            iconWrap.style.color = '#dc2626';
+            icon.className = 'feather-slash';
+            title.textContent = '⛔ PERINGATAN KRITIS: Melebihi Batas Kuota SK Izin LA!';
+            title.style.color = '#991b1b';
+
+            badge.style.background = '#dc2626';
+            badge.style.color = '#ffffff';
+            badge.textContent = `Melampaui Batas SK: +${kelebihanSk.toLocaleString()} m³ (Maks: ${debitIzin.toLocaleString()} m³/hari)`;
+
+            desc.style.color = '#7f1d1d';
+            desc.innerHTML = `Volume yang dialirkan (<strong>${volDialirkan.toLocaleString()} m³</strong>) melampaui batas maksimal debit harian yang ditetapkan pada Surat Izin Land Application (<strong>${debitIzin.toLocaleString()} m³/hari</strong>). <strong>Wajib memberikan justifikasi teknis/alasan kondisi darurat pengaliran.</strong>`;
+
+            // Rekomendasi alasan over-quota
+            suggestionsBox.style.display = 'block';
+            chipsContainer.innerHTML = `
+                <button type="button" class="keterangan-chip" style="background:#fee2e2;color:#991b1b;border-color:#fca5a5;" onclick="setKeterangan('Pengaliran darurat akibat normalisasi tanggul kolam IPAL pasca curah hujan ekstrem')">
+                    🚨 Operasional Darurat IPAL
+                </button>
+                <button type="button" class="keterangan-chip" style="background:#fee2e2;color:#991b1b;border-color:#fca5a5;" onclick="setKeterangan('Pengaliran sisa cadangan limbah kolam anaerobik hari sebelumnya yang tertunda')">
+                    💧 Sisa Cadangan Tertunda
+                </button>
+                <button type="button" class="keterangan-chip" style="background:#fee2e2;color:#991b1b;border-color:#fca5a5;" onclick="setKeterangan('Akumulasi debit limbah olah puncak pasca libur operasional')">
+                    ⏱️ Akumulasi Debit Puncak
                 </button>
             `;
-        });
-        container.innerHTML = html;
-    }
 
-    function selectBlokChip(namaBlok, bakAwal, bakAkhir) {
-        const blokInput = document.getElementById('blok_input');
-        const bakInput = document.getElementById('no_bak_input');
-        if (blokInput) {
-            blokInput.value = namaBlok;
+            ketReqBadge.style.display = 'inline-block';
+            ketReqBadge.textContent = 'Wajib Diisi (Justifikasi Kuota SK)';
+            ketField.required = true;
+            ketCard.style.borderColor = '#fca5a5';
+            volDialirkanInput.style.borderColor = '#ef4444';
         }
-        if (bakInput && bakAwal) {
-            if (bakAwal === bakAkhir || !bakAkhir) {
-                bakInput.value = bakAwal;
-            } else {
-                bakInput.value = `${bakAwal}, ${bakAkhir}`;
-            }
+        // KASUS 2: OVERFLOW (Vol Dialirkan > Vol Dihasilkan tapi masih <= Debit Izin SK)
+        else if (volDialirkan > volDihasilkan) {
+            card.style.background = '#fef2f2';
+            card.style.border = '1.5px solid #fca5a5';
+            iconWrap.style.background = '#fee2e2';
+            iconWrap.style.color = '#dc2626';
+            icon.className = 'feather-alert-triangle';
+            title.textContent = '⚠️ PERINGATAN: Volume Dialirkan Melebihi Limbah Dihasilkan (Overflow)!';
+            title.style.color = '#991b1b';
+
+            badge.style.background = '#ea580c';
+            badge.style.color = '#ffffff';
+            badge.textContent = `Rasio: ${ratio}% (+${selisih.toLocaleString()} m³) ${debitIzin ? '| Kuota SK: ' + debitIzin.toLocaleString() + ' m³' : ''}`;
+
+            desc.style.color = '#7f1d1d';
+            desc.innerHTML = `Volume yang dialirkan (<strong>${volDialirkan.toLocaleString()} m³</strong>) melebihi limbah yang dihasilkan pada hari yang sama (<strong>${volDihasilkan.toLocaleString()} m³</strong>). <strong>Wajib memberikan alasan teknis kelebihan pengaliran.</strong>`;
+
+            // Rekomendasi alasan
+            suggestionsBox.style.display = 'block';
+            chipsContainer.innerHTML = `
+                <button type="button" class="keterangan-chip" style="background:#fee2e2;color:#991b1b;border-color:#fca5a5;" onclick="setKeterangan('Pengaliran sisa cadangan limbah kolam anaerobik/cooling pond hari sebelumnya')">
+                    💧 Sisa Cadangan Kolam IPAL
+                </button>
+                <button type="button" class="keterangan-chip" style="background:#fee2e2;color:#991b1b;border-color:#fca5a5;" onclick="setKeterangan('Pengurasan dan normalisasi endapan kolam anaerob IPAL')">
+                    🔄 Pengurasan/Normalisasi Kolam
+                </button>
+            `;
+
+            ketReqBadge.style.display = 'inline-block';
+            ketReqBadge.textContent = 'Wajib Diisi (Alasan Kelebihan)';
+            ketField.required = true;
+            ketCard.style.borderColor = '#fca5a5';
+            volDialirkanInput.style.borderColor = '#f97316';
         }
-        checkPermitCompliance();
-    }
+        // KASUS 3: UNDERFLOW (Vol Dialirkan Terlalu Sedikit < 40% dari Dihasilkan)
+        else if (volDihasilkan > 0 && volDialirkan < (0.4 * volDihasilkan)) {
+            card.style.background = '#fffbeb';
+            card.style.border = '1.5px solid #fde68a';
+            iconWrap.style.background = '#fef3c7';
+            iconWrap.style.color = '#d97706';
+            icon.className = 'feather-alert-circle';
+            title.textContent = '⚠️ PERHATIAN: Volume Dialirkan Terlalu Sedikit (Underflow / Kendala)';
+            title.style.color = '#92400e';
 
-    function checkPermitCompliance() {
-        const idPks = getSelectedPksId();
-        const blokInput = document.getElementById('blok_input');
-        const bakInput = document.getElementById('no_bak_input');
-        const statusCard = document.getElementById('permit_status_card');
-        const statusIcon = document.getElementById('permit_status_icon');
-        const statusTitle = document.getElementById('permit_status_title');
-        const statusDesc = document.getElementById('permit_status_desc');
-        const alasanBox = document.getElementById('alasan_luar_izin_box');
-        const alasanField = document.getElementById('alasan_field');
+            badge.style.background = '#d97706';
+            badge.style.color = '#ffffff';
+            badge.textContent = `Rasio: ${ratio}% (Hanya ${volDialirkan.toLocaleString()} dari ${volDihasilkan.toLocaleString()} m³)`;
 
-        if (!blokInput || !statusCard) return;
+            desc.style.color = '#78350f';
+            desc.innerHTML = `Volume yang dialirkan (<strong>${volDialirkan.toLocaleString()} m³</strong>) jauh lebih kecil dari volume limbah yang dihasilkan (<strong>${volDihasilkan.toLocaleString()} m³</strong>). <strong>Wajib memberikan keterangan kendala operasional pengaliran.</strong>`;
 
-        const rawBlok = blokInput.value.trim();
-        const rawBak = bakInput ? bakInput.value.trim() : '';
+            // Rekomendasi kendala
+            suggestionsBox.style.display = 'block';
+            chipsContainer.innerHTML = `
+                <button type="button" class="keterangan-chip" style="background:#fef3c7;color:#92400e;border-color:#fde68a;" onclick="setKeterangan('Pompa distribusi / pipa saluran Land Application sedang maintenance/perbaikan')">
+                    🔧 Maintenance Pompa/Pipa
+                </button>
+                <button type="button" class="keterangan-chip" style="background:#fef3c7;color:#92400e;border-color:#fde68a;" onclick="setKeterangan('Limbah ditampung di kolam retensi IPAL untuk stabilisasi waktu tinggal')">
+                    ⏳ Penampungan/Retensi IPAL
+                </button>
+                <button type="button" class="keterangan-chip" style="background:#fef3c7;color:#92400e;border-color:#fde68a;" onclick="setKeterangan('Lahan LA jenuh air akibat curah hujan tinggi (menghindari run-off)')">
+                    🌧️ Lahan LA Jenuh Air (Hujan)
+                </button>
+                <button type="button" class="keterangan-chip" style="background:#fef3c7;color:#92400e;border-color:#fde68a;" onclick="setKeterangan('Pabrik stop olah / kendala pasokan TBS')">
+                    🛑 Stop Olah Pabrik
+                </button>
+            `;
 
-        if (!rawBlok) {
-            statusCard.className = 'permit-status-card';
-            if (alasanBox && !alasanField.value.trim()) {
-                alasanBox.classList.remove('show');
-            }
-            return;
+            ketReqBadge.style.display = 'inline-block';
+            ketReqBadge.textContent = 'Wajib Diisi (Keterangan Kendala)';
+            ketField.required = true;
+            ketCard.style.borderColor = '#fde68a';
+            volDialirkanInput.style.borderColor = '';
         }
+        // KASUS 4: NORMAL & MEMENUHI KUOTA
+        else {
+            card.style.background = '#f0fdf4';
+            card.style.border = '1.5px solid #bbf7d0';
+            iconWrap.style.background = '#dcfce7';
+            iconWrap.style.color = '#16a34a';
+            icon.className = 'feather-check-circle';
+            title.textContent = '✅ Status Pengaliran Normal & Memenuhi Batas SK';
+            title.style.color = '#14532d';
 
-        const pksData = PKS_BLOK_MAP[idPks];
-        if (!pksData || !pksData.bloks || pksData.bloks.length === 0) {
-            statusCard.className = 'permit-status-card permit-card-sesuai active';
-            statusIcon.innerHTML = '<i class="feather-info" style="color:#16a34a;"></i>';
-            statusTitle.textContent = 'PKS Belum Memiliki Master Peta Blok';
-            statusDesc.textContent = 'Data pengaliran akan disimpan langsung ke sistem.';
-            if (alasanBox) alasanBox.classList.remove('show');
-            return;
-        }
+            badge.style.background = '#16a34a';
+            badge.style.color = '#ffffff';
+            badge.textContent = `Rasio: ${ratio}% (Normal)`;
 
-        // Parse input tokens
-        const rawTokens = rawBlok.split(/[\/,\s;&+]+|(?:\bdan\b)/i);
-        const cleanTokens = [];
-        rawTokens.forEach(t => {
-            const clean = t.replace(/^(BLOK|BLOCK|AFD\.?|AFDELING)\s*/i, '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
-            if (clean && !cleanTokens.includes(clean)) cleanTokens.push(clean);
-        });
+            desc.style.color = '#166534';
+            desc.innerHTML = `Volume dialirkan (<strong>${volDialirkan.toLocaleString()} m³</strong>) seimbang dengan volume dihasilkan (<strong>${volDihasilkan.toLocaleString()} m³</strong>) dan berada dalam batas kuota SK Izin LA${debitIzin ? ' (' + debitIzin.toLocaleString() + ' m³/hari)' : ''}.`;
 
-        const bakNumbers = (rawBak.match(/\d+/g) || []).map(Number);
-
-        const matchedBloks = [];
-        const unmatchedBloks = [];
-
-        cleanTokens.forEach(token => {
-            const found = pksData.bloks.find(b => b.clean_blok === token);
-            if (found) {
-                matchedBloks.push(found);
-            } else {
-                unmatchedBloks.push(token);
-            }
-        });
-
-        let isCompliant = true;
-        let reasonMsg = '';
-
-        if (unmatchedBloks.length > 0) {
-            isCompliant = false;
-            reasonMsg = `Blok [${unmatchedBloks.join(', ')}] tidak tercantum dalam Surat Keputusan Izin LA resmi PKS ini.`;
-        } else if (cleanTokens.length === 0) {
-            isCompliant = false;
-            reasonMsg = 'Format blok pengaliran tidak dikenali.';
-        } else if (bakNumbers.length > 0) {
-            const invalidBaks = [];
-            bakNumbers.forEach(bakNo => {
-                const validInAny = matchedBloks.some(b => {
-                    const min = b.no_bak_awal !== null ? Number(b.no_bak_awal) : null;
-                    const max = b.no_bak_akhir !== null ? Number(b.no_bak_akhir) : null;
-                    if (min !== null && max !== null) {
-                        return bakNo >= Math.min(min, max) && bakNo <= Math.max(min, max);
-                    } else if (min !== null) {
-                        return bakNo === min;
-                    }
-                    return true;
-                });
-                if (!validInAny) invalidBaks.push(bakNo);
-            });
-
-            if (invalidBaks.length > 0) {
-                isCompliant = false;
-                reasonMsg = `Bak No. [${invalidBaks.join(', ')}] berada di luar rentang bak resmi untuk blok (${cleanTokens.join(', ')}).`;
-            }
-        }
-
-        if (isCompliant) {
-            statusCard.className = 'permit-status-card permit-card-sesuai active';
-            statusIcon.innerHTML = '<i class="feather-check-circle" style="color:#16a34a;font-size:16px;"></i>';
-            statusTitle.textContent = '✅ Sesuai Izin Land Application';
-            statusDesc.textContent = `Blok ${cleanTokens.join(', ')} terdaftar resmi pada Surat Izin LA (${pksData.nomor_sk || 'Terverifikasi'}).`;
-            if (alasanBox) {
-                alasanBox.classList.remove('show');
-            }
-        } else {
-            statusCard.className = 'permit-status-card permit-card-luar active';
-            statusIcon.innerHTML = '<i class="feather-alert-triangle" style="color:#f59e0b;font-size:16px;"></i>';
-            statusTitle.textContent = '⚠️ DI LUAR IZIN LAND APLIKASI TERDETEKSI';
-            statusDesc.textContent = `${reasonMsg} Sistem mewajibkan Anda mengisi alasan pengaliran di bawah ini.`;
-            if (alasanBox) {
-                alasanBox.classList.add('show');
-            }
+            suggestionsBox.style.display = 'none';
+            ketReqBadge.style.display = 'none';
+            ketField.required = false;
+            ketCard.style.borderColor = 'rgba(22,163,74,.1)';
+            volDialirkanInput.style.borderColor = '';
         }
     }
 
     document.addEventListener('DOMContentLoaded', function() {
         if (typeof $ !== 'undefined' && $.fn.select2) {
             $('[data-select2-selector]').select2({ width: '100%' });
-            $('#pks_select').on('change', function() {
-                renderBlokChips(this.value);
-                checkPermitCompliance();
+            // Re-check when Select2 changes
+            $('[data-select2-selector]').on('select2:select', function (e) {
+                checkVolumeDetection();
             });
         }
 
-        const initialPks = getSelectedPksId();
-        if (initialPks) {
-            renderBlokChips(initialPks);
-        }
+        const volDialirkanInput = document.getElementById('vol_dialirkan_input');
+        const volDihasilkanInput = document.getElementById('vol_dihasilkan_input');
+        const pksSelector = document.getElementById('pks_selector');
 
-        const blokInput = document.getElementById('blok_input');
-        const bakInput = document.getElementById('no_bak_input');
-
-        if (blokInput) {
-            blokInput.addEventListener('input', checkPermitCompliance);
-        }
-        if (bakInput) {
-            bakInput.addEventListener('input', checkPermitCompliance);
-        }
-
-        // Jalankan pengecekan awal jika ada old input
-        if (blokInput && blokInput.value.trim()) {
-            checkPermitCompliance();
+        if (volDialirkanInput && volDihasilkanInput) {
+            volDialirkanInput.addEventListener('input', checkVolumeDetection);
+            volDihasilkanInput.addEventListener('input', checkVolumeDetection);
+            if (pksSelector) {
+                pksSelector.addEventListener('change', checkVolumeDetection);
+            }
+            // Trigger check on initial load
+            checkVolumeDetection();
         }
     });
 </script>

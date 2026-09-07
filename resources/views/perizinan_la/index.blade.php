@@ -1,27 +1,25 @@
 @extends('layouts.simoli')
 
-@section('title', 'Perizinan Land Application')
-@section('page-title', 'Perizinan Land Application Tiap PKS')
-@section('page-description', 'Legalitas Izin Pemanfaatan Air Limbah (BOD, pH, Kuota Debit Harian, Titik Penaatan & Sumur Pantau)')
+@section('title', 'Arsip Dokumen Perizinan Land Application')
+@section('page-title', 'Arsip Dokumen Perizinan Land Application')
+@section('page-description', 'Pusat Penyimpanan & Pengarsipan Berkas Surat Keputusan (SK) Izin Land Application PKS')
 
 @section('breadcrumb')
-    <li>Master & Regulasi</li>
+    <li>Arsip & Legalitas</li>
     <li class="separator">/</li>
-    <li>Perizinan LA</li>
+    <li>Arsip Perizinan LA</li>
 @endsection
 
 @section('page-actions')
     <div class="d-flex gap-2">
         <a href="{{ route('pemetaan-la.index') }}" class="btn-ptpn btn-ptpn-outline">
-            <i class="feather-map-pin" style="font-size:15px;"></i>
-            <span>Peta Spasial GIS LA</span>
+            <i class="feather-map" style="font-size:15px;"></i>
+            <span>Arsip Peta LA</span>
         </a>
-        @if(Auth::user()->isAdmin())
         <a href="{{ route('perizinan-la.create') }}" class="btn-ptpn btn-ptpn-primary">
-            <i class="feather-plus" style="font-size:15px;"></i>
-            <span>Tambah Izin PKS</span>
+            <i class="feather-upload-cloud" style="font-size:15px;"></i>
+            <span>Unggah Arsip SK</span>
         </a>
-        @endif
     </div>
 @endsection
 
@@ -53,337 +51,253 @@
     .prz-kpi-val   { font-family: 'Outfit', sans-serif; font-size: 24px; font-weight: 800; line-height: 1.1; margin-bottom: 4px; }
     .prz-kpi-sub   { font-size: 11.5px; color: #6b7280; }
 
-    /* Alert Banner Kepatuhan */
-    .alert-compliance {
-        background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
-        border: 1.5px solid #fde68a;
-        border-left: 5px solid #d97706;
-        border-radius: 14px;
-        padding: 14px 18px;
-        margin-bottom: 20px;
+    .doc-card {
+        background: #ffffff;
+        border-radius: 16px;
+        border: 1px solid rgba(22,163,74,.15);
+        box-shadow: 0 2px 12px rgba(22,163,74,.05);
+        transition: all .25s ease;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
     }
-
-    .badge-permit-aktif {
-        background: rgba(34, 197, 94, 0.15);
-        color: #15803d;
-        border: 1px solid #86efac;
-        padding: 4px 10px;
-        border-radius: 50px;
-        font-size: 11.5px;
-        font-weight: 700;
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
+    .doc-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 25px rgba(22,163,74,.12);
+        border-color: rgba(22,163,74,.35);
     }
-    .badge-permit-warn {
-        background: rgba(245, 158, 11, 0.15);
-        color: #b45309;
-        border: 1px solid #fde68a;
-        padding: 4px 10px;
-        border-radius: 50px;
-        font-size: 11.5px;
-        font-weight: 700;
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-    }
-    .badge-permit-danger {
-        background: rgba(239, 68, 68, 0.15);
-        color: #b91c1c;
-        border: 1px solid #fca5a5;
-        padding: 4px 10px;
-        border-radius: 50px;
-        font-size: 11.5px;
-        font-weight: 700;
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-    }
-
-    .tbl-action-btn {
-        width: 32px; height: 32px;
-        border-radius: 8px;
-        display: inline-flex;
+    .doc-icon {
+        width: 54px;
+        height: 54px;
+        border-radius: 16px;
+        background: #f0fdf4;
+        border: 1.5px solid #bbf7d0;
+        color: #16a34a;
+        display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 14px;
-        transition: all .2s;
+        font-size: 26px;
+        flex-shrink: 0;
+    }
+    .badge-status-aktif { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+    .badge-status-perhatian { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+    .badge-status-kedaluwarsa { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+
+    html.app-skin-dark .prz-kpi,
+    html.app-skin-dark .doc-card {
+        background: #0a2317 !important;
+        border-color: rgba(34,197,94,.18) !important;
+    }
+    html.app-skin-dark .doc-icon {
+        background: #052e16 !important;
+        border-color: rgba(34,197,94,.3) !important;
+        color: #86efac !important;
     }
 </style>
 @endsection
 
 @section('content')
 
-@if(session('success'))
-<div class="alert-simoli alert-simoli-success alert-dismissible fade show" role="alert">
-    <i class="feather-check-circle fs-5 text-success"></i>
-    <div class="flex-grow-1">
-        <strong>Sukses!</strong> {{ session('success') }}
-    </div>
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-</div>
-@endif
-
-{{-- 1. KPI SUMMARY CARDS --}}
+{{-- 1. KPI Ringkasan Dokumen --}}
 <div class="row g-3 mb-4">
-    <div class="col-6 col-lg-3">
+    <div class="col-sm-6 col-xl-3">
         <div class="prz-kpi prz-kpi-green">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="prz-kpi-label">PKS Memiliki Izin</div>
-                    <div class="prz-kpi-val text-success">{{ $totalIzin }} <span class="fs-6 text-muted font-normal">/ {{ $totalPks }} Unit</span></div>
-                    <div class="prz-kpi-sub">Kelola Regulasi DLH</div>
-                </div>
-                <div class="icon-pill icon-pill-green"><i class="feather-shield"></i></div>
-            </div>
+            <div class="prz-kpi-label">Total Arsip SK</div>
+            <div class="prz-kpi-val text-success">{{ $totalArsip }}</div>
+            <div class="prz-kpi-sub">Berkas SK izin terdaftar</div>
         </div>
     </div>
-    <div class="col-6 col-lg-3">
+    <div class="col-sm-6 col-xl-3">
         <div class="prz-kpi prz-kpi-blue">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="prz-kpi-label">Status Izin Aktif</div>
-                    <div class="prz-kpi-val text-primary">{{ $izinAktif }} <span class="fs-6 text-muted font-normal">PKS</span></div>
-                    <div class="prz-kpi-sub">Memenuhi Standar PP</div>
-                </div>
-                <div class="icon-pill icon-pill-blue"><i class="feather-check-square"></i></div>
-            </div>
+            <div class="prz-kpi-label">Izin Aktif</div>
+            <div class="prz-kpi-val text-primary">{{ $arsipAktif }}</div>
+            <div class="prz-kpi-sub">Masa berlaku masih valid</div>
         </div>
     </div>
-    <div class="col-6 col-lg-3">
+    <div class="col-sm-6 col-xl-3">
         <div class="prz-kpi prz-kpi-gold">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="prz-kpi-label">Proses Perpanjangan</div>
-                    <div class="prz-kpi-val text-warning">{{ $izinPerpanjangan }} <span class="fs-6 text-muted font-normal">PKS</span></div>
-                    <div class="prz-kpi-sub">Pengajuan Ulang / SLO</div>
-                </div>
-                <div class="icon-pill icon-pill-gold"><i class="feather-refresh-cw"></i></div>
-            </div>
+            <div class="prz-kpi-label">Proses Perpanjangan</div>
+            <div class="prz-kpi-val text-warning">{{ $arsipPerpanjangan }}</div>
+            <div class="prz-kpi-sub">&le; 60 hari sebelum expired</div>
         </div>
     </div>
-    <div class="col-6 col-lg-3">
+    <div class="col-sm-6 col-xl-3">
         <div class="prz-kpi prz-kpi-red">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="prz-kpi-label">Izin Kedaluwarsa</div>
-                    <div class="prz-kpi-val text-danger">{{ $izinKedaluwarsa }} <span class="fs-6 text-muted font-normal">PKS</span></div>
-                    <div class="prz-kpi-sub">Perlu Tindak Lanjut Segera</div>
+            <div class="prz-kpi-label">Kedaluwarsa</div>
+            <div class="prz-kpi-val text-danger">{{ $arsipKedaluwarsa }}</div>
+            <div class="prz-kpi-sub">Perlu pembaruan SK</div>
+        </div>
+    </div>
+</div>
+
+{{-- 2. Filter & Pencarian Arsip --}}
+<div class="simoli-card mb-4">
+    <div class="simoli-card-body p-3">
+        <form method="GET" action="{{ route('perizinan-la.index') }}" class="row g-2 align-items-center">
+            <div class="col-md-4">
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0"><i class="feather-search text-muted"></i></span>
+                    <input type="text" name="search" class="form-control border-start-0" placeholder="Cari Nomor SK, Judul, atau Instansi..." value="{{ request('search') }}">
                 </div>
-                <div class="icon-pill icon-pill-rose"><i class="feather-alert-triangle"></i></div>
             </div>
-        </div>
-    </div>
-</div>
-
-{{-- 2. COMPLIANCE NOTIFICATION (BILA ADA OVER DEBIT PENGALIRAN) --}}
-@if($recentOverDebits->count() > 0)
-<div class="alert-compliance">
-    <div class="d-flex align-items-start gap-3">
-        <i class="feather-alert-octagon text-warning fs-3 mt-1"></i>
-        <div class="flex-grow-1">
-            <h6 class="fw-bold text-dark mb-1">Peringatan Kepatuhan Debit Pengaliran (Over Permit Discharge)</h6>
-            <p class="mb-2 text-muted small">
-                Terdeteksi <strong>{{ $recentOverDebits->count() }}</strong> catatan pengaliran dalam 30 hari terakhir yang debit pengalirannya melebihi batas kuota harian dalam SK Perizinan:
-            </p>
-            <div class="table-responsive bg-white rounded-3 p-2 border">
-                <table class="table table-sm table-borderless align-middle mb-0 font-12">
-                    <thead>
-                        <tr class="text-muted border-bottom">
-                            <th>Tanggal</th>
-                            <th>PKS</th>
-                            <th>Blok / No. Bak</th>
-                            <th>Debit Realisasi</th>
-                            <th>Batas Izin SK</th>
-                            <th>Selisih (Over)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($recentOverDebits->take(3) as $od)
-                        <tr>
-                            <td class="fw-bold">{{ $od->tanggal ? $od->tanggal->format('d/m/Y') : '-' }}</td>
-                            <td><span class="badge bg-light text-dark border">{{ $od->pks->nama ?? '-' }}</span></td>
-                            <td>Blok {{ $od->blok ?? '-' }} (Bak {{ $od->no_bak ?? '-' }})</td>
-                            <td class="text-danger fw-bold">{{ number_format($od->vol_limbah_dialirkan, 0, ',', '.') }} m³/hari</td>
-                            <td>{{ number_format($od->debit_izin, 0, ',', '.') }} m³/hari</td>
-                            <td><span class="badge bg-danger">+{{ number_format($od->kelebihan, 0, ',', '.') }} m³</span></td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
-@endif
-
-{{-- 3. FILTER DAN TABEL PERIZINAN --}}
-<div class="simoli-card">
-    <div class="simoli-card-header">
-        <h3 class="simoli-card-title">
-            <i class="feather-file-text text-success"></i>
-            <span>Daftar Dokumen & Ketentuan SK Izin Land Application</span>
-        </h3>
-    </div>
-    <div class="simoli-card-body">
-        
-        {{-- Search & Filter Bar --}}
-        <form method="GET" action="{{ route('perizinan-la.index') }}" class="row g-2 mb-4">
+            
             @if(Auth::user()->isAdmin())
             <div class="col-md-3">
-                <select name="id_pks" class="form-select form-select-sm" onchange="this.form.submit()">
-                    <option value="">-- Semua PKS --</option>
+                <select name="id_pks" class="form-select">
+                    <option value="">-- Semua Unit PKS --</option>
                     @foreach($daftarPks as $pks)
-                    <option value="{{ $pks->id_pks }}" {{ request('id_pks') == $pks->id_pks ? 'selected' : '' }}>
-                        {{ $pks->nama }} ({{ $pks->kode }})
-                    </option>
+                        <option value="{{ $pks->id_pks }}" {{ request('id_pks') == $pks->id_pks ? 'selected' : '' }}>
+                            {{ $pks->nama }} ({{ $pks->akro ?? $pks->kode }})
+                        </option>
                     @endforeach
                 </select>
             </div>
             @endif
+
             <div class="col-md-3">
-                <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
-                    <option value="">-- Semua Status Izin --</option>
+                <select name="status" class="form-select">
+                    <option value="">-- Semua Status --</option>
                     <option value="Aktif" {{ request('status') == 'Aktif' ? 'selected' : '' }}>Aktif</option>
                     <option value="Proses Perpanjangan" {{ request('status') == 'Proses Perpanjangan' ? 'selected' : '' }}>Proses Perpanjangan</option>
                     <option value="Kedaluwarsa" {{ request('status') == 'Kedaluwarsa' ? 'selected' : '' }}>Kedaluwarsa</option>
                 </select>
             </div>
-            <div class="col-md-4">
-                <div class="input-group input-group-sm">
-                    <input type="text" name="search" class="form-control" placeholder="Cari No. SK / Instansi..." value="{{ request('search') }}">
-                    <button class="btn btn-ptpn-primary" type="submit"><i class="feather-search"></i></button>
-                </div>
-            </div>
-            <div class="col-md-2 text-end">
-                @if(request()->hasAny(['id_pks', 'status', 'search']))
-                <a href="{{ route('perizinan-la.index') }}" class="btn btn-sm btn-light border text-muted">
-                    <i class="feather-x"></i> Reset
-                </a>
+
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn-ptpn btn-ptpn-primary w-100 justify-content-center">
+                    <i class="feather-filter"></i> Filter
+                </button>
+                @if(request()->hasAny(['search', 'id_pks', 'status']))
+                    <a href="{{ route('perizinan-la.index') }}" class="btn btn-light border px-3" title="Reset Filter">
+                        <i class="feather-refresh-cw"></i>
+                    </a>
                 @endif
             </div>
         </form>
-
-        {{-- Table --}}
-        <div class="table-responsive">
-            <table class="table table-simoli table-hover align-middle">
-                <thead>
-                    <tr>
-                        <th width="4%">No</th>
-                        <th width="15%">PKS & Lokasi</th>
-                        <th width="20%">Nomor SK & Penerbit</th>
-                        <th width="18%">Baku Mutu & Kuota Izin</th>
-                        <th width="15%">Titik Penaatan & Sumur</th>
-                        <th width="14%">Masa Berlaku</th>
-                        <th width="14%" class="text-center">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($perizinanList as $index => $item)
-                    <tr>
-                        <td>{{ $perizinanList->firstItem() + $index }}</td>
-                        <td>
-                            <div class="fw-bold text-dark">{{ $item->pks->nama ?? '-' }}</div>
-                            <small class="text-muted d-block">{{ $item->pks->kode ?? '' }} &bull; {{ $item->luas_areal_izin }} Ha</small>
-                            <span class="badge bg-light text-success border mt-1 font-11">
-                                <i class="feather-map-pin me-1"></i>{{ $item->pks->petaBlokLa ? $item->pks->petaBlokLa->count() : 0 }} Blok Terpetakan
-                            </span>
-                        </td>
-                        <td>
-                            <div class="fw-bold text-primary">{{ $item->nomor_sk }}</div>
-                            <div class="small text-muted mb-1">{{ $item->instansi_penerbit }}</div>
-                            @if($item->file_sk)
-                            <a href="{{ asset('uploads/perizinan_la/' . $item->file_sk) }}" target="_blank" class="badge bg-danger-subtle text-danger border border-danger-subtle text-decoration-none">
-                                <i class="feather-file me-1"></i>Download SK (PDF)
-                            </a>
-                            @endif
-                        </td>
-                        <td>
-                            <div class="font-12">
-                                <div class="d-flex justify-content-between mb-1">
-                                    <span class="text-muted">Debit Maks:</span>
-                                    <strong class="text-success">{{ number_format($item->debit_maksimal_harian, 0, ',', '.') }} m³/hari</strong>
-                                </div>
-                                <div class="d-flex justify-content-between mb-1">
-                                    <span class="text-muted">BOD Maks:</span>
-                                    <strong>{{ number_format($item->bod_maksimal, 0, ',', '.') }} mg/L</strong>
-                                </div>
-                                <div class="d-flex justify-content-between">
-                                    <span class="text-muted">Rentang pH:</span>
-                                    <span>{{ $item->ph_min }} – {{ $item->ph_max }}</span>
-                                </div>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="font-12 mb-1">
-                                <i class="feather-radio text-danger me-1"></i>
-                                <span class="fw-semibold">{{ $item->nama_titik_penaatan ?? 'IPAL Outlet' }}</span>
-                            </div>
-                            <small class="text-muted d-block">{{ $item->koordinat_penaatan_text ?? ($item->lat_titik_penaatan ? $item->lat_titik_penaatan.','.$item->long_titik_penaatan : '-') }}</small>
-                            <div class="mt-1">
-                                <span class="badge bg-info-subtle text-primary border border-info-subtle font-11">
-                                    <i class="feather-droplet me-1"></i>{{ $item->sumurPantau->count() }} Titik Sumur Pantau
-                                </span>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="mb-1">
-                                @if($item->badge_class === 'success')
-                                <span class="badge-permit-aktif"><i class="feather-check-circle"></i> {{ $item->status_label }}</span>
-                                @elseif($item->badge_class === 'warning')
-                                <span class="badge-permit-warn"><i class="feather-clock"></i> {{ $item->status_label }}</span>
-                                @else
-                                <span class="badge-permit-danger"><i class="feather-alert-triangle"></i> {{ $item->status_label }}</span>
-                                @endif
-                            </div>
-                            <small class="text-muted d-block">
-                                Exp: {{ $item->tanggal_berakhir ? $item->tanggal_berakhir->format('d M Y') : 'Seterusnya' }}
-                            </small>
-                            @if($item->sisa_hari !== null && $item->sisa_hari >= 0)
-                            <small class="text-secondary font-11">Sisa {{ $item->sisa_hari }} hari lagi</small>
-                            @endif
-                        </td>
-                        <td class="text-center">
-                            <div class="d-flex justify-content-center gap-1">
-                                <a href="{{ route('perizinan-la.show', $item->id) }}" class="btn btn-sm btn-outline-success tbl-action-btn" title="Lihat Detail & Legalitas">
-                                    <i class="feather-eye"></i>
-                                </a>
-                                <a href="{{ route('pemetaan-la.index', ['id_pks' => $item->id_pks]) }}" class="btn btn-sm btn-outline-primary tbl-action-btn" title="Buka di Peta Spasial GIS">
-                                    <i class="feather-map"></i>
-                                </a>
-                                @if(Auth::user()->isAdmin())
-                                <a href="{{ route('perizinan-la.edit', $item->id) }}" class="btn btn-sm btn-outline-warning tbl-action-btn" title="Edit Data Izin">
-                                    <i class="feather-edit-2"></i>
-                                </a>
-                                <form action="{{ route('perizinan-la.destroy', $item->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data perizinan ini?');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-outline-danger tbl-action-btn" title="Hapus">
-                                        <i class="feather-trash-2"></i>
-                                    </button>
-                                </form>
-                                @endif
-                            </div>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="7" class="text-center py-5 text-muted">
-                            <i class="feather-inbox fs-1 d-block mb-2 text-secondary"></i>
-                            Belum ada data perizinan Land Application.
-                        </td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-
-        <div class="d-flex justify-content-between align-items-center mt-3">
-            <small class="text-muted">Menampilkan {{ $perizinanList->count() }} dari {{ $perizinanList->total() }} data perizinan PKS</small>
-            {{ $perizinanList->links() }}
-        </div>
-
     </div>
 </div>
+
+{{-- 3. Daftar Berkas Arsip SK --}}
+@if($perizinanList->count() > 0)
+<div class="row g-4 mb-4">
+    @foreach($perizinanList as $item)
+    <div class="col-md-6 col-xl-4">
+        <div class="doc-card">
+            <div class="d-flex align-items-start justify-content-between gap-3 mb-3">
+                <div class="doc-icon">
+                    <i class="feather-file-text"></i>
+                </div>
+                <div class="text-end">
+                    @php
+                        $badgeClass = 'badge-status-aktif';
+                        if ($item->status_label === 'Kedaluwarsa') {
+                            $badgeClass = 'badge-status-kedaluwarsa';
+                        } elseif (str_contains($item->status_label, 'Perpanjang') || str_contains($item->status_label, 'Perhatian')) {
+                            $badgeClass = 'badge-status-perhatian';
+                        }
+                    @endphp
+                    <span class="badge {{ $badgeClass }} px-2 py-1 rounded-pill" style="font-size:11px;font-weight:700;">
+                        {{ $item->status_label }}
+                    </span>
+                    <div style="font-size:11px;color:#6b7280;margin-top:3px;">
+                        @if($item->sisa_hari !== null)
+                            @if($item->sisa_hari > 0)
+                                Sisa {{ $item->sisa_hari }} hari
+                            @else
+                                Lewat {{ abs($item->sisa_hari) }} hari
+                            @endif
+                        @else
+                            -
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-2">
+                <span class="badge bg-light text-dark border mb-1" style="font-size:11px;font-weight:700;">
+                    <i class="feather-home text-success"></i> {{ $item->pks ? $item->pks->nama : 'Unit PKS' }}
+                </span>
+                <h5 style="font-family:'Outfit',sans-serif;font-weight:800;font-size:15px;color:#1f2937;margin-bottom:4px;line-height:1.3;">
+                    {{ $item->nomor_sk }}
+                </h5>
+                <p style="font-size:12px;color:#4b5563;margin-bottom:12px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
+                    {{ $item->tentang }}
+                </p>
+            </div>
+
+            <div class="bg-light rounded-3 p-2 mb-3" style="font-size:11.5px;color:#374151;">
+                <div class="d-flex justify-content-between mb-1">
+                    <span class="text-muted">Penerbit:</span>
+                    <strong class="text-truncate" style="max-width:180px;">{{ $item->instansi_penerbit }}</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-1">
+                    <span class="text-muted">Batas Debit Izin:</span>
+                    <strong class="text-success"><i class="feather-droplet"></i> {{ number_format($item->debit_maksimal_harian ?? 0, 0, ',', '.') }} m³/hari</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-1">
+                    <span class="text-muted">Tgl Terbit:</span>
+                    <strong>{{ $item->tanggal_terbit ? $item->tanggal_terbit->format('d/m/Y') : '-' }}</strong>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span class="text-muted">Masa Berlaku:</span>
+                    <strong>{{ $item->tanggal_berakhir ? $item->tanggal_berakhir->format('d/m/Y') : '5 Tahun' }}</strong>
+                </div>
+            </div>
+
+            <div class="mt-auto pt-2.5 border-top d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                <div class="d-flex align-items-center gap-2 flex-nowrap">
+                    @if($item->file_sk)
+                        <a href="{{ asset('uploads/perizinan_la/' . $item->file_sk) }}" target="_blank" class="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1.5 px-3 py-1.5 fw-bold" style="border-radius:9px;font-size:12.5px;">
+                            <i class="feather-eye" style="font-size:14.5px;"></i> Buka PDF
+                        </a>
+                        <a href="{{ asset('uploads/perizinan_la/' . $item->file_sk) }}" download class="btn btn-sm btn-light border text-muted d-inline-flex align-items-center justify-content-center px-2.5 py-1.5" style="border-radius:9px;font-size:12.5px;" title="Unduh Berkas">
+                            <i class="feather-download" style="font-size:14.5px;"></i>
+                        </a>
+                    @else
+                        <span class="text-muted" style="font-size:11.5px;"><em>Belum ada file</em></span>
+                    @endif
+                </div>
+
+                <div class="d-flex align-items-center gap-2 flex-nowrap">
+                    <a href="{{ route('perizinan-la.show', $item->id) }}" class="btn btn-sm btn-light border text-secondary d-inline-flex align-items-center justify-content-center px-2.5 py-1.5" title="Detail Arsip" style="border-radius:9px;">
+                        <i class="feather-info" style="font-size:15px;"></i>
+                    </a>
+                    @if(Auth::user()->isAdmin() || Auth::user()->id_pks == $item->id_pks)
+                    <a href="{{ route('perizinan-la.edit', $item->id) }}" class="btn btn-sm btn-light border text-warning d-inline-flex align-items-center justify-content-center px-2.5 py-1.5" title="Edit Metadata" style="border-radius:9px;">
+                        <i class="feather-edit-2" style="font-size:15px;"></i>
+                    </a>
+                    <form action="{{ route('perizinan-la.destroy', $item->id) }}" method="POST" class="d-inline m-0 p-0" onsubmit="return confirm('Apakah Anda yakin ingin menghapus arsip SK ini?');">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-sm btn-light border text-danger d-inline-flex align-items-center justify-content-center px-2.5 py-1.5" title="Hapus Arsip" style="border-radius:9px;">
+                            <i class="feather-trash-2" style="font-size:15px;"></i>
+                        </button>
+                    </form>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+    @endforeach
+</div>
+
+<div class="d-flex justify-content-center">
+    {{ $perizinanList->links('pagination::bootstrap-5') }}
+</div>
+@else
+<div class="simoli-card text-center py-5">
+    <div style="font-size:48px;color:#86efac;margin-bottom:12px;">
+        <i class="feather-inbox"></i>
+    </div>
+    <h5 style="font-family:'Outfit',sans-serif;font-weight:800;color:#374151;">Belum Ada Arsip Dokumen SK</h5>
+    <p style="font-size:13px;color:#6b7280;max-width:400px;margin:0 auto 20px auto;">
+        Belum ada berkas Surat Keputusan (SK) Land Application yang diunggah. Silakan klik tombol di bawah untuk mengunggah berkas pertama.
+    </p>
+    <a href="{{ route('perizinan-la.create') }}" class="btn-ptpn btn-ptpn-primary" style="display:inline-flex;">
+        <i class="feather-upload-cloud"></i> Unggah Arsip SK Sekarang
+    </a>
+</div>
+@endif
 
 @endsection

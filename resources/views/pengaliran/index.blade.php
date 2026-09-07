@@ -355,15 +355,6 @@
                     <input type="date" name="sampai_tanggal" class="form-control" value="{{ request('sampai_tanggal') }}">
                 </div>
 
-                <div class="col-lg-2 col-md-3 col-6">
-                    <label><i class="feather-shield me-1" style="color:#16a34a;"></i> Status Izin LA</label>
-                    <select name="kesesuaian_izin" class="form-select">
-                        <option value="">Semua Status</option>
-                        <option value="Sesuai Izin" {{ request('kesesuaian_izin') == 'Sesuai Izin' ? 'selected' : '' }}>✅ Sesuai Izin</option>
-                        <option value="Di Luar Izin" {{ request('kesesuaian_izin') == 'Di Luar Izin' ? 'selected' : '' }}>⚠️ Di Luar Izin</option>
-                    </select>
-                </div>
-
                 <div class="col-lg-2 col-md-3">
                     <label>&nbsp;</label>
                     <div class="d-flex gap-2">
@@ -413,10 +404,9 @@
                         @endif
                         <th style="min-width:110px;">Block Pengaliran</th>
                         <th style="min-width:130px;">Bak Distribusi</th>
-                        <th style="width:110px;text-align:center;">Status Izin</th>
                         <th style="width:100px;text-align:center;">Bed Dialirkan</th>
                         <th style="min-width:130px;">Vol. Dialirkan</th>
-                        <th style="min-width:160px;">Keterangan</th>
+                        <th style="min-width:180px;">Keterangan</th>
                         <th style="width:90px;text-align:center;">Aksi</th>
                     </tr>
                 </thead>
@@ -456,23 +446,6 @@
                         </td>
 
                         <td style="text-align:center;">
-                            @if($item->kesesuaian_izin === 'Di Luar Izin')
-                                <span class="badge bg-warning text-dark d-inline-flex align-items-center gap-1 px-2 py-1 shadow-sm"
-                                      style="font-size:10.5px;font-weight:800;border-radius:6px;cursor:pointer;"
-                                      title="{{ $item->alasan_tidak_sesuai_izin ? 'Alasan: ' . $item->alasan_tidak_sesuai_izin : 'Pengaliran di luar blok/bak izin SK' }}">
-                                    <i class="feather-alert-triangle" style="font-size:11px;"></i>
-                                    Di Luar Izin
-                                </span>
-                            @else
-                                <span class="badge bg-success-subtle text-success d-inline-flex align-items-center gap-1 px-2 py-1"
-                                      style="font-size:10.5px;font-weight:800;border-radius:6px;background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d;">
-                                    <i class="feather-check-circle" style="font-size:11px;"></i>
-                                    Sesuai Izin
-                                </span>
-                            @endif
-                        </td>
-
-                        <td style="text-align:center;">
                             <span style="font-family:'Outfit',sans-serif;font-size:16px;font-weight:900;color:#16a34a;">
                                 {{ number_format($item->flat_bed ?? 0, 0, ',', '.') }}
                             </span>
@@ -480,25 +453,33 @@
                         </td>
 
                         <td>
-                            @php $maxVol = $totalVolDialirkan > 0 ? $totalVolDialirkan : 1; $pct = min(100, ($item->vol_limbah_dialirkan / $maxVol) * 100); @endphp
+                            @php 
+                                $maxVol = $totalVolDialirkan > 0 ? $totalVolDialirkan : 1; 
+                                $pct = min(100, ($item->vol_limbah_dialirkan / $maxVol) * 100); 
+                                $isOver = $item->vol_limbah_dialirkan > ($item->vol_limbah_dihasilkan ?? 0);
+                                $isUnder = (($item->vol_limbah_dihasilkan ?? 0) > 0 && $item->vol_limbah_dialirkan < (0.4 * $item->vol_limbah_dihasilkan));
+                            @endphp
                             <div style="font-weight:800;font-size:13px;color:#1f2937;">
                                 {{ number_format($item->vol_limbah_dialirkan, 0, ',', '.') }}
                                 <span style="font-size:11px;font-weight:600;color:#6b7280;">m³</span>
                             </div>
                             <div class="vol-bar"><div class="vol-bar-fill" style="width:{{ $pct }}%"></div></div>
+                            @if($isOver)
+                                <span class="badge bg-danger" style="font-size:9.5px;padding:2px 6px;border-radius:4px;margin-top:3px;display:inline-block;" title="Volume dialirkan melebihi volume dihasilkan">
+                                    ⚠️ Overflow (+{{ number_format($item->vol_limbah_dialirkan - $item->vol_limbah_dihasilkan) }} m³)
+                                </span>
+                            @elseif($isUnder)
+                                <span class="badge bg-warning text-dark" style="font-size:9.5px;padding:2px 6px;border-radius:4px;margin-top:3px;display:inline-block;" title="Volume dialirkan di bawah 40% volume dihasilkan">
+                                    ⚠️ Underflow
+                                </span>
+                            @endif
                         </td>
 
                         <td>
-                            <small style="color:#6b7280;font-size:11.5px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px;"
+                            <small style="color:#6b7280;font-size:11.5px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px;"
                                    title="{{ $item->keterangan }}">
                                 {{ $item->keterangan ?? 'Pengaliran Limbah lancar' }}
                             </small>
-                            @if($item->kesesuaian_izin === 'Di Luar Izin' && $item->alasan_tidak_sesuai_izin)
-                            <small style="color:#c2410c;font-size:10.5px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px;"
-                                   title="Alasan di luar izin: {{ $item->alasan_tidak_sesuai_izin }}">
-                                ⚠️ {{ $item->alasan_tidak_sesuai_izin }}
-                            </small>
-                            @endif
                         </td>
 
                         <td style="text-align:center;" onclick="event.stopPropagation();">

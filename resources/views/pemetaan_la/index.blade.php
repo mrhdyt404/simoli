@@ -1,626 +1,476 @@
 @extends('layouts.simoli')
 
-@section('title', 'Pemetaan Spasial GIS Land Application')
-@section('page-title', 'Pemetaan Spasial GIS Land Application')
-@section('page-description', 'Peta Interaktif Spasial Blok Land Application, Titik Penaatan IPAL & Sumur Pantau Tiap PKS')
+@section('title', 'Arsip & Pratinjau Peta Land Application')
+@section('page-title', 'Arsip & Pratinjau Peta Land Application')
+@section('page-description', 'Pratinjau Peta Terkini Tiap PKS & Pusat Pengarsipan Dokumen Peta Land Application')
 
 @section('breadcrumb')
-    <li>Monitoring</li>
+    <li>Arsip & Legalitas</li>
     <li class="separator">/</li>
-    <li>Pemetaan LA</li>
+    <li>Arsip Peta LA</li>
 @endsection
 
 @section('page-actions')
     <div class="d-flex gap-2">
         <a href="{{ route('perizinan-la.index') }}" class="btn-ptpn btn-ptpn-outline">
-            <i class="feather-shield" style="font-size:15px;"></i>
-            <span>Regulasi & Izin SK</span>
+            <i class="feather-file-text" style="font-size:15px;"></i>
+            <span>Arsip SK Izin LA</span>
         </a>
-        @if($pksAktif)
-        <a href="{{ route('pemetaan-la.peta-digital', $pksAktif->id_pks) }}" target="_blank" class="btn-ptpn btn-ptpn-primary">
-            <i class="feather-printer" style="font-size:15px;"></i>
-            <span>Layout Peta Resmi GIS</span>
+        <a href="{{ route('pemetaan-la.create') }}" class="btn-ptpn btn-ptpn-primary">
+            <i class="feather-upload-cloud" style="font-size:15px;"></i>
+            <span>Unggah Arsip Peta</span>
         </a>
-        @endif
     </div>
 @endsection
 
 @section('styles')
-<!-- Leaflet CSS -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 <style>
-    /* Full Screen Map Container */
-    .gis-wrapper {
-        position: relative;
-        border-radius: 18px;
+    /* ================================================================
+       PREVIEW PETA TERKINI (HERO CARD)
+       ================================================================ */
+    .hero-map-card {
+        background: #ffffff;
+        border-radius: 20px;
+        border: 1px solid rgba(22,163,74,.2);
+        box-shadow: 0 4px 20px rgba(22,163,74,.08);
         overflow: hidden;
-        border: 1.5px solid rgba(22, 163, 74, 0.2);
-        box-shadow: 0 8px 32px rgba(5, 46, 22, 0.12);
-        height: calc(100vh - 220px);
-        min-height: 560px;
-        display: flex;
+        margin-bottom: 30px;
+        animation: fadeUp .4s ease-out;
     }
 
-    #simoli-gis-map {
-        width: 100%;
-        height: 100%;
-        z-index: 10;
-        background: #e2e8f0;
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(12px); }
+        to   { opacity: 1; transform: translateY(0); }
     }
 
-    /* Floating Side Control Panel */
-    .gis-sidebar-panel {
-        position: absolute;
-        top: 14px;
-        left: 14px;
-        bottom: 14px;
-        width: 340px;
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(10px);
-        border-radius: 14px;
-        border: 1px solid rgba(22, 163, 74, 0.25);
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-        z-index: 1000;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        transition: transform 0.3s ease;
-    }
-
-    .gis-sidebar-panel.collapsed {
-        transform: translateX(-360px);
-    }
-
-    .gis-panel-header {
-        padding: 14px 16px;
-        background: linear-gradient(135deg, #052e16 0%, #166534 100%);
-        color: #ffffff;
+    .hero-map-header {
+        padding: 16px 22px;
+        background: linear-gradient(90deg, #052e16 0%, #14532d 50%, #166534 100%);
         display: flex;
         align-items: center;
         justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
     }
 
-    .gis-panel-body {
-        padding: 14px 16px;
-        overflow-y: auto;
-        flex-grow: 1;
-    }
-
-    .gis-toggle-btn {
-        position: absolute;
-        top: 14px;
-        left: 14px;
-        z-index: 999;
-        background: #166534;
-        color: #fff;
-        border: none;
-        border-radius: 10px;
-        width: 38px;
-        height: 38px;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        cursor: pointer;
-    }
-
-    .gis-sidebar-panel.collapsed + .gis-toggle-btn {
-        display: flex;
-    }
-
-    /* Legend Indicator in Map */
-    .gis-legend-overlay {
-        position: absolute;
-        bottom: 20px;
-        right: 20px;
-        background: rgba(255, 255, 255, 0.92);
-        backdrop-filter: blur(8px);
-        border: 1px solid rgba(22, 163, 74, 0.25);
-        border-radius: 12px;
-        padding: 12px 16px;
-        z-index: 1000;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-        font-size: 11.5px;
-        max-width: 260px;
-    }
-
-    .legend-item {
+    .hero-map-title {
+        font-family: 'Outfit', sans-serif;
+        font-size: 15px;
+        font-weight: 800;
+        color: #86efac;
         display: flex;
         align-items: center;
         gap: 8px;
-        margin-bottom: 5px;
-    }
-    .legend-item:last-child { margin-bottom: 0; }
-
-    .legend-dot {
-        width: 14px; height: 14px;
-        border-radius: 4px;
-        flex-shrink: 0;
-    }
-
-    /* Custom Leaflet Popups */
-    .leaflet-popup-content-wrapper {
-        border-radius: 14px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-        border: 1px solid rgba(22, 163, 74, 0.3);
-        padding: 0;
-        overflow: hidden;
-    }
-    .leaflet-popup-content {
         margin: 0;
-        line-height: 1.4;
-    }
-    .popup-header {
-        background: linear-gradient(135deg, #052e16 0%, #15803d 100%);
-        color: #fff;
-        padding: 10px 14px;
-        font-family: 'Outfit', sans-serif;
-        font-size: 14px;
-        font-weight: 700;
-    }
-    .popup-body {
-        padding: 12px 14px;
-        font-size: 12px;
     }
 
-    /* Pulsing Pin for IPAL Outlet */
-    .pulse-marker {
-        display: block;
-        width: 22px; height: 22px;
-        border-radius: 50%;
-        background: #dc2626;
-        border: 3px solid #ffffff;
-        box-shadow: 0 0 0 rgba(220, 38, 38, 0.6);
-        animation: pulsePin 1.8s infinite;
-    }
-    @keyframes pulsePin {
-        0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); }
-        70% { box-shadow: 0 0 0 14px rgba(220, 38, 38, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
-    }
-
-    .well-marker {
+    .hero-map-viewer-wrap {
+        height: 520px;
+        background: #1e293b;
+        position: relative;
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 24px; height: 24px;
-        border-radius: 50%;
-        background: #2563eb;
+        overflow: hidden;
+    }
+
+    .hero-map-img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        transition: transform .3s ease;
+    }
+
+    .hero-map-meta-panel {
+        padding: 24px;
+        background: #ffffff;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .badge-terkini {
+        background: linear-gradient(135deg, #16a34a, #22c55e);
         color: #ffffff;
-        border: 2px solid #ffffff;
-        font-size: 11px;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        font-size: 11.5px;
+        font-weight: 800;
+        padding: 5px 12px;
+        border-radius: 50px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 2px 8px rgba(34,197,94,.3);
+    }
+
+    /* ================================================================
+       GALLERY CARDS
+       ================================================================ */
+    .map-card {
+        background: #ffffff;
+        border-radius: 16px;
+        border: 1px solid rgba(22,163,74,.15);
+        box-shadow: 0 2px 12px rgba(22,163,74,.05);
+        transition: all .25s ease;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+    }
+    .map-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 25px rgba(22,163,74,.12);
+        border-color: rgba(22,163,74,.35);
+    }
+    .map-thumb-wrap {
+        height: 160px;
+        background: #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    .map-thumb-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform .3s ease;
+    }
+    .map-card:hover .map-thumb-img {
+        transform: scale(1.05);
+    }
+    .map-thumb-placeholder {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: #94a3b8;
+    }
+    .badge-category {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: rgba(15, 23, 42, 0.8);
+        backdrop-filter: blur(4px);
+        color: #ffffff;
+        font-size: 10px;
+        font-weight: 700;
+        padding: 3px 8px;
+        border-radius: 50px;
+    }
+
+    html.app-skin-dark .hero-map-card,
+    html.app-skin-dark .hero-map-meta-panel,
+    html.app-skin-dark .map-card {
+        background: #0a2317 !important;
+        border-color: rgba(34,197,94,.18) !important;
+    }
+    html.app-skin-dark .map-thumb-wrap {
+        background: #052e16 !important;
+        border-color: rgba(34,197,94,.2) !important;
     }
 </style>
 @endsection
 
 @section('content')
 
-{{-- TOP BAR: PKS SELECTOR & QUICK STATS --}}
-<div class="row g-3 mb-3">
-    <div class="col-lg-4">
-        <form method="GET" action="{{ route('pemetaan-la.index') }}" id="pksForm">
-            <div class="input-group">
-                <span class="input-group-text bg-success text-white border-success fw-bold font-12">
-                    <i class="feather-map-pin me-1"></i> Pilih PKS
+{{-- ================================================================
+     1. HERO PRATINJAU PETA TERKINI (BERDASARKAN TAHUN PALING BARU)
+     ================================================================ --}}
+<div class="hero-map-card">
+    <div class="hero-map-header">
+        <div class="d-flex align-items-center gap-2">
+            <h4 class="hero-map-title">
+                <i class="feather-map" style="font-size:18px;"></i>
+                <span>Pratinjau Peta Terkini — {{ $pksAktif ? $pksAktif->nama : 'PKS' }}</span>
+            </h4>
+            @if($petaTerbaru)
+                <span class="badge-terkini">
+                    <i class="feather-star" style="font-size:12px;"></i> Tahun {{ $petaTerbaru->tahun_peta ?: date('Y') }}
                 </span>
-                <select name="id_pks" class="form-select border-success" onchange="document.getElementById('pksForm').submit()" {{ !Auth::user()->isAdmin() ? 'disabled' : '' }}>
+            @endif
+        </div>
+
+        {{-- Selector PKS (untuk Admin) atau Badge Unit (untuk Non-Admin) --}}
+        <div>
+            @if(Auth::user()->isAdmin())
+                <form method="GET" action="{{ route('pemetaan-la.index') }}" id="pksFilterForm" class="d-flex align-items-center gap-2 m-0">
+                    <span style="font-size:11.5px;color:#86efac;font-weight:700;white-space:nowrap;">Pilih Unit PKS:</span>
+                    <select name="id_pks" class="form-select form-select-sm" style="min-width:200px;font-weight:700;border-radius:8px;" onchange="document.getElementById('pksFilterForm').submit();">
+                        @foreach($daftarPks as $pks)
+                            <option value="{{ $pks->id_pks }}" {{ $selectedPksId == $pks->id_pks ? 'selected' : '' }}>
+                                {{ $pks->nama }} ({{ $pks->akro ?? $pks->kode }})
+                            </option>
+                        @endforeach
+                    </select>
+                </form>
+            @else
+                <span class="badge bg-light text-dark px-3 py-2 rounded-pill font-12" style="font-weight:800;">
+                    <i class="feather-home text-success"></i> {{ $pksAktif ? $pksAktif->nama : 'PKS Saya' }}
+                </span>
+            @endif
+        </div>
+    </div>
+
+    @if($petaTerbaru)
+    <div class="row g-0">
+        {{-- Viewer Peta Terkini (Col 8) --}}
+        <div class="col-lg-8">
+            <div class="hero-map-viewer-wrap">
+                @if($petaTerbaru->is_pdf)
+                    <iframe src="{{ asset('uploads/peta_la/' . $petaTerbaru->file_peta) }}" width="100%" height="100%" style="border:none;"></iframe>
+                @elseif($petaTerbaru->is_image)
+                    <img src="{{ asset('uploads/peta_la/' . $petaTerbaru->file_peta) }}" alt="{{ $petaTerbaru->nama_peta }}" class="hero-map-img">
+                @else
+                    <div class="text-center text-white p-4">
+                        <i class="feather-file" style="font-size:54px;opacity:.6;margin-bottom:12px;"></i>
+                        <h5>Berkas Spasial {{ strtoupper($petaTerbaru->tipe_file) }}</h5>
+                        <p style="opacity:.8;font-size:13px;">Format ini dapat diunduh untuk dibuka pada software SIG.</p>
+                        <a href="{{ asset('uploads/peta_la/' . $petaTerbaru->file_peta) }}" download class="btn btn-light btn-sm mt-2">
+                            <i class="feather-download"></i> Unduh Berkas
+                        </a>
+                    </div>
+                @endif
+            </div>
+        </div>
+
+        {{-- Panel Informasi Peta Terkini (Col 4) --}}
+        <div class="col-lg-4">
+            <div class="hero-map-meta-panel">
+                <div class="mb-3">
+                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 rounded-pill mb-2" style="font-size:11px;font-weight:700;">
+                        {{ $petaTerbaru->kategori_peta }}
+                    </span>
+                    <h4 style="font-family:'Outfit',sans-serif;font-weight:800;color:#1f2937;margin-bottom:6px;line-height:1.3;">
+                        {{ $petaTerbaru->nama_peta }}
+                    </h4>
+                    <div class="text-muted" style="font-size:12px;">
+                        <i class="feather-calendar text-success"></i> Tahun Pembuatan: <strong>{{ $petaTerbaru->tahun_peta ?: '-' }}</strong>
+                    </div>
+                </div>
+
+                <div class="bg-light rounded-3 p-3 mb-3" style="font-size:12.5px;color:#374151;">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Unit PKS:</span>
+                        <strong>{{ $petaTerbaru->pks ? $petaTerbaru->pks->nama : 'PKS' }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Format Berkas:</span>
+                        <strong class="text-uppercase">{{ $petaTerbaru->tipe_file ?: '-' }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Ukuran Berkas:</span>
+                        <strong>{{ $petaTerbaru->formatted_size }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">Tanggal Diunggah:</span>
+                        <strong>{{ $petaTerbaru->created_at ? $petaTerbaru->created_at->format('d/m/Y') : '-' }}</strong>
+                    </div>
+                </div>
+
+                @if($petaTerbaru->keterangan)
+                <div class="mb-3 flex-grow-1">
+                    <span class="text-muted d-block" style="font-size:11px;font-weight:700;text-transform:uppercase;">Keterangan Teknis:</span>
+                    <p style="font-size:12.5px;color:#4b5563;line-height:1.4;margin:4px 0 0 0;">
+                        {{ $petaTerbaru->keterangan }}
+                    </p>
+                </div>
+                @else
+                <div class="flex-grow-1"></div>
+                @endif
+
+                <div class="d-grid gap-2 mt-auto pt-3 border-top">
+                    <a href="{{ asset('uploads/peta_la/' . $petaTerbaru->file_peta) }}" target="_blank" class="btn btn-outline-success">
+                        <i class="feather-maximize-2"></i> Buka Ukuran Penuh
+                    </a>
+                    <a href="{{ asset('uploads/peta_la/' . $petaTerbaru->file_peta) }}" download class="btn btn-ptpn btn-ptpn-primary justify-content-center">
+                        <i class="feather-download"></i> Unduh Peta Terkini
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    @else
+    {{-- Empty state jika belum ada peta untuk PKS ini --}}
+    <div class="text-center py-5 px-3">
+        <div style="font-size:48px;color:#86efac;margin-bottom:12px;">
+            <i class="feather-map-pin"></i>
+        </div>
+        <h5 style="font-family:'Outfit',sans-serif;font-weight:800;color:#374151;">Belum Ada Berkas Peta untuk {{ $pksAktif ? $pksAktif->nama : 'PKS Ini' }}</h5>
+        <p style="font-size:13px;color:#6b7280;max-width:420px;margin:0 auto 20px auto;">
+            Unit PKS ini belum memiliki berkas peta yang diunggah. Silakan klik tombol di bawah untuk mengunggah berkas peta pertama.
+        </p>
+        <a href="{{ route('pemetaan-la.create') }}" class="btn-ptpn btn-ptpn-primary" style="display:inline-flex;">
+            <i class="feather-upload-cloud"></i> Unggah Peta untuk {{ $pksAktif ? $pksAktif->akro ?? $pksAktif->nama : 'PKS' }}
+        </a>
+    </div>
+    @endif
+</div>
+
+
+{{-- ================================================================
+     2. DAFTAR & RIWAYAT SELURUH ARSIP PETA
+     ================================================================ --}}
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+        <h4 style="font-family:'Outfit',sans-serif;font-weight:800;font-size:18px;color:#1f2937;margin:0;">
+            <i class="feather-folder text-success"></i> Riwayat &amp; Galeri Seluruh Arsip Peta
+        </h4>
+        <small class="text-muted">Daftar seluruh versi dan kategori dokumen peta yang tersimpan di sistem</small>
+    </div>
+    <span class="badge bg-light text-dark border px-3 py-2 rounded-pill font-12" style="font-weight:700;">
+        Total: {{ $totalPeta }} Berkas Peta
+    </span>
+</div>
+
+{{-- Filter & Pencarian Arsip Peta --}}
+<div class="simoli-card mb-4">
+    <div class="simoli-card-body p-3">
+        <form method="GET" action="{{ route('pemetaan-la.index') }}" class="row g-2 align-items-center">
+            <div class="col-md-4">
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0"><i class="feather-search text-muted"></i></span>
+                    <input type="text" name="search" class="form-control border-start-0" placeholder="Cari nama peta atau deskripsi..." value="{{ request('search') }}">
+                </div>
+            </div>
+            
+            @if(Auth::user()->isAdmin())
+            <div class="col-md-3">
+                <select name="id_pks" class="form-select">
+                    <option value="">-- Semua Unit PKS --</option>
                     @foreach($daftarPks as $pks)
-                    <option value="{{ $pks->id_pks }}" {{ $selectedPksId == $pks->id_pks ? 'selected' : '' }}>
-                        {{ $pks->nama }} ({{ $pks->kode }})
-                    </option>
+                        <option value="{{ $pks->id_pks }}" {{ request('id_pks') == $pks->id_pks ? 'selected' : '' }}>
+                            {{ $pks->nama }} ({{ $pks->akro ?? $pks->kode }})
+                        </option>
                     @endforeach
                 </select>
             </div>
+            @endif
+
+            <div class="col-md-3">
+                <select name="kategori" class="form-select">
+                    <option value="">-- Semua Kategori Peta --</option>
+                    @foreach($kategoriList as $kat)
+                        <option value="{{ $kat }}" {{ request('kategori') == $kat ? 'selected' : '' }}>{{ $kat }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn-ptpn btn-ptpn-primary w-100 justify-content-center">
+                    <i class="feather-filter"></i> Filter
+                </button>
+                @if(request()->hasAny(['search', 'id_pks', 'kategori']))
+                    <a href="{{ route('pemetaan-la.index') }}" class="btn btn-light border px-3" title="Reset Filter">
+                        <i class="feather-refresh-cw"></i>
+                    </a>
+                @endif
+            </div>
         </form>
     </div>
-
-    <div class="col-lg-8">
-        <div class="d-flex flex-wrap gap-2 justify-content-lg-end">
-            <div class="badge bg-white text-dark border p-2 font-12 shadow-sm d-flex align-items-center gap-2">
-                <i class="feather-grid text-success fs-6"></i>
-                <span><strong>{{ $blokList->count() }}</strong> Blok Terpetakan</span>
-            </div>
-            <div class="badge bg-white text-dark border p-2 font-12 shadow-sm d-flex align-items-center gap-2">
-                <i class="feather-layers text-primary fs-6"></i>
-                <span><strong>{{ number_format($totalLuasHa, 2, ',', '.') }}</strong> Ha Terizin</span>
-            </div>
-            <div class="badge bg-white text-dark border p-2 font-12 shadow-sm d-flex align-items-center gap-2">
-                <i class="feather-radio text-danger fs-6"></i>
-                <span>Titik IPAL: <strong>{{ $perizinan->nama_titik_penaatan ?? 'Kolam Anaerob 4' }}</strong></span>
-            </div>
-            <div class="badge bg-white text-dark border p-2 font-12 shadow-sm d-flex align-items-center gap-2">
-                <i class="feather-droplet text-info fs-6"></i>
-                <span><strong>{{ $totalSumurPantau }}</strong> Sumur Pantau</span>
-            </div>
-        </div>
-    </div>
 </div>
 
-{{-- GIS MAP CONTAINER --}}
-<div class="gis-wrapper">
-    
-    {{-- Floating Info & Control Sidebar --}}
-    <div class="gis-sidebar-panel" id="gisPanel">
-        <div class="gis-panel-header">
-            <div>
-                <h6 class="mb-0 fw-bold font-14">
-                    <i class="feather-map me-1 text-success"></i> GIS Land Application
-                </h6>
-                <small class="text-white-50 font-11">PKS {{ $pksAktif->nama ?? 'Unit' }}</small>
-            </div>
-            <button type="button" class="btn btn-sm btn-link text-white p-0" onclick="toggleGisSidebar()" title="Sembunyikan Panel">
-                <i class="feather-chevrons-left fs-5"></i>
-            </button>
-        </div>
+{{-- Grid Galeri Berkas Peta --}}
+@if($petaList->count() > 0)
+<div class="row g-4 mb-4">
+    @foreach($petaList as $peta)
+    <div class="col-md-6 col-xl-4">
+        <div class="map-card">
+            <div class="map-thumb-wrap">
+                <span class="badge-category">{{ $peta->kategori_peta }}</span>
+                @if($petaTerbaru && $peta->id == $petaTerbaru->id)
+                    <span class="badge bg-success" style="position:absolute;top:10px;right:10px;font-size:10px;font-weight:800;border-radius:50px;padding:3px 8px;">
+                        🌟 Peta Terkini (Aktif)
+                    </span>
+                @endif
 
-        <div class="gis-panel-body">
-            
-            {{-- Legalitas SK Box --}}
-            <div class="p-2 bg-light rounded-3 border mb-3">
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                    <span class="text-muted font-11">Nomor SK DLH:</span>
-                    <span class="badge bg-success font-10">{{ $perizinan->status_label ?? 'Aktif' }}</span>
-                </div>
-                <div class="fw-bold text-dark font-12 text-truncate" title="{{ $perizinan->nomor_sk ?? 'N/A' }}">
-                    {{ $perizinan->nomor_sk ?? 'Belum ada SK terdaftar' }}
-                </div>
-                <div class="d-flex justify-content-between font-11 text-muted mt-1">
-                    <span>Debit Maks: <strong>{{ $perizinan ? number_format($perizinan->debit_maksimal_harian, 0) : 0 }} m³/hr</strong></span>
-                    <span>BOD: <strong>{{ $perizinan ? number_format($perizinan->bod_maksimal, 0) : 0 }} mg/L</strong></span>
-                </div>
-            </div>
-
-            {{-- Layer Visibility Controls --}}
-            <h6 class="fw-bold font-12 text-secondary text-uppercase mb-2">Layer Peta:</h6>
-            <div class="mb-3">
-                <div class="form-check form-switch mb-1">
-                    <input class="form-check-input" type="checkbox" id="layerIpal" checked onchange="toggleLayer('ipal')">
-                    <label class="form-check-label font-12" for="layerIpal">Titik Penaatan IPAL (Outlet)</label>
-                </div>
-                <div class="form-check form-switch mb-1">
-                    <input class="form-check-input" type="checkbox" id="layerSumur" checked onchange="toggleLayer('sumur')">
-                    <label class="form-check-label font-12" for="layerSumur">Titik Sumur Pantau Air Tanah</label>
-                </div>
-                <div class="form-check form-switch mb-1">
-                    <input class="form-check-input" type="checkbox" id="layerBlok" checked onchange="toggleLayer('blok')">
-                    <label class="form-check-label font-12" for="layerBlok">Blok-Blok Land Application</label>
-                </div>
-            </div>
-
-            {{-- Daftar Blok List with Quick Zoom --}}
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <h6 class="fw-bold font-12 text-secondary text-uppercase mb-0">Daftar Blok ({{ $blokList->count() }}):</h6>
-                <span class="badge bg-light text-dark border font-10">Klik untuk Zoom</span>
-            </div>
-
-            <div class="list-group list-group-flush font-12 border rounded-3 overflow-auto" style="max-height: 240px;">
-                @forelse($blokList as $b)
-                @php $st = $blokStatus[$b->id] ?? null; @endphp
-                <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-2 px-3" 
-                        onclick="zoomToBlok({{ $b->latitude_center ?? 0 }}, {{ $b->longitude_center ?? 0 }}, '{{ $b->nama_blok }}')">
-                    <div>
-                        <strong class="text-success">Blok {{ $b->nama_blok }}</strong>
-                        <small class="text-muted d-block font-11">{{ $b->afdeling }} &bull; {{ $b->luas_ha }} Ha &bull; {{ $b->jumlah_flat_bed }} Bed</small>
+                @if($peta->is_image)
+                    <img src="{{ asset('uploads/peta_la/' . $peta->file_peta) }}" alt="{{ $peta->nama_peta }}" class="map-thumb-img">
+                @elseif($peta->is_pdf)
+                    <div class="map-thumb-placeholder text-center">
+                        <i class="feather-file-text text-danger" style="font-size:58px;margin-bottom:8px;display:inline-block;"></i>
+                        <span style="font-size:11.5px;font-weight:800;color:#64748b;letter-spacing:.3px;">DOKUMEN PETA PDF</span>
                     </div>
-                    <div>
-                        @if($st && $st['is_active_7d'])
-                        <span class="badge bg-success font-10" title="Aktif dialiri limbah minggu ini">Aktif Dialiri</span>
-                        @else
-                        <span class="badge bg-light text-secondary border font-10">Standby</span>
+                @else
+                    <div class="map-thumb-placeholder text-center">
+                        <i class="feather-map text-success" style="font-size:58px;margin-bottom:8px;display:inline-block;"></i>
+                        <span style="font-size:11.5px;font-weight:800;color:#64748b;letter-spacing:.3px;">BERKAS SPASIAL / DATA</span>
+                    </div>
+                @endif
+            </div>
+
+            <div class="p-3 d-flex flex-column flex-grow-1">
+                <div class="mb-2">
+                    <span class="badge bg-light text-dark border mb-1" style="font-size:11px;font-weight:700;">
+                        <i class="feather-home text-success"></i> {{ $peta->pks ? $peta->pks->nama : 'Unit PKS' }}
+                    </span>
+                    <h5 style="font-family:'Outfit',sans-serif;font-weight:800;font-size:15px;color:#1f2937;margin-bottom:4px;line-height:1.3;">
+                        {{ $peta->nama_peta }}
+                    </h5>
+                    @if($peta->keterangan)
+                    <p style="font-size:12px;color:#64748b;margin-bottom:10px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
+                        {{ $peta->keterangan }}
+                    </p>
+                    @endif
+                </div>
+
+                <div class="bg-light rounded-3 p-2 mb-3 mt-auto" style="font-size:11.5px;color:#374151;">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted">Tahun Peta:</span>
+                        <strong>{{ $peta->tahun_peta ?: '-' }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted">Tipe File:</span>
+                        <strong class="text-uppercase">{{ $peta->tipe_file ?: '-' }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">Ukuran Berkas:</span>
+                        <strong>{{ $peta->formatted_size }}</strong>
+                    </div>
+                </div>
+
+                <div class="pt-2.5 mt-auto border-top d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                    <div class="d-flex align-items-center gap-2 flex-nowrap">
+                        <a href="{{ asset('uploads/peta_la/' . $peta->file_peta) }}" target="_blank" class="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1.5 px-3 py-1.5 fw-bold" style="border-radius:9px;font-size:12.5px;">
+                            <i class="feather-eye" style="font-size:14.5px;"></i> Buka Peta
+                        </a>
+                        <a href="{{ asset('uploads/peta_la/' . $peta->file_peta) }}" download class="btn btn-sm btn-light border text-muted d-inline-flex align-items-center justify-content-center px-2.5 py-1.5" style="border-radius:9px;font-size:12.5px;" title="Unduh File">
+                            <i class="feather-download" style="font-size:14.5px;"></i>
+                        </a>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-2 flex-nowrap">
+                        <a href="{{ route('pemetaan-la.show', $peta->id) }}" class="btn btn-sm btn-light border text-secondary d-inline-flex align-items-center justify-content-center px-2.5 py-1.5" title="Detail Arsip" style="border-radius:9px;">
+                            <i class="feather-info" style="font-size:15px;"></i>
+                        </a>
+                        @if(Auth::user()->isAdmin() || Auth::user()->id_pks == $peta->id_pks)
+                        <a href="{{ route('pemetaan-la.edit', $peta->id) }}" class="btn btn-sm btn-light border text-warning d-inline-flex align-items-center justify-content-center px-2.5 py-1.5" title="Edit Metadata" style="border-radius:9px;">
+                            <i class="feather-edit-2" style="font-size:15px;"></i>
+                        </a>
+                        <form action="{{ route('pemetaan-la.destroy', $peta->id) }}" method="POST" class="d-inline m-0 p-0" onsubmit="return confirm('Apakah Anda yakin ingin menghapus arsip peta ini?');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-sm btn-light border text-danger d-inline-flex align-items-center justify-content-center px-2.5 py-1.5" title="Hapus Arsip" style="border-radius:9px;">
+                                <i class="feather-trash-2" style="font-size:15px;"></i>
+                            </button>
+                        </form>
                         @endif
                     </div>
-                </button>
-                @empty
-                <div class="p-3 text-center text-muted font-11">Belum ada blok terpetakan.</div>
-                @endforelse
+                </div>
             </div>
-
-            <div class="mt-3">
-                <a href="{{ route('pemetaan-la.peta-digital', $selectedPksId) }}" target="_blank" class="btn btn-sm btn-outline-success w-100 font-12">
-                    <i class="feather-external-link me-1"></i> Buka Layout Kartografi Cetak
-                </a>
-            </div>
-
         </div>
     </div>
-
-    {{-- Re-open Button when panel is collapsed --}}
-    <button type="button" class="gis-toggle-btn" onclick="toggleGisSidebar()" title="Buka Panel Kontrol">
-        <i class="feather-layers"></i>
-    </button>
-
-    {{-- Leaflet Map Canvas --}}
-    <div id="simoli-gis-map"></div>
-
-    {{-- Legend Overlay Bottom-Right --}}
-    <div class="gis-legend-overlay">
-        <div class="fw-bold font-12 mb-2 text-dark border-bottom pb-1">Legenda Spasial LA</div>
-        <div class="legend-item">
-            <span class="pulse-marker" style="width:14px;height:14px;"></span>
-            <span>Titik Penaatan IPAL (Outlet)</span>
-        </div>
-        <div class="legend-item">
-            <span class="well-marker" style="width:14px;height:14px;font-size:8px;"><i class="feather-droplet"></i></span>
-            <span>Sumur Pantau Air Tanah</span>
-        </div>
-        <div class="legend-item">
-            <span class="legend-dot" style="background:#16a34a;border:1px solid #14532d;"></span>
-            <span>Blok Aktif Dialiri (&le; 7 hari)</span>
-        </div>
-        <div class="legend-item">
-            <span class="legend-dot" style="background:#f59e0b;border:1px solid #b45309;"></span>
-            <span>Blok Standby / Rotasi</span>
-        </div>
-    </div>
-
+    @endforeach
 </div>
 
-@endsection
+<div class="d-flex justify-content-center">
+    {{ $petaList->links('pagination::bootstrap-5') }}
+</div>
+@else
+<div class="simoli-card text-center py-4">
+    <p style="font-size:13px;color:#6b7280;margin:0;">Tidak ada berkas peta lain yang sesuai dengan filter pencarian.</p>
+</div>
+@endif
 
-@section('scripts')
-<!-- Leaflet JS -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-<script>
-    let map;
-    let layerGroupIpal = L.layerGroup();
-    let layerGroupSumur = L.layerGroup();
-    let layerGroupBlok = L.layerGroup();
-
-    // Data PKS dari Backend
-    const pksData = {
-        id: {{ $pksAktif->id_pks ?? 1 }},
-        nama: "{{ $pksAktif->nama ?? 'PKS' }}",
-        kode: "{{ $pksAktif->kode ?? 'PKS' }}",
-        latTitikPenaatan: {{ $perizinan->lat_titik_penaatan ?? 1.742525 }},
-        longTitikPenaatan: {{ $perizinan->long_titik_penaatan ?? 100.510011 }},
-        namaTitikPenaatan: "{{ $perizinan->nama_titik_penaatan ?? 'IPAL Kolam Anaerob 4' }}",
-        koordinatText: "{{ $perizinan->koordinat_penaatan_text ?? '' }}",
-        debitMax: "{{ $perizinan->debit_maksimal_harian ?? 400 }}",
-        bodMax: "{{ $perizinan->bod_maksimal ?? 5000 }}",
-        sumurPantau: [
-            @if($perizinan && $perizinan->sumurPantau)
-            @foreach($perizinan->sumurPantau as $sp)
-            {
-                nama: "{{ $sp->nama_sumur }}",
-                jenis: "{{ $sp->jenis_sumur }}",
-                blok: "{{ $sp->lokasi_blok ?? '-' }}",
-                lat: {{ $sp->latitude ?? 0 }},
-                lng: {{ $sp->longitude ?? 0 }},
-                koordinatText: "{{ $sp->koordinat_text ?? '' }}",
-                frekuensi: "{{ $sp->frekuensi_pantau }}"
-            },
-            @endforeach
-            @endif
-        ],
-        bloks: [
-            @foreach($blokList as $b)
-            @php $st = $blokStatus[$b->id] ?? null; @endphp
-            {
-                id: {{ $b->id }},
-                nama: "{{ $b->nama_blok }}",
-                afdeling: "{{ $b->afdeling }}",
-                luas: "{{ $b->luas_ha }}",
-                flatbed: "{{ $b->jumlah_flat_bed }}",
-                parit: "{{ $b->panjang_parit_meter }}",
-                lat: {{ $b->latitude_center ?? 0 }},
-                lng: {{ $b->longitude_center ?? 0 }},
-                isActive7d: {{ ($st && $st['is_active_7d']) ? 'true' : 'false' }},
-                lastFlowDate: "{{ $st['last_date'] ?? '-' }}",
-                volLimbah: "{{ $st['vol_limbah'] ?? 0 }}"
-            },
-            @endforeach
-        ]
-    };
-
-    document.addEventListener('DOMContentLoaded', function() {
-        initLeafletMap();
-    });
-
-    function initLeafletMap() {
-        // Center koordinat awal: titik penaatan IPAL PKS
-        const defaultLat = pksData.latTitikPenaatan || 1.742525;
-        const defaultLng = pksData.longTitikPenaatan || 100.510011;
-
-        map = L.map('simoli-gis-map', {
-            center: [defaultLat, defaultLng],
-            zoom: 14,
-            zoomControl: false
-        });
-
-        // Top-Right Zoom Control
-        L.control.zoom({ position: 'topright' }).addTo(map);
-
-        // Basemaps: OpenStreetMap & Esri Satellite HD
-        const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
-        });
-
-        const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
-        });
-
-        const topoLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-            attribution: 'Map data: &copy; OpenTopoMap (CC-BY-SA)'
-        });
-
-        // Default to satellite layer for true plantation landscape view
-        satelliteLayer.addTo(map);
-
-        const baseMaps = {
-            "Satelit HD (Esri)": satelliteLayer,
-            "Peta Jalan (OSM)": osmLayer,
-            "Topografi Relief": topoLayer
-        };
-
-        L.control.layers(baseMaps, null, { position: 'topright' }).addTo(map);
-
-        // Add layer groups to map
-        layerGroupIpal.addTo(map);
-        layerGroupSumur.addTo(map);
-        layerGroupBlok.addTo(map);
-
-        // Render markers
-        renderIpalMarker();
-        renderSumurMarkers();
-        renderBlokPolygons();
-    }
-
-    // 1. Render Marker IPAL Outlet Effluent
-    function renderIpalMarker() {
-        if (!pksData.latTitikPenaatan || !pksData.longTitikPenaatan) return;
-
-        const ipalIcon = L.divIcon({
-            className: 'custom-div-icon',
-            html: `<div class="pulse-marker" title="Titik Penaatan IPAL"></div>`,
-            iconSize: [22, 22],
-            iconAnchor: [11, 11]
-        });
-
-        const marker = L.marker([pksData.latTitikPenaatan, pksData.longTitikPenaatan], { icon: ipalIcon });
-        
-        const popupContent = `
-            <div class="popup-header bg-danger">
-                <i class="feather-radio me-1"></i> ${pksData.namaTitikPenaatan}
-            </div>
-            <div class="popup-body">
-                <div class="mb-1 text-muted font-11">Titik Penaatan Effluent Outlet PKS</div>
-                <div class="mb-2"><strong>Koordinat:</strong> ${pksData.koordinatText || (pksData.latTitikPenaatan + ', ' + pksData.longTitikPenaatan)}</div>
-                <div class="d-flex justify-content-between py-1 border-top border-bottom font-11 mb-2">
-                    <span>Debit Maks Izin:</span>
-                    <strong class="text-success">${pksData.debitMax} m³/hari</strong>
-                </div>
-                <div class="d-flex justify-content-between font-11">
-                    <span>BOD Maksimum:</span>
-                    <strong>${pksData.bodMax} mg/L</strong>
-                </div>
-            </div>
-        `;
-
-        marker.bindPopup(popupContent);
-        layerGroupIpal.addLayer(marker);
-    }
-
-    // 2. Render Markers Sumur Pantau Air Tanah
-    function renderSumurMarkers() {
-        pksData.sumurPantau.forEach((sp, idx) => {
-            if (!sp.lat || !sp.lng) return;
-
-            const wellIcon = L.divIcon({
-                className: 'custom-div-icon',
-                html: `<div class="well-marker" title="${sp.nama}"><i class="feather-droplet"></i></div>`,
-                iconSize: [24, 24],
-                iconAnchor: [12, 12]
-            });
-
-            const marker = L.marker([sp.lat, sp.lng], { icon: wellIcon });
-            
-            const popupContent = `
-                <div class="popup-header" style="background:#1d4ed8;">
-                    <i class="feather-droplet me-1"></i> ${sp.nama}
-                </div>
-                <div class="popup-body">
-                    <div class="mb-1"><span class="badge bg-primary-subtle text-primary border">${sp.jenis}</span></div>
-                    <div class="mb-1"><strong>Lokasi Blok:</strong> ${sp.blok}</div>
-                    <div class="mb-1"><strong>Koordinat:</strong> ${sp.koordinatText || (sp.lat + ', ' + sp.lng)}</div>
-                    <div class="small text-muted border-top pt-1 mt-1">Frekuensi Pantau: ${sp.frekuensi} (Laboratorium Terakreditasi)</div>
-                </div>
-            `;
-
-            marker.bindPopup(popupContent);
-            layerGroupSumur.addLayer(marker);
-        });
-    }
-
-    // 3. Render Blok-Blok Land Application
-    function renderBlokPolygons() {
-        pksData.bloks.forEach(blok => {
-            if (!blok.lat || !blok.lng) return;
-
-            // Generate polygon shape around center coordinate (~ 250m x 250m box per blok)
-            const d = 0.0022; // ~240 meter offset
-            const bounds = [
-                [blok.lat - d, blok.lng - d],
-                [blok.lat + d, blok.lng - d],
-                [blok.lat + d, blok.lng + d],
-                [blok.lat - d, blok.lng + d]
-            ];
-
-            const fillColor = blok.isActive7d ? '#22c55e' : '#f59e0b';
-            const strokeColor = blok.isActive7d ? '#15803d' : '#b45309';
-
-            const polygon = L.polygon(bounds, {
-                color: strokeColor,
-                weight: 2,
-                fillColor: fillColor,
-                fillOpacity: 0.55
-            });
-
-            // Blok Center Label Marker
-            const labelIcon = L.divIcon({
-                className: 'custom-div-icon',
-                html: `<div style="background:rgba(0,0,0,0.75);color:#fff;font-size:10px;font-weight:bold;padding:1px 5px;border-radius:4px;white-space:nowrap;transform:translate(-50%,-50%);">${blok.nama}</div>`,
-                iconSize: [0, 0]
-            });
-            const labelMarker = L.marker([blok.lat, blok.lng], { icon: labelIcon });
-
-            const popupContent = `
-                <div class="popup-header">
-                    <i class="feather-grid me-1"></i> Blok ${blok.nama} (${blok.afdeling})
-                </div>
-                <div class="popup-body">
-                    <div class="d-flex justify-content-between mb-1">
-                        <span class="text-muted">Luas Blok:</span>
-                        <strong>${blok.luas} Ha</strong>
-                    </div>
-                    <div class="d-flex justify-content-between mb-1">
-                        <span class="text-muted">Jumlah Flatbed:</span>
-                        <strong>${blok.flatbed} Bed</strong>
-                    </div>
-                    <div class="d-flex justify-content-between mb-2 border-bottom pb-1">
-                        <span class="text-muted">Panjang Parit:</span>
-                        <span>${blok.parit ? blok.parit + ' m' : '-'}</span>
-                    </div>
-                    <div class="p-2 rounded-2 ${blok.isActive7d ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-light text-secondary'} font-11">
-                        <div class="fw-bold">${blok.isActive7d ? '🟢 Sedang Aktif Dialiri' : '🟡 Standby / Rotasi'}</div>
-                        <div>Terakhir dialiri: <strong>${blok.lastFlowDate || '-'}</strong> (${blok.volLimbah} m³)</div>
-                    </div>
-                </div>
-            `;
-
-            polygon.bindPopup(popupContent);
-            labelMarker.bindPopup(popupContent);
-
-            layerGroupBlok.addLayer(polygon);
-            layerGroupBlok.addLayer(labelMarker);
-        });
-    }
-
-    // Toggle layer controls
-    function toggleLayer(layerName) {
-        if (layerName === 'ipal') {
-            const chk = document.getElementById('layerIpal').checked;
-            if (chk) map.addLayer(layerGroupIpal); else map.removeLayer(layerGroupIpal);
-        } else if (layerName === 'sumur') {
-            const chk = document.getElementById('layerSumur').checked;
-            if (chk) map.addLayer(layerGroupSumur); else map.removeLayer(layerGroupSumur);
-        } else if (layerName === 'blok') {
-            const chk = document.getElementById('layerBlok').checked;
-            if (chk) map.addLayer(layerGroupBlok); else map.removeLayer(layerGroupBlok);
-        }
-    }
-
-    // Zoom to specific block on list click
-    function zoomToBlok(lat, lng, namaBlok) {
-        if (lat && lng) {
-            map.flyTo([lat, lng], 16, { animate: true, duration: 1.2 });
-        }
-    }
-
-    // Toggle floating sidebar
-    function toggleGisSidebar() {
-        const panel = document.getElementById('gisPanel');
-        panel.classList.toggle('collapsed');
-    }
-</script>
 @endsection

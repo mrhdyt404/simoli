@@ -696,11 +696,11 @@
                 </div>
                 @endif
 
-                <div class="col-lg-2 col-md-6">
+                <div class="col-lg-2 col-md-3">
                     <label class="form-label">
                         <i class="feather-calendar me-1" style="color:#16a34a;"></i> Bulan
                     </label>
-                    <select name="bulan" class="form-select">
+                    <select name="bulan" id="filter_bulan" class="form-select">
                         @foreach($namaBulan as $i => $bln)
                             @if($i > 0)
                             <option value="{{ $i }}" {{ $bulan == $i ? 'selected' : '' }}>{{ $bln }}</option>
@@ -709,11 +709,11 @@
                     </select>
                 </div>
 
-                <div class="col-lg-2 col-md-6">
+                <div class="col-lg-2 col-md-3">
                     <label class="form-label">
                         <i class="feather-calendar me-1" style="color:#16a34a;"></i> Tahun
                     </label>
-                    <select name="tahun" class="form-select">
+                    <select name="tahun" id="filter_tahun" class="form-select">
                         @foreach($years as $y)
                         <option value="{{ $y }}" {{ $tahun == $y ? 'selected' : '' }}>{{ $y }}</option>
                         @endforeach
@@ -722,15 +722,16 @@
 
                 <div class="col-lg-2 col-md-6">
                     <label class="form-label">
-                        <i class="feather-clock me-1" style="color:#16a34a;"></i> Periode Minggu
+                        <i class="feather-clock me-1" style="color:#16a34a;"></i> Mode Periode / Minggu
                     </label>
-                    <select name="minggu" class="form-select">
-                        <option value="all" {{ ($minggu == 'all' || empty($minggu)) ? 'selected' : '' }}>Minggu Aktif ({{ $weekLabel ?? 'Berjalan' }})</option>
+                    <select name="minggu" id="select_minggu" class="form-select">
+                        <option value="all" {{ ($minggu == 'all' || empty($minggu)) ? 'selected' : '' }}>Minggu Aktif (Otomatis)</option>
                         <option value="1" {{ $minggu == '1' ? 'selected' : '' }}>Minggu 1 (Tgl 01 - 07)</option>
                         <option value="2" {{ $minggu == '2' ? 'selected' : '' }}>Minggu 2 (Tgl 08 - 14)</option>
                         <option value="3" {{ $minggu == '3' ? 'selected' : '' }}>Minggu 3 (Tgl 15 - 21)</option>
                         <option value="4" {{ $minggu == '4' ? 'selected' : '' }}>Minggu 4 (Tgl 22 - 28)</option>
                         <option value="5" {{ $minggu == '5' ? 'selected' : '' }}>Minggu 5 (Tgl 29 - Akhir)</option>
+                        <option value="custom" {{ $minggu == 'custom' || $activeWeek == 'custom' ? 'selected' : '' }}>🗓️ Input Manual Rentang Hari</option>
                     </select>
                 </div>
 
@@ -748,7 +749,34 @@
                         </button>
                         <button type="button" id="btnDownloadImage" class="btn-ptpn" style="padding:10px 12px;border-radius:12px;background:linear-gradient(135deg,#0d9488,#14b8a6);color:#fff;border:none;cursor:pointer;font-weight:700;font-size:13px;" title="Simpan PNG">
                             <i class="feather-image" style="font-size:14px;"></i>
+                        </button>
                     </div>
+                </div>
+            </div>
+
+            {{-- Input Manual Rentang Hari / Tanggal (Baris Tambahan) --}}
+            <div id="manual_date_range_row" class="row g-3 align-items-center mt-2 pt-2 border-top" style="{{ ($minggu == 'custom' || $activeWeek == 'custom') ? '' : 'display:none;' }}">
+                <div class="col-md-auto">
+                    <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill font-12 fw-bold">
+                        <i class="feather-calendar me-1"></i> Rentang Hari Manual:
+                    </span>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-light text-success fw-bold">Dari Tgl</span>
+                        <input type="date" name="tgl_awal" id="input_tgl_awal" class="form-control" value="{{ $tglAwal ?? '' }}">
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-light text-success fw-bold">Sampai Tgl</span>
+                        <input type="date" name="tgl_akhir" id="input_tgl_akhir" class="form-control" value="{{ $tglAkhir ?? '' }}">
+                    </div>
+                </div>
+                <div class="col-md-auto">
+                    <small class="text-muted fst-italic">
+                        * Data kolom "Progress Minggu Ini" akan dihitung sesuai rentang hari yang Anda input secara manual di atas.
+                    </small>
                 </div>
             </div>
         </form>
@@ -946,7 +974,7 @@
                                 <th rowspan="2" class="th-blue" style="width: 44px;">NO</th>
                                 <th rowspan="2" class="th-blue" style="width: 86px;">PKS</th>
                                 <th rowspan="2" class="th-blue" style="width: 86px;">Total Bed</th>
-                                <th colspan="3" class="th-green-main">Progress Minggu Ini</th>
+                                <th colspan="3" class="th-green-main">{{ $activeWeek === 'custom' ? strtoupper($weekLabel) : 'Progress Minggu Ini' }}</th>
                                 <th colspan="3" class="th-orange-main">Progress S.d Bulan Ini</th>
                                 <th rowspan="2" class="th-blue" style="width: 210px;">Keterangan</th>
                             </tr>
@@ -1274,6 +1302,54 @@
 <script>
     $(document).ready(function() {
         $('[data-select2-selector]').select2({ width: '100%' });
+
+        // Helper to format date YYYY-MM-DD
+        function formatDateYMD(year, month, day) {
+            const m = String(month).padStart(2, '0');
+            const d = String(day).padStart(2, '0');
+            return `${year}-${m}-${d}`;
+        }
+
+        // Helper to calculate week date ranges based on month and year
+        function updateDateInputsForPresetWeek() {
+            const selectedMinggu = $('#select_minggu').val();
+            const year = parseInt($('#filter_tahun').val()) || new Date().getFullYear();
+            const month = parseInt($('#filter_bulan').val()) || (new Date().getMonth() + 1);
+            const lastDayOfMonth = new Date(year, month, 0).getDate();
+
+            if (selectedMinggu === 'custom') {
+                $('#manual_date_range_row').slideDown(200);
+                $('#input_tgl_awal').focus();
+            } else {
+                $('#manual_date_range_row').slideUp(200);
+                if (selectedMinggu === '1') {
+                    $('#input_tgl_awal').val(formatDateYMD(year, month, 1));
+                    $('#input_tgl_akhir').val(formatDateYMD(year, month, Math.min(7, lastDayOfMonth)));
+                } else if (selectedMinggu === '2') {
+                    $('#input_tgl_awal').val(formatDateYMD(year, month, 8));
+                    $('#input_tgl_akhir').val(formatDateYMD(year, month, Math.min(14, lastDayOfMonth)));
+                } else if (selectedMinggu === '3') {
+                    $('#input_tgl_awal').val(formatDateYMD(year, month, 15));
+                    $('#input_tgl_akhir').val(formatDateYMD(year, month, Math.min(21, lastDayOfMonth)));
+                } else if (selectedMinggu === '4') {
+                    $('#input_tgl_awal').val(formatDateYMD(year, month, 22));
+                    $('#input_tgl_akhir').val(formatDateYMD(year, month, Math.min(28, lastDayOfMonth)));
+                } else if (selectedMinggu === '5') {
+                    $('#input_tgl_awal').val(formatDateYMD(year, month, 29));
+                    $('#input_tgl_akhir').val(formatDateYMD(year, month, lastDayOfMonth));
+                }
+            }
+        }
+
+        $('#select_minggu').on('change', function() {
+            updateDateInputsForPresetWeek();
+        });
+
+        $('#filter_bulan, #filter_tahun').on('change', function() {
+            if ($('#select_minggu').val() !== 'custom' && $('#select_minggu').val() !== 'all') {
+                updateDateInputsForPresetWeek();
+            }
+        });
 
         // Download Infografis as Image
         $('#btnDownloadImage').on('click', function() {

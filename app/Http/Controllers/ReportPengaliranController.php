@@ -133,8 +133,20 @@ class ReportPengaliranController extends Controller
         $isCurrentMonth = ($tahun == (int) date('Y') && $bulan == (int) date('n'));
         $todayDay = (int) date('j');
 
-        // Resolve active week if $minggu is 'all' or not specified
-        if ($minggu === 'all' || empty($minggu)) {
+        $tglAwalParam = $request->input('tgl_awal');
+        $tglAkhirParam = $request->input('tgl_akhir');
+
+        // Resolve active week if $minggu is 'custom' or date range is provided
+        if ($minggu === 'custom' || ($request->filled('tgl_awal') && $request->filled('tgl_akhir'))) {
+            $activeWeek = 'custom';
+            $weekStart = Carbon::parse($tglAwalParam)->startOfDay();
+            $weekEnd = Carbon::parse($tglAkhirParam)->endOfDay();
+            
+            $tglAwal = $weekStart->format('Y-m-d');
+            $tglAkhir = $weekEnd->format('Y-m-d');
+            
+            $weekLabel = "Periode (" . $weekStart->format('d') . " " . $namaBulan[(int)$weekStart->format('n')] . " - " . $weekEnd->format('d') . " " . $namaBulan[(int)$weekEnd->format('n')] . " " . $weekEnd->format('Y') . ")";
+        } elseif ($minggu === 'all' || empty($minggu)) {
             if ($isCurrentMonth) {
                 // Determine current week by today's date
                 if ($todayDay <= 7) $activeWeek = '1';
@@ -173,27 +185,37 @@ class ReportPengaliranController extends Controller
             $activeWeek = (string) $minggu;
         }
 
-        // Calculate week range
+        // Calculate week range for presets 1..5
         if ($activeWeek === '1') {
             $weekStart = Carbon::createFromDate($tahun, $bulan, 1)->startOfDay();
             $weekEnd = Carbon::createFromDate($tahun, $bulan, min(7, $totalDaysInMonth))->endOfDay();
             $weekLabel = "Minggu 1 (01 - " . sprintf("%02d", min(7, $totalDaysInMonth)) . " " . $namaBulan[$bulan] . " " . $tahun . ")";
+            $tglAwal = $weekStart->format('Y-m-d');
+            $tglAkhir = $weekEnd->format('Y-m-d');
         } elseif ($activeWeek === '2') {
             $weekStart = Carbon::createFromDate($tahun, $bulan, 8)->startOfDay();
             $weekEnd = Carbon::createFromDate($tahun, $bulan, min(14, $totalDaysInMonth))->endOfDay();
             $weekLabel = "Minggu 2 (08 - " . sprintf("%02d", min(14, $totalDaysInMonth)) . " " . $namaBulan[$bulan] . " " . $tahun . ")";
+            $tglAwal = $weekStart->format('Y-m-d');
+            $tglAkhir = $weekEnd->format('Y-m-d');
         } elseif ($activeWeek === '3') {
             $weekStart = Carbon::createFromDate($tahun, $bulan, 15)->startOfDay();
             $weekEnd = Carbon::createFromDate($tahun, $bulan, min(21, $totalDaysInMonth))->endOfDay();
             $weekLabel = "Minggu 3 (15 - " . sprintf("%02d", min(21, $totalDaysInMonth)) . " " . $namaBulan[$bulan] . " " . $tahun . ")";
+            $tglAwal = $weekStart->format('Y-m-d');
+            $tglAkhir = $weekEnd->format('Y-m-d');
         } elseif ($activeWeek === '4') {
             $weekStart = Carbon::createFromDate($tahun, $bulan, 22)->startOfDay();
             $weekEnd = Carbon::createFromDate($tahun, $bulan, min(28, $totalDaysInMonth))->endOfDay();
             $weekLabel = "Minggu 4 (22 - " . sprintf("%02d", min(28, $totalDaysInMonth)) . " " . $namaBulan[$bulan] . " " . $tahun . ")";
-        } else {
+            $tglAwal = $weekStart->format('Y-m-d');
+            $tglAkhir = $weekEnd->format('Y-m-d');
+        } elseif ($activeWeek === '5') {
             $weekStart = Carbon::createFromDate($tahun, $bulan, 29)->startOfDay();
             $weekEnd = Carbon::createFromDate($tahun, $bulan, $totalDaysInMonth)->endOfDay();
             $weekLabel = "Minggu 5 (29 - " . sprintf("%02d", $totalDaysInMonth) . " " . $namaBulan[$bulan] . " " . $tahun . ")";
+            $tglAwal = $weekStart->format('Y-m-d');
+            $tglAkhir = $weekEnd->format('Y-m-d');
         }
 
         // Header Periode label (matching the blue pill in the image, e.g. "01 JULI 2026 – 30 JULI 2026")
@@ -371,6 +393,8 @@ class ReportPengaliranController extends Controller
             'bulan',
             'tahun',
             'minggu',
+            'tglAwal',
+            'tglAkhir',
             'activeWeek',
             'weekLabel',
             'periodeLabel',
