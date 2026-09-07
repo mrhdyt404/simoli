@@ -41,118 +41,261 @@
         to   { opacity:1; transform:translateY(0); }
     }
 
-    /* === HERO SUMMARY CARD === */
+    /* === HERO SUMMARY CARD (STUNNING EXECUTIVE DESIGN) === */
     .detail-hero {
-        border-radius: 20px;
-        background: linear-gradient(135deg, #052e16 0%, #0a2317 35%, #166534 70%, #16a34a 100%);
-        border: 1px solid rgba(34,197,94,.25);
-        box-shadow: 0 12px 40px rgba(0,0,0,.15);
-        padding: clamp(20px,3vw+12px,36px);
+        border-radius: 24px;
+        background: linear-gradient(135deg, #022c14 0%, #064e3b 45%, #047857 100%);
+        border: 1px solid rgba(52,211,153,.3);
+        box-shadow: 0 16px 40px rgba(2,44,20,.25), 0 0 0 1px rgba(255,255,255,.05) inset;
+        padding: clamp(22px, 3vw + 14px, 36px);
         color: #ffffff;
-        margin-bottom: 24px;
+        margin-bottom: 28px;
         position: relative;
         overflow: hidden;
-        animation: fadeUpCard .4s ease-out;
+        animation: fadeUpCard .4s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .detail-hero::before {
-        content:'';position:absolute;top:-80px;right:-80px;
-        width:260px;height:260px;border-radius:50%;
-        background:radial-gradient(circle,rgba(34,197,94,.2) 0%,transparent 70%);
-        pointer-events:none;
+        content: '';
+        position: absolute;
+        top: -100px;
+        right: -100px;
+        width: 320px;
+        height: 320px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(52,211,153,.22) 0%, rgba(16,185,129,0) 70%);
+        pointer-events: none;
     }
 
+    .detail-hero::after {
+        content: '';
+        position: absolute;
+        bottom: -80px;
+        left: -80px;
+        width: 240px;
+        height: 240px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(16,185,129,.12) 0%, transparent 70%);
+        pointer-events: none;
+    }
+
+    /* Badges */
     .detail-hero-pks-badge {
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        padding: 5px 14px;
+        padding: 6px 16px;
         border-radius: 50px;
-        background: rgba(255,255,255,.15);
-        border: 1px solid rgba(255,255,255,.25);
+        background: rgba(255,255,255,.14);
+        border: 1px solid rgba(255,255,255,.22);
+        backdrop-filter: blur(12px);
         font-size: 13px;
         font-weight: 800;
         color: #ffffff;
-        margin-bottom: 12px;
     }
 
+    .hero-akro-pill {
+        color: #86efac;
+        font-weight: 800;
+    }
+
+    .detail-hero-code-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        border-radius: 50px;
+        background: rgba(0,0,0,.25);
+        border: 1px solid rgba(255,255,255,.15);
+        backdrop-filter: blur(12px);
+        font-size: 12.5px;
+        font-weight: 600;
+        color: rgba(209,250,229,.9);
+        font-family: monospace;
+    }
+
+    /* Date */
     .detail-hero-date {
         font-family: 'Outfit', sans-serif;
-        font-size: clamp(22px,2.5vw+10px,32px);
+        font-size: clamp(22px, 2.5vw + 10px, 32px);
         font-weight: 900;
         color: #ffffff;
         letter-spacing: -0.5px;
-        line-height: 1.1;
-        margin-bottom: 10px;
+        line-height: 1.15;
+        margin-top: 4px;
+        margin-bottom: 14px;
+        text-shadow: 0 2px 10px rgba(0,0,0,.2);
     }
 
+    /* Meta Pills */
     .detail-hero-meta {
         display: flex;
         flex-wrap: wrap;
         gap: 10px;
-        margin-bottom: 20px;
+        margin-bottom: 22px;
     }
 
     .detail-hero-pill {
-        display: flex;
+        display: inline-flex;
         align-items: center;
-        gap: 6px;
-        padding: 5px 12px;
+        gap: 8px;
+        padding: 6px 14px;
         border-radius: 50px;
         background: rgba(255,255,255,.1);
-        border: 1px solid rgba(255,255,255,.15);
-        font-size: 12px;
+        border: 1px solid rgba(255,255,255,.16);
+        backdrop-filter: blur(10px);
+        font-size: 12.5px;
         font-weight: 600;
-        color: rgba(209,250,229,.9);
+        color: rgba(236,253,245,.95);
+    }
+    .detail-hero-pill i {
+        color: #4ade80;
+        font-size: 14px;
     }
 
-    /* Quick stats in hero */
+    /* Quick stats grid */
     .hero-stats-grid {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
-        gap: 10px;
-        margin-top: 4px;
+        gap: 12px;
+        margin-top: 6px;
     }
 
     .hero-stat-tile {
-        background: rgba(255,255,255,.08);
-        border: 1px solid rgba(255,255,255,.12);
-        border-radius: 12px;
+        background: rgba(0,0,0,.2);
+        border: 1px solid rgba(255,255,255,.14);
+        border-radius: 16px;
         padding: 12px 14px;
-        backdrop-filter: blur(8px);
-        transition: all .2s ease;
+        backdrop-filter: blur(12px);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        transition: all .25s ease;
     }
 
     .hero-stat-tile:hover {
-        background: rgba(255,255,255,.14);
-        border-color: rgba(34,197,94,.4);
+        background: rgba(255,255,255,.12);
+        border-color: rgba(52,211,153,.4);
         transform: translateY(-2px);
+    }
+
+    .hero-stat-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        flex-shrink: 0;
     }
 
     .hero-stat-val {
         font-family: 'Outfit', sans-serif;
-        font-size: clamp(18px,2vw+10px,24px);
+        font-size: clamp(17px, 1.8vw + 8px, 22px);
         font-weight: 900;
-        color: #ffffff;
-        line-height: 1;
-        margin-bottom: 4px;
+        line-height: 1.1;
+        margin-bottom: 2px;
+    }
+
+    .hero-stat-val .unit {
+        font-size: 11px;
+        font-weight: 600;
+        opacity: .8;
+        margin-left: 2px;
     }
 
     .hero-stat-lbl {
         font-size: 10px;
         font-weight: 700;
-        color: rgba(187,247,208,.65);
+        color: rgba(209,250,229,.75);
         text-transform: uppercase;
         letter-spacing: .5px;
     }
 
-    /* Efficiency ring */
+    /* Efficiency / Status card on right side of hero */
+    .hero-efficiency-card {
+        background: rgba(0, 0, 0, 0.22);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 20px;
+        padding: 22px 20px;
+        text-align: center;
+        backdrop-filter: blur(14px);
+        box-shadow: 0 8px 24px rgba(0,0,0,.12);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .hero-eff-header {
+        font-size: 11px;
+        font-weight: 800;
+        color: rgba(187,247,208,.85);
+        text-transform: uppercase;
+        letter-spacing: .8px;
+        margin-bottom: 8px;
+    }
+
     .efficiency-display {
         font-family: 'Outfit', sans-serif;
-        font-size: clamp(28px,4vw+14px,42px);
+        font-size: clamp(32px, 4vw + 16px, 46px);
         font-weight: 900;
         color: #4ade80;
         line-height: 1;
+        text-shadow: 0 4px 16px rgba(74,222,128,.3);
+    }
+
+    .hero-eff-bar-wrap {
+        margin: 14px auto;
+        height: 8px;
+        border-radius: 8px;
+        background: rgba(255,255,255,.14);
+        max-width: 220px;
+        width: 100%;
+        overflow: hidden;
+    }
+
+    .hero-eff-bar {
+        height: 100%;
+        border-radius: 8px;
+        background: linear-gradient(90deg, #34d399 0%, #a7f3d0 100%);
+        box-shadow: 0 0 10px rgba(52,211,153,.5);
+        transition: width 1s ease;
+    }
+
+    .hero-eff-sub {
+        font-size: 11.5px;
+        color: rgba(209,250,229,.75);
+        font-weight: 500;
+    }
+
+    .hero-eff-status {
+        margin-top: 14px;
+    }
+
+    .status-active {
+        display: inline-flex;
+        align-items: center;
+        padding: 7px 16px;
+        border-radius: 50px;
+        background: rgba(52,211,153,.18);
+        border: 1px solid rgba(52,211,153,.35);
+        color: #86efac;
+        font-size: 12.5px;
+        font-weight: 800;
+    }
+
+    .status-empty {
+        display: inline-flex;
+        align-items: center;
+        padding: 7px 16px;
+        border-radius: 50px;
+        background: rgba(239,68,68,.18);
+        border: 1px solid rgba(239,68,68,.35);
+        color: #fca5a5;
+        font-size: 12.5px;
+        font-weight: 800;
     }
 
     /* === DETAIL CARDS === */
@@ -214,19 +357,19 @@
         line-height: 1.6;
         color: #14532d;
         font-weight: 500;
-    }
-
-    /* Dark mode */
+    }    /* Dark mode */
     html.app-skin-dark .detail-card { background:#0a2317 !important;border-color:rgba(34,197,94,.15) !important; }
     html.app-skin-dark .detail-card-title { color:#d1fae5 !important; }
     html.app-skin-dark .detail-item { border-color:rgba(34,197,94,.07) !important; }
     html.app-skin-dark .detail-label { color:#6b8f72 !important; }
     html.app-skin-dark .detail-value { color:#d1fae5 !important; }
     html.app-skin-dark .keterangan-box { background:#0e3b26;border-color:#16a34a;color:#bbf7d0; }
+    html.app-skin-dark .pks-subbox { background:#0e3b26 !important; border-color:rgba(34,197,94,.2) !important; }
+    html.app-skin-dark .pks-subval { color:#d1fae5 !important; }
 
     /* Responsive */
-    @media (max-width: 767.98px) {
-        .hero-stats-grid { grid-template-columns: repeat(2,1fr); gap:8px; }
+    @media (max-width: 991.98px) {
+        .hero-stats-grid { grid-template-columns: repeat(2,1fr); gap:10px; }
     }
 </style>
 @endsection
@@ -242,73 +385,109 @@
          1. HERO CARD — Summary visual
          ================================================================ --}}
     <section class="detail-hero" aria-label="Ringkasan Data Pengaliran">
-        <div class="row align-items-start g-4">
+        <div class="row align-items-center g-4">
             <div class="col-lg-7">
-                <div class="detail-hero-pks-badge">
-                    <i class="feather-home" style="font-size:15px;"></i>
-                    PKS {{ $data->pks->akro ?? '—' }} — {{ $data->pks->nama ?? '' }}
-                </div>
-                <div class="detail-hero-date">
-                    {{ \Carbon\Carbon::parse($data->tanggal)->locale('id')->translatedFormat('l, d F Y') }}
-                </div>
-                <div class="detail-hero-meta">
-                    <div class="detail-hero-pill">
-                        <i class="feather-clock" style="font-size:13px;color:#4ade80;"></i>
-                        {{ $data->jam_mulai ? substr($data->jam_mulai,0,5) : '-' }} — {{ $data->jam_selesai ? substr($data->jam_selesai,0,5) : '-' }}
+                {{-- PKS Badges --}}
+                <div class="d-flex align-items-center gap-2 flex-wrap mb-3">
+                    <div class="detail-hero-pks-badge">
+                        <i class="feather-home" style="font-size:14px;color:#4ade80;"></i>
+                        <span>PKS {{ $data->pks->nama ?? '' }}</span>
+                        @if(isset($data->pks->akro) && $data->pks->akro)
+                            <span class="hero-akro-pill">({{ $data->pks->akro }})</span>
+                        @endif
                     </div>
-                    <div class="detail-hero-pill">
-                        <i class="feather-map-pin" style="font-size:13px;color:#4ade80;"></i>
-                        Blok {{ $data->blok ?? '-' }} | Bak {{ $data->no_bak ?? '-' }}
-                    </div>
-                    @if($data->rotasi)
-                    <div class="detail-hero-pill">
-                        <i class="feather-rotate-cw" style="font-size:13px;color:#4ade80;"></i>
-                        Rotasi: {{ $data->rotasi }}
+                    @if(isset($data->pks->kode) && $data->pks->kode)
+                    <div class="detail-hero-code-badge">
+                        <i class="feather-hash" style="font-size:13px;color:#86efac;"></i>
+                        <span>Kode: <strong>{{ $data->pks->kode }}</strong></span>
                     </div>
                     @endif
                 </div>
 
+                {{-- Date --}}
+                <h1 class="detail-hero-date">
+                    {{ \Carbon\Carbon::parse($data->tanggal)->locale('id')->translatedFormat('l, d F Y') }}
+                </h1>
+
+                {{-- Meta Pills --}}
+                <div class="detail-hero-meta">
+                    <div class="detail-hero-pill">
+                        <i class="feather-clock"></i>
+                        <span>{{ $data->jam_mulai ? substr($data->jam_mulai,0,5) : '-' }} — {{ $data->jam_selesai ? substr($data->jam_selesai,0,5) : '-' }}</span>
+                    </div>
+                    <div class="detail-hero-pill">
+                        <i class="feather-map-pin"></i>
+                        <span>Blok <strong>{{ $data->blok ?? '-' }}</strong> | Bak <strong>{{ $data->no_bak ?? '-' }}</strong></span>
+                    </div>
+                    @if($data->rotasi)
+                    <div class="detail-hero-pill">
+                        <i class="feather-rotate-cw"></i>
+                        <span>Rotasi: <strong>{{ $data->rotasi }}</strong></span>
+                    </div>
+                    @endif
+                    @if(isset($data->pks->manager) && $data->pks->manager)
+                    <div class="detail-hero-pill">
+                        <i class="feather-user"></i>
+                        <span>Manager: <strong>{{ $data->pks->manager }}</strong></span>
+                    </div>
+                    @endif
+                </div>
+
+                {{-- Stats Grid (4 columns) --}}
                 <div class="hero-stats-grid">
                     <div class="hero-stat-tile">
-                        <div class="hero-stat-val" style="color:#4ade80;">{{ number_format($data->flat_bed ?? 0) }}</div>
-                        <div class="hero-stat-lbl">Bed Dialirkan</div>
+                        <div class="hero-stat-icon" style="color:#60a5fa;background:rgba(96,165,250,.15);"><i class="feather-arrow-down-circle"></i></div>
+                        <div>
+                            <div class="hero-stat-val" style="color:#93c5fd;">{{ number_format($data->vol_limbah_dihasilkan) }} <span class="unit">m³</span></div>
+                            <div class="hero-stat-lbl">Vol. Dihasilkan</div>
+                        </div>
                     </div>
                     <div class="hero-stat-tile">
-                        <div class="hero-stat-val">{{ number_format($data->vol_limbah_dialirkan) }}</div>
-                        <div class="hero-stat-lbl">Vol. Dialirkan m³</div>
+                        <div class="hero-stat-icon" style="color:#34d399;background:rgba(52,211,153,.15);"><i class="feather-droplet"></i></div>
+                        <div>
+                            <div class="hero-stat-val" style="color:#6ee7b7;">{{ number_format($data->vol_limbah_dialirkan) }} <span class="unit">m³</span></div>
+                            <div class="hero-stat-lbl">Vol. Dialirkan</div>
+                        </div>
                     </div>
                     <div class="hero-stat-tile">
-                        <div class="hero-stat-val" style="color:#93c5fd;">{{ number_format($data->vol_limbah_dihasilkan) }}</div>
-                        <div class="hero-stat-lbl">Vol. Dihasilkan m³</div>
+                        <div class="hero-stat-icon" style="color:#4ade80;background:rgba(74,222,128,.15);"><i class="feather-layers"></i></div>
+                        <div>
+                            <div class="hero-stat-val" style="color:#86efac;">{{ number_format($data->flat_bed ?? 0) }} <span class="unit">Bed</span></div>
+                            <div class="hero-stat-lbl">Bed Dialirkan</div>
+                        </div>
                     </div>
                     <div class="hero-stat-tile">
-                        <div class="hero-stat-val" style="color:#fde68a;">{{ number_format($data->luas_area ?? 0, 1) }}</div>
-                        <div class="hero-stat-lbl">Luas Area Ha</div>
+                        <div class="hero-stat-icon" style="color:#fbbf24;background:rgba(251,191,36,.15);"><i class="feather-maximize-2"></i></div>
+                        <div>
+                            <div class="hero-stat-val" style="color:#fde68a;">{{ number_format($data->luas_area ?? 0, 1) }} <span class="unit">Ha</span></div>
+                            <div class="hero-stat-lbl">Luas Area</div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {{-- Right: Efficiency --}}
+            {{-- Right Column: Efficiency Panel --}}
             <div class="col-lg-5">
-                <div style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:20px;text-align:center;backdrop-filter:blur(10px);">
-                    <div style="font-size:11px;font-weight:700;color:rgba(187,247,208,.7);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;">
+                <div class="hero-efficiency-card">
+                    <div class="hero-eff-header">
+                        <i class="feather-activity me-1" style="color:#4ade80;"></i>
                         Efisiensi Pengaliran
                     </div>
                     <div class="efficiency-display">{{ $efisiensi }}%</div>
-                    <div style="margin:12px auto 14px;height:8px;border-radius:8px;background:rgba(255,255,255,.12);max-width:200px;overflow:hidden;">
-                        <div style="height:100%;width:{{ $efisiensi }}%;border-radius:8px;background:linear-gradient(90deg,#4ade80,#86efac);transition:width 1s ease;"></div>
+                    <div class="hero-eff-bar-wrap">
+                        <div class="hero-eff-bar" style="width: {{ min(100, $efisiensi) }}%;"></div>
                     </div>
-                    <div style="font-size:11.5px;color:rgba(187,247,208,.7);">
-                        Vol. Dialirkan / Vol. Dihasilkan
+                    <div class="hero-eff-sub">
+                        Ratio: Volume Dialirkan / Volume Dihasilkan
                     </div>
-                    <div style="margin-top:12px;padding:10px;border-radius:10px;background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.25);">
+                    <div class="hero-eff-status">
                         @if($data->vol_limbah_dialirkan > 0)
-                            <span style="color:#86efac;font-size:12.5px;font-weight:800;">
-                                <i class="feather-check-circle me-1"></i> Pengaliran Aktif &amp; Berjalan
+                            <span class="status-active">
+                                <i class="feather-check-circle me-1.5"></i> Pengaliran Aktif &amp; Berjalan
                             </span>
                         @else
-                            <span style="color:#fca5a5;font-size:12.5px;font-weight:800;">
-                                <i class="feather-alert-circle me-1"></i> Belum Ada Volume
+                            <span class="status-empty">
+                                <i class="feather-alert-circle me-1.5"></i> Belum Ada Volume
                             </span>
                         @endif
                     </div>
@@ -334,7 +513,7 @@
                         <div class="col-md-6">
                             <div class="detail-item">
                                 <span class="detail-label">Tanggal Pengaliran</span>
-                                <div class="detail-value">{{ \Carbon\Carbon::parse($data->tanggal)->locale('id')->translatedFormat('dddd, d MMMM Y') }}</div>
+                                <div class="detail-value">{{ \Carbon\Carbon::parse($data->tanggal)->locale('id')->translatedFormat('l, d F Y') }}</div>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -358,11 +537,17 @@
                         <div class="col-md-6">
                             <div class="detail-item">
                                 <span class="detail-label">Unit PKS</span>
-                                <div class="detail-value">
-                                    <span class="pks-badge" style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:8px;font-size:11px;font-weight:800;background:linear-gradient(135deg,#052e16,#166534);color:#86efac;">
+                                <div class="detail-value d-flex align-items-center gap-2 flex-wrap">
+                                    <span class="pks-badge" style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:8px;font-size:11.5px;font-weight:800;background:linear-gradient(135deg,#052e16,#166534);color:#86efac;">
+                                        <i class="feather-home" style="font-size:12px;"></i>
                                         {{ $data->pks->akro ?? 'N/A' }}
                                     </span>
-                                    <span style="margin-left:8px;font-size:13px;font-weight:600;color:#374151;">{{ $data->pks->nama ?? '' }}</span>
+                                    <span style="font-size:14px;font-weight:700;color:#1f2937;">{{ $data->pks->nama ?? '' }}</span>
+                                    @if(isset($data->pks->kode) && $data->pks->kode)
+                                        <span class="badge" style="background:#f3f4f6;color:#4b5563;border:1px solid #e5e7eb;font-family:monospace;font-size:11px;font-weight:700;">
+                                            {{ $data->pks->kode }}
+                                        </span>
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -422,9 +607,9 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="detail-item">
-                                <span class="detail-label">Bed di alirkan</span>
-                                <div class="detail-value" style="font-family:'Outfit',sans-serif;font-size:22px;font-weight:900;color:#16a34a;">
-                                    {{ number_format($data->flat_bed) }} <span style="font-size:13px;font-weight:600;color:#6b7280;">Bed</span>
+                                <span class="detail-label">Volume Dihasilkan</span>
+                                <div class="detail-value" style="font-size:18px;font-weight:800;color:#0d9488;">
+                                    {{ number_format($data->vol_limbah_dihasilkan) }} <span style="font-size:12px;font-weight:600;color:#6b7280;">m³</span>
                                 </div>
                             </div>
                         </div>
@@ -438,9 +623,9 @@
                         </div>
                         <div class="col-md-6">
                             <div class="detail-item">
-                                <span class="detail-label">Volume Dihasilkan</span>
-                                <div class="detail-value" style="font-size:18px;font-weight:800;color:#0d9488;">
-                                    {{ number_format($data->vol_limbah_dihasilkan) }} <span style="font-size:12px;font-weight:600;color:#6b7280;">m³</span>
+                                <span class="detail-label">Bed di alirkan</span>
+                                <div class="detail-value" style="font-family:'Outfit',sans-serif;font-size:22px;font-weight:900;color:#16a34a;">
+                                    {{ number_format($data->flat_bed) }} <span style="font-size:13px;font-weight:600;color:#6b7280;">Bed</span>
                                 </div>
                             </div>
                         </div>
@@ -470,8 +655,57 @@
             @endif
         </div>
 
-        {{-- RIGHT: Waktu + Foto --}}
+        {{-- RIGHT: Unit PKS + Waktu + Foto --}}
         <div class="col-lg-4">
+
+            {{-- Card Information Unit PKS --}}
+            <div class="detail-card mb-4">
+                <div class="detail-card-header" style="background: linear-gradient(135deg, #052e16 0%, #14532d 100%); padding: 14px 18px;">
+                    <div class="d-flex align-items-center gap-2.5">
+                        <div style="width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;color:#86efac;flex-shrink:0;">
+                            <i class="feather-home" style="font-size:18px;"></i>
+                        </div>
+                        <div>
+                            <h3 style="font-family:'Outfit',sans-serif;font-size:14.5px;font-weight:800;color:#ffffff;margin:0;line-height:1.2;">
+                                PKS {{ $data->pks->nama ?? 'Unit PKS' }}
+                            </h3>
+                            <span style="font-size:10.5px;font-weight:700;color:#86efac;letter-spacing:.4px;text-transform:uppercase;">
+                                Pabrik Kelapa Sawit (PKS)
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="detail-card-body" style="padding:16px;">
+                    <div class="row g-2.5">
+                        <div class="col-6">
+                            <div class="pks-subbox">
+                                <span class="detail-label" style="margin-bottom:2px;font-size:10px;"><i class="feather-hash me-1"></i>Kode Unit</span>
+                                <div class="detail-value pks-subval" style="font-family:monospace;font-weight:800;color:#166534;font-size:12.5px;">
+                                    {{ $data->pks->kode ?? '—' }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="pks-subbox">
+                                <span class="detail-label" style="margin-bottom:2px;font-size:10px;"><i class="feather-tag me-1"></i>Akronim</span>
+                                <div>
+                                    <span class="badge" style="background:#dcfce7;color:#15803d;border:1px solid #86efac;font-weight:800;font-size:11px;padding:3px 8px;border-radius:6px;">
+                                        {{ $data->pks->akro ?? '—' }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="pks-subbox" style="background:#f0fdf4;border:1px solid #bbf7d0;">
+                                <span class="detail-label" style="margin-bottom:2px;font-size:10px;color:#15803d;"><i class="feather-user me-1"></i>Manager / PJ Unit</span>
+                                <div class="pks-subval" style="font-size:13.5px;font-weight:800;color:#14532d;">
+                                    {{ $data->pks->manager ?? 'Belum ditentukan' }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             {{-- Waktu Ringkas --}}
             <div class="detail-card mb-4">
@@ -482,7 +716,7 @@
                 <div class="detail-card-body">
                     <div class="detail-item">
                         <span class="detail-label">Hari Pengaliran</span>
-                        <div class="detail-value">{{ \Carbon\Carbon::parse($data->tanggal)->locale('id')->translatedFormat('dddd') }}</div>
+                        <div class="detail-value">{{ \Carbon\Carbon::parse($data->tanggal)->locale('id')->translatedFormat('l') }}</div>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">Tanggal</span>

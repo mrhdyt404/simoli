@@ -14,9 +14,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->trustProxies(at: '*');
         $middleware->redirectGuestsTo('/login');
         $middleware->validateCsrfTokens(except: [
             'logout',
+        ]);
+        $middleware->alias([
+            'auth.iot' => \App\Http\Middleware\IotApiAuth::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

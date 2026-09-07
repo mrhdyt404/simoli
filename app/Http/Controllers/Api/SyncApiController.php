@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\AlatBerat;
 use App\Models\MonitoringAlatBerat;
+use App\Models\Pengaliran;
 use App\Models\Pks;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
@@ -16,51 +18,244 @@ use Illuminate\Support\Str;
 class SyncApiController extends Controller
 {
     /**
-     * Helper to authenticate user from Bearer token
+     * Helper to authenticate user from Bearer token or session
      */
     private function getAuthenticatedUser(Request $request): ?User
     {
         $authHeader = $request->header('Authorization');
-        if (!$authHeader || !str_starts_with($authHeader, 'Bearer ')) {
-            return null;
-        }
-
-        $token = str_replace('Bearer ', '', $authHeader);
-        $decoded = base64_decode($token, true);
-        if ($decoded === false) {
-            return null;
-        }
-
-        $parts = explode(':', $decoded);
-
-        if (count($parts) >= 2) {
-            $user = User::with('pks')->find($parts[0]);
-            if ($user && $user->username === $parts[1]) {
-                return $user;
+        if ($authHeader && str_starts_with($authHeader, 'Bearer ')) {
+            $token = str_replace('Bearer ', '', $authHeader);
+            $decoded = base64_decode($token, true);
+            if ($decoded !== false) {
+                $parts = explode(':', $decoded);
+                if (count($parts) >= 2) {
+                    $user = User::with('pks')->find($parts[0]);
+                    if ($user && $user->username === $parts[1]) {
+                        return $user;
+                    }
+                }
             }
         }
 
-        return null;
+        return Auth::user() ?? Auth::guard('web')->user();
+    }
+
+    private function numericSum($items, string $field): float|int
+    {
+        return $items->sum(function ($item) use ($field) {
+            $value = $item->{$field} ?? 0;
+            if (is_numeric($value)) {
+                return $value + 0;
+            }
+            $sanitized = preg_replace('/[^0-9.-]/', '', (string) $value);
+            return is_numeric($sanitized) ? $sanitized + 0 : 0;
+        });
+    }
+
+    private function getGrafikData(?int $idPks, array $params): array
+    {
+        $periode    = $params['periode'] ?? 'harian';
+        $tahun      = $params['tahun'] ?? date('Y');
+        $bulan      = $params['bulan'] ?? date('m');
+        $jenis      = $params['jenis'] ?? 'flat_bed';
+        $nilai      = $params['nilai'] ?? null;
+        $tglMulai   = $params['tgl_mulai'] ?? null;
+        $tglSelesai = $params['tgl_selesai'] ?? null;
+
+        $pilihanQuery = Pengaliran::query();
+        if ($idPks) {
+            $pilihanQuery->where('id_pks', $idPks);
+        }
+
+        if ($jenis == 'blok') {
+            $pilihan = (clone $pilihanQuery)
+                ->whereNotNull('blok')
+                ->where('blok', '!=', '')
+                ->distinct()
+                ->orderBy('blok')
+                ->pluck('blok');
+        } elseif ($jenis == 'no_bak') {
+            $pilihan = (clone $pilihanQuery)
+                ->whereNotNull('no_bak')
+                ->where('no_bak', '!=', '')
+                ->distinct()
+                ->orderBy('no_bak')
+                ->pluck('no_bak');
+        } else {
+            $pilihan = (clone $pilihanQuery)
+                ->whereNotNull('flat_bed')
+                ->where('flat_bed', '!=', '')
+                ->distinct()
+                ->orderBy('flat_bed')
+                ->pluck('flat_bed');
+        }
+
+        $baseQuery = Pengaliran::query();
+        if ($idPks) {
+            $baseQuery->where('id_pks', $idPks);
+        }
+
+        if ($nilai !== null && $nilai !== '' && $nilai !== 'Semua') {
+            if ($jenis == 'blok') {
+                $baseQuery->where('blok', $nilai);
+            } elseif ($jenis == 'no_bak') {
+                $baseQuery->where('no_bak', $nilai);
+            } else {
+                $baseQuery->where('flat_bed', $nilai);
+            }
+        }
+
+        $labels = [];
+        $volumeDialirkan = [];
+        $volumeDihasilkan = [];
+
+        if ($periode === 'custom') {
+            if (!$tglMulai) $tglMulai = Carbon::now()->startOfMonth()->toDateString();
+            if (!$tglSelesai) $tglSelesai = Carbon::now()->toDateString();
+
+            $start = Carbon::parse($tglMulai)->startOfDay();
+            $end   = Carbon::parse($tglSelesai)->endOfDay();
+
+            $curr = $start->copy();
+            while ($curr->lte($end)) {
+                $dateStr = $curr->toDateString();
+                $labels[] = $curr->format('d/m/Y');
+
+                $q = (clone $baseQuery)->whereDate('tanggal', $dateStr);
+                $volumeDialirkan[]  = round((float)$this->numericSum($q->get(), 'vol_limbah_dialirkan'), 2);
+                $volumeDihasilkan[] = round((float)$this->numericSum($q->get(), 'vol_limbah_dihasilkan'), 2);
+
+                $curr->addDay();
+            }
+        } elseif ($periode === 'semua') {
+            $records = (clone $baseQuery)
+                ->selectRaw('YEAR(tanggal) as yr, MONTH(tanggal) as mo')
+                ->whereNotNull('tanggal')
+                ->groupBy(DB::raw('YEAR(tanggal)'), DB::raw('MONTH(tanggal)'))
+                ->orderBy(DB::raw('YEAR(tanggal)'))
+                ->orderBy(DB::raw('MONTH(tanggal)'))
+                ->get();
+
+            $namaBulanShort = [
+                1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'Mei', 6 => 'Jun',
+                7 => 'Jul', 8 => 'Agu', 9 => 'Sep', 10 => 'Okt', 11 => 'Nov', 12 => 'Des'
+            ];
+
+            if ($records->isEmpty()) {
+                $labels[] = date('M Y');
+                $volumeDialirkan[]  = 0;
+                $volumeDihasilkan[] = 0;
+            } else {
+                foreach ($records as $rec) {
+                    $yr = $rec->yr;
+                    $mo = $rec->mo;
+                    $labels[] = ($namaBulanShort[(int)$mo] ?? $mo) . ' ' . $yr;
+                    $q = (clone $baseQuery)->whereYear('tanggal', $yr)->whereMonth('tanggal', $mo);
+                    $volumeDialirkan[]  = round((float)$this->numericSum($q->get(), 'vol_limbah_dialirkan'), 2);
+                    $volumeDihasilkan[] = round((float)$this->numericSum($q->get(), 'vol_limbah_dihasilkan'), 2);
+                }
+            }
+        } elseif ($periode === 'tahunan') {
+            $yearQuery = Pengaliran::query();
+            if ($idPks) {
+                $yearQuery->where('id_pks', $idPks);
+            }
+            $years = $yearQuery->whereNotNull('tanggal')
+                ->selectRaw('DISTINCT YEAR(tanggal) as yr')
+                ->pluck('yr')
+                ->map(fn($y) => (int)$y)
+                ->filter()
+                ->toArray();
+
+            if (empty($years)) {
+                $years = [(int)date('Y') - 1, (int)date('Y')];
+            } else {
+                sort($years);
+            }
+
+            $minYear = min($years);
+            $maxYear = max($years);
+            if ($minYear == $maxYear) {
+                $minYear = $maxYear - 1;
+            }
+
+            $allYears = range($minYear, $maxYear);
+
+            foreach ($allYears as $yr) {
+                $labels[] = (string)$yr;
+                $q = (clone $baseQuery)->whereYear('tanggal', $yr);
+                $volumeDialirkan[]  = round((float)$this->numericSum($q->get(), 'vol_limbah_dialirkan'), 2);
+                $volumeDihasilkan[] = round((float)$this->numericSum($q->get(), 'vol_limbah_dihasilkan'), 2);
+            }
+        } elseif ($periode === 'bulanan') {
+            $namaBulan = [
+                1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'Mei', 6 => 'Jun',
+                7 => 'Jul', 8 => 'Agu', 9 => 'Sep', 10 => 'Okt', 11 => 'Nov', 12 => 'Des'
+            ];
+            for ($m = 1; $m <= 12; $m++) {
+                $labels[] = $namaBulan[$m];
+                $q = (clone $baseQuery)->whereYear('tanggal', $tahun)->whereMonth('tanggal', $m);
+                $volumeDialirkan[]  = round((float)$this->numericSum($q->get(), 'vol_limbah_dialirkan'), 2);
+                $volumeDihasilkan[] = round((float)$this->numericSum($q->get(), 'vol_limbah_dihasilkan'), 2);
+            }
+        } elseif ($periode === 'mingguan') {
+            $jumlahHari = Carbon::create($tahun, $bulan)->daysInMonth;
+            $weeks = [
+                'Minggu 1 (1-7)'   => [1, 7],
+                'Minggu 2 (8-14)'  => [8, 14],
+                'Minggu 3 (15-21)' => [15, 21],
+                'Minggu 4 (22-28)' => [22, 28],
+            ];
+            if ($jumlahHari > 28) {
+                $weeks['Minggu 5 (29-'.$jumlahHari.')'] = [29, $jumlahHari];
+            }
+
+            foreach ($weeks as $wName => [$dStart, $dEnd]) {
+                $labels[] = $wName;
+                $q = (clone $baseQuery)->whereYear('tanggal', $tahun)
+                    ->whereMonth('tanggal', $bulan)
+                    ->whereRaw('DAY(tanggal) BETWEEN ? AND ?', [$dStart, $dEnd]);
+                $volumeDialirkan[]  = round((float)$this->numericSum($q->get(), 'vol_limbah_dialirkan'), 2);
+                $volumeDihasilkan[] = round((float)$this->numericSum($q->get(), 'vol_limbah_dihasilkan'), 2);
+            }
+        } else {
+            // Harian
+            $jumlahHari = Carbon::create($tahun, $bulan)->daysInMonth;
+            for ($i = 1; $i <= $jumlahHari; $i++) {
+                $labels[] = (string)$i;
+                $q = (clone $baseQuery)->whereYear('tanggal', $tahun)
+                    ->whereMonth('tanggal', $bulan)
+                    ->whereDay('tanggal', $i);
+                $volumeDialirkan[]  = round((float)$this->numericSum($q->get(), 'vol_limbah_dialirkan'), 2);
+                $volumeDihasilkan[] = round((float)$this->numericSum($q->get(), 'vol_limbah_dihasilkan'), 2);
+            }
+        }
+
+        return [
+            'labels'           => $labels,
+            'labelHari'        => $labels,
+            'volumeDialirkan'  => $volumeDialirkan,
+            'volumeGrafik'     => $volumeDialirkan,
+            'volumeDihasilkan' => $volumeDihasilkan,
+            'pilihan'          => $pilihan,
+        ];
     }
 
     /**
-     * Pull Master Data & Recent Records (Delta Sync)
+     * Pull Master Data & Recent Records (Delta Sync) with Timeframe Filtering
      */
     public function pull(Request $request)
     {
         try {
             $user = $this->getAuthenticatedUser($request);
-            if (!$user) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Unauthenticated. Silakan login terlebih dahulu.',
-                ], 401);
-            }
 
             $idPks = $request->input('id_pks');
-
-            if ($user->isUnit() || $user->isFieldUser()) {
+            if (!$idPks && $user && ($user->isUnit() || $user->isFieldUser() || $user->id_pks)) {
                 $idPks = $user->id_pks;
+            }
+
+            if (!$idPks) {
+                $idPks = Pks::value('id_pks') ?? 1;
             }
 
             $lastSync = $request->input('last_sync');
@@ -94,21 +289,37 @@ class SyncApiController extends Controller
             }
             if ($lastSync) {
                 $reportsQuery->where('updated_at', '>=', $lastSync);
+            } elseif ($request->has('tgl_mulai') && $request->has('tgl_selesai')) {
+                $reportsQuery->whereBetween('tanggal', [$request->input('tgl_mulai'), $request->input('tgl_selesai')]);
+            } elseif ($request->has('tahun') && $request->has('bulan')) {
+                $reportsQuery->whereYear('tanggal', $request->input('tahun'))->whereMonth('tanggal', $request->input('bulan'));
             } else {
                 $reportsQuery->orderBy('tanggal', 'desc')->orderBy('id', 'desc')->limit(30);
             }
             $reportsList = $reportsQuery->get();
 
+            // 5. Compute Grafik Volume Data based on filters
+            $grafikData = $this->getGrafikData($idPks ? (int)$idPks : null, [
+                'periode'     => $request->input('periode', 'harian'),
+                'tahun'       => $request->input('tahun', date('Y')),
+                'bulan'       => $request->input('bulan', date('m')),
+                'jenis'       => $request->input('jenis', 'flat_bed'),
+                'nilai'       => $request->input('nilai'),
+                'tgl_mulai'   => $request->input('tgl_mulai'),
+                'tgl_selesai' => $request->input('tgl_selesai'),
+            ]);
+
             return response()->json([
                 'success' => true,
-                'message' => 'Pull data master berhasil',
+                'message' => 'Pull data master & filter berhasil',
                 'server_time' => Carbon::now('Asia/Jakarta')->toIso8601String(),
-                'data' => [
+                'data' => array_merge([
                     'pks' => $pksList,
                     'alat_berat' => $alatList,
                     'operators' => $usersList,
                     'recent_reports' => $reportsList,
-                ]
+                    'grafik_volume' => $grafikData,
+                ], $grafikData)
             ]);
         } catch (\Throwable $e) {
             return response()->json([

@@ -230,6 +230,7 @@
             <div class="form-card">
                 <div class="form-section-title"><i class="feather-droplet"></i> Data Bed &amp; Volume Limbah</div>
                 <div class="row g-3">
+                    {{-- 1. Bed di alirkan --}}
                     <div class="col-md-3">
                         <label class="form-label" style="color:#16a34a;">Bed di alirkan <span class="text-danger">*</span></label>
                         <div class="input-group">
@@ -238,8 +239,11 @@
                                 value="{{ old('flat_bed', $pengaliran->flat_bed) }}" min="0" step="1" required>
                             <span class="input-group-text">Bed</span>
                         </div>
+                        <small class="text-muted" style="font-size:11px;">Jumlah flat bed dialirkan</small>
                         @error('flat_bed') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
+
+                    {{-- 2. Vol. Dialirkan --}}
                     <div class="col-md-3">
                         <label class="form-label" style="color:#059669;">Vol. Dialirkan <span class="text-danger">*</span></label>
                         <div class="input-group">
@@ -251,6 +255,8 @@
                         <small id="vol_dialirkan_hint" class="text-muted" style="font-size:11px;">Debit limbah ke LA</small>
                         @error('vol_limbah_dialirkan') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
+
+                    {{-- 3. Vol. Dihasilkan --}}
                     <div class="col-md-3">
                         <label class="form-label">Vol. Dihasilkan <span class="text-danger">*</span></label>
                         <div class="input-group">
@@ -259,8 +265,11 @@
                                 value="{{ old('vol_limbah_dihasilkan', $pengaliran->vol_limbah_dihasilkan) }}" min="0" step="1" required>
                             <span class="input-group-text">m³</span>
                         </div>
+                        <small class="text-muted" style="font-size:11px;">Limbah dari proses PKS</small>
                         @error('vol_limbah_dihasilkan') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
+
+                    {{-- 4. Luas Area --}}
                     <div class="col-md-3">
                         <label class="form-label">Luas Area <span class="text-danger">*</span></label>
                         <div class="input-group">
@@ -269,6 +278,7 @@
                                 value="{{ old('luas_area', $pengaliran->luas_area) }}" min="0" step="1" required>
                             <span class="input-group-text">Ha</span>
                         </div>
+                        <small class="text-muted" style="font-size:11px;">Luasan area pengaliran</small>
                         @error('luas_area') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
                 </div>

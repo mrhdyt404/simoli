@@ -44,109 +44,231 @@
         to   { opacity:1; transform:translateY(0); }
     }
 
-    /* === HERO SUMMARY CARD === */
+    /* === HERO SUMMARY CARD (STUNNING EXECUTIVE DESIGN) === */
     .detail-hero {
-        border-radius: 20px;
-        background: linear-gradient(135deg, #052e16 0%, #0a2317 35%, #166534 70%, #16a34a 100%);
-        border: 1px solid rgba(34,197,94,.25);
-        box-shadow: 0 12px 40px rgba(0,0,0,.15);
-        padding: clamp(20px,3vw+12px,36px);
+        border-radius: 24px;
+        background: linear-gradient(135deg, #022c14 0%, #064e3b 45%, #047857 100%);
+        border: 1px solid rgba(52,211,153,.3);
+        box-shadow: 0 16px 40px rgba(2,44,20,.25), 0 0 0 1px rgba(255,255,255,.05) inset;
+        padding: clamp(22px, 3vw + 14px, 36px);
         color: #ffffff;
-        margin-bottom: 24px;
+        margin-bottom: 28px;
         position: relative;
         overflow: hidden;
-        animation: fadeUpCard .4s ease-out;
+        animation: fadeUpCard .4s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .detail-hero::before {
-        content:'';position:absolute;top:-80px;right:-80px;
-        width:260px;height:260px;border-radius:50%;
-        background:radial-gradient(circle,rgba(34,197,94,.2) 0%,transparent 70%);
-        pointer-events:none;
+        content: '';
+        position: absolute;
+        top: -100px;
+        right: -100px;
+        width: 320px;
+        height: 320px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(52,211,153,.22) 0%, rgba(16,185,129,0) 70%);
+        pointer-events: none;
     }
 
+    .detail-hero::after {
+        content: '';
+        position: absolute;
+        bottom: -80px;
+        left: -80px;
+        width: 240px;
+        height: 240px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(16,185,129,.12) 0%, transparent 70%);
+        pointer-events: none;
+    }
+
+    /* Badges */
     .detail-hero-pks-badge {
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        padding: 5px 14px;
+        padding: 6px 16px;
         border-radius: 50px;
-        background: rgba(255,255,255,.15);
-        border: 1px solid rgba(255,255,255,.25);
+        background: rgba(255,255,255,.14);
+        border: 1px solid rgba(255,255,255,.22);
+        backdrop-filter: blur(12px);
         font-size: 13px;
         font-weight: 800;
         color: #ffffff;
-        margin-bottom: 12px;
     }
 
+    .hero-akro-pill {
+        color: #86efac;
+        font-weight: 800;
+    }
+
+    .detail-hero-code-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        border-radius: 50px;
+        background: rgba(0,0,0,.25);
+        border: 1px solid rgba(255,255,255,.15);
+        backdrop-filter: blur(12px);
+        font-size: 12.5px;
+        font-weight: 600;
+        color: rgba(209,250,229,.9);
+        font-family: monospace;
+    }
+
+    /* Date */
     .detail-hero-date {
         font-family: 'Outfit', sans-serif;
-        font-size: clamp(22px,2.5vw+10px,32px);
+        font-size: clamp(22px, 2.5vw + 10px, 32px);
         font-weight: 900;
         color: #ffffff;
         letter-spacing: -0.5px;
-        line-height: 1.1;
-        margin-bottom: 10px;
+        line-height: 1.15;
+        margin-top: 4px;
+        margin-bottom: 14px;
+        text-shadow: 0 2px 10px rgba(0,0,0,.2);
     }
 
+    /* Meta Pills */
     .detail-hero-meta {
         display: flex;
         flex-wrap: wrap;
         gap: 10px;
-        margin-bottom: 20px;
+        margin-bottom: 22px;
     }
 
     .detail-hero-pill {
-        display: flex;
+        display: inline-flex;
         align-items: center;
-        gap: 6px;
-        padding: 5px 12px;
+        gap: 8px;
+        padding: 6px 14px;
         border-radius: 50px;
         background: rgba(255,255,255,.1);
-        border: 1px solid rgba(255,255,255,.15);
-        font-size: 12px;
+        border: 1px solid rgba(255,255,255,.16);
+        backdrop-filter: blur(10px);
+        font-size: 12.5px;
         font-weight: 600;
-        color: rgba(209,250,229,.9);
+        color: rgba(236,253,245,.95);
+    }
+    .detail-hero-pill i {
+        color: #4ade80;
+        font-size: 14px;
     }
 
-    /* Stats Grid in Hero */
+    /* Quick stats grid */
     .hero-stats-grid {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
-        gap: 10px;
-        margin-top: 4px;
+        gap: 12px;
+        margin-top: 6px;
     }
 
     .hero-stat-tile {
-        background: rgba(255,255,255,.08);
-        border: 1px solid rgba(255,255,255,.12);
-        border-radius: 12px;
+        background: rgba(0,0,0,.2);
+        border: 1px solid rgba(255,255,255,.14);
+        border-radius: 16px;
         padding: 12px 14px;
-        backdrop-filter: blur(8px);
-        transition: all .2s ease;
+        backdrop-filter: blur(12px);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        transition: all .25s ease;
     }
 
     .hero-stat-tile:hover {
-        background: rgba(255,255,255,.14);
-        border-color: rgba(34,197,94,.4);
+        background: rgba(255,255,255,.12);
+        border-color: rgba(52,211,153,.4);
         transform: translateY(-2px);
+    }
+
+    .hero-stat-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        flex-shrink: 0;
     }
 
     .hero-stat-val {
         font-family: 'Outfit', sans-serif;
-        font-size: clamp(18px,2vw+10px,24px);
+        font-size: clamp(17px, 1.8vw + 8px, 22px);
         font-weight: 900;
-        color: #ffffff;
-        line-height: 1;
-        margin-bottom: 4px;
+        line-height: 1.1;
+        margin-bottom: 2px;
+    }
+
+    .hero-stat-val .unit {
+        font-size: 11px;
+        font-weight: 600;
+        opacity: .8;
+        margin-left: 2px;
     }
 
     .hero-stat-lbl {
         font-size: 10px;
         font-weight: 700;
-        color: rgba(187,247,208,.65);
+        color: rgba(209,250,229,.75);
         text-transform: uppercase;
         letter-spacing: .5px;
+    }
+
+    /* Efficiency / Status card on right side of hero */
+    .hero-efficiency-card {
+        background: rgba(0, 0, 0, 0.22);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 20px;
+        padding: 22px 20px;
+        text-align: center;
+        backdrop-filter: blur(14px);
+        box-shadow: 0 8px 24px rgba(0,0,0,.12);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .hero-eff-header {
+        font-size: 11px;
+        font-weight: 800;
+        color: rgba(187,247,208,.85);
+        text-transform: uppercase;
+        letter-spacing: .8px;
+        margin-bottom: 8px;
+    }
+
+    .efficiency-display {
+        font-family: 'Outfit', sans-serif;
+        font-size: clamp(26px, 3vw + 10px, 36px);
+        font-weight: 900;
+        color: #4ade80;
+        line-height: 1;
+        text-shadow: 0 4px 16px rgba(74,222,128,.3);
+    }
+
+    .hero-eff-sub {
+        font-size: 11.5px;
+        color: rgba(209,250,229,.75);
+        font-weight: 500;
+    }
+
+    .hero-eff-status {
+        margin-top: 14px;
+    }
+
+    .status-active {
+        display: inline-flex;
+        align-items: center;
+        padding: 7px 16px;
+        border-radius: 50px;
+        background: rgba(52,211,153,.18);
+        border: 1px solid rgba(52,211,153,.35);
+        color: #86efac;
+        font-size: 12.5px;
+        font-weight: 800;
     }
 
     /* === DETAIL CARDS === */
@@ -236,8 +358,8 @@
     html.app-skin-dark .keterangan-box { background:#0e3b26;border-color:#16a34a;color:#bbf7d0; }
     html.app-skin-dark .photo-display-card { background:#0e3b26;border-color:rgba(34,197,94,.15); }
 
-    @media (max-width: 767.98px) {
-        .hero-stats-grid { grid-template-columns: repeat(2,1fr); gap:8px; }
+    @media (max-width: 991.98px) {
+        .hero-stats-grid { grid-template-columns: repeat(2,1fr); gap:10px; }
     }
 </style>
 @endsection
@@ -249,65 +371,106 @@
          1. HERO CARD — Summary visual
          ================================================================ --}}
     <section class="detail-hero" aria-label="Ringkasan Data Pemeliharaan">
-        <div class="row align-items-start g-4">
-            <div class="col-lg-8">
-                <div class="detail-hero-pks-badge">
-                    <i class="feather-home" style="font-size:15px;"></i>
-                    PKS {{ $data->pks->AKRO ?? '—' }} — {{ $data->pks->NAMA ?? '' }}
-                </div>
-                <div class="detail-hero-date">
-                    {{ $data->tanggal ? $data->tanggal->locale('id')->translatedFormat('l, d F Y') : '-' }}
-                </div>
-                <div class="detail-hero-meta">
-                    <div class="detail-hero-pill">
-                        <i class="feather-tool" style="font-size:13px;color:#4ade80;"></i>
-                        Jenis: {{ $data->jenis_pemeliharaan == 1 ? 'Mekanis' : 'Manual' }}
+        <div class="row align-items-center g-4">
+            <div class="col-lg-7">
+                {{-- PKS Badges --}}
+                <div class="d-flex align-items-center gap-2 flex-wrap mb-3">
+                    <div class="detail-hero-pks-badge">
+                        <i class="feather-home" style="font-size:14px;color:#4ade80;"></i>
+                        <span>PKS {{ $data->pks->nama ?? $data->pks->NAMA ?? '' }}</span>
+                        @if(isset($data->pks->akro) || isset($data->pks->AKRO))
+                            <span class="hero-akro-pill">({{ $data->pks->akro ?? $data->pks->AKRO }})</span>
+                        @endif
                     </div>
-                    <div class="detail-hero-pill">
-                        <i class="feather-map-pin" style="font-size:13px;color:#4ade80;"></i>
-                        Blok {{ $data->blok ?? '-' }} | Bak {{ $data->no_bak ?? '-' }}
+                    @if(isset($data->pks->kode) && $data->pks->kode)
+                    <div class="detail-hero-code-badge">
+                        <i class="feather-hash" style="font-size:13px;color:#86efac;"></i>
+                        <span>Kode: <strong>{{ $data->pks->kode }}</strong></span>
                     </div>
-                    <div class="detail-hero-pill">
-                        <i class="feather-users" style="font-size:13px;color:#4ade80;"></i>
-                        HK: {{ $data->jumlah_hk ?? '-' }} Orang
-                    </div>
+                    @endif
                 </div>
 
+                {{-- Date --}}
+                <h1 class="detail-hero-date">
+                    {{ $data->tanggal ? $data->tanggal->locale('id')->translatedFormat('l, d F Y') : '-' }}
+                </h1>
+
+                {{-- Meta Pills --}}
+                <div class="detail-hero-meta">
+                    <div class="detail-hero-pill">
+                        <i class="feather-tool"></i>
+                        <span>Jenis: <strong>{{ $data->jenis_pemeliharaan == 1 ? 'Mekanis' : 'Manual' }}</strong></span>
+                    </div>
+                    <div class="detail-hero-pill">
+                        <i class="feather-map-pin"></i>
+                        <span>Blok <strong>{{ $data->blok ?? '-' }}</strong> | Bak <strong>{{ $data->no_bak ?? '-' }}</strong></span>
+                    </div>
+                    <div class="detail-hero-pill">
+                        <i class="feather-users"></i>
+                        <span>Tenaga Kerja: <strong>{{ $data->jumlah_hk ?? '-' }} HK</strong></span>
+                    </div>
+                    @if(isset($data->pks->manager) && $data->pks->manager)
+                    <div class="detail-hero-pill">
+                        <i class="feather-user"></i>
+                        <span>Manager: <strong>{{ $data->pks->manager }}</strong></span>
+                    </div>
+                    @endif
+                </div>
+
+                {{-- Stats Grid --}}
                 <div class="hero-stats-grid">
                     <div class="hero-stat-tile">
-                        <div class="hero-stat-val" style="color:#60a5fa;">{{ number_format($data->flat_bed ?? 0) }}</div>
-                        <div class="hero-stat-lbl">Flat Bed</div>
+                        <div class="hero-stat-icon" style="color:#60a5fa;background:rgba(96,165,250,.15);"><i class="feather-square"></i></div>
+                        <div>
+                            <div class="hero-stat-val" style="color:#93c5fd;">{{ number_format($data->flat_bed ?? 0) }} <span class="unit">Bed</span></div>
+                            <div class="hero-stat-lbl">Flat Bed</div>
+                        </div>
                     </div>
                     <div class="hero-stat-tile">
-                        <div class="hero-stat-val" style="color:#fbbf24;">{{ number_format($data->long_bed ?? 0) }}</div>
-                        <div class="hero-stat-lbl">Long Bed</div>
+                        <div class="hero-stat-icon" style="color:#fbbf24;background:rgba(251,191,36,.15);"><i class="feather-grid"></i></div>
+                        <div>
+                            <div class="hero-stat-val" style="color:#fde68a;">{{ number_format($data->long_bed ?? 0) }} <span class="unit">Bed</span></div>
+                            <div class="hero-stat-lbl">Long Bed</div>
+                        </div>
                     </div>
                     <div class="hero-stat-tile">
-                        <div class="hero-stat-val" style="color:#4ade80;">{{ number_format(($data->flat_bed ?? 0) + ($data->long_bed ?? 0)) }}</div>
-                        <div class="hero-stat-lbl">Total Area Unit</div>
+                        <div class="hero-stat-icon" style="color:#4ade80;background:rgba(74,222,128,.15);"><i class="feather-layers"></i></div>
+                        <div>
+                            <div class="hero-stat-val" style="color:#86efac;">{{ number_format(($data->flat_bed ?? 0) + ($data->long_bed ?? 0)) }} <span class="unit">Bed</span></div>
+                            <div class="hero-stat-lbl">Total Bed</div>
+                        </div>
                     </div>
                     <div class="hero-stat-tile">
-                        <div class="hero-stat-val" style="color:#2dd4bf;">{{ $data->jumlah_hk ?? 0 }}</div>
-                        <div class="hero-stat-lbl">Tenaga Kerja HK</div>
+                        <div class="hero-stat-icon" style="color:#2dd4bf;background:rgba(45,212,191,.15);"><i class="feather-users"></i></div>
+                        <div>
+                            <div class="hero-stat-val" style="color:#5eead4;">{{ $data->jumlah_hk ?? 0 }} <span class="unit">HK</span></div>
+                            <div class="hero-stat-lbl">Tenaga Kerja</div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {{-- Right: Status badge --}}
-            <div class="col-lg-4">
-                <div style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:20px;text-align:center;backdrop-filter:blur(10px);">
-                    <div style="font-size:11px;font-weight:700;color:rgba(187,247,208,.7);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;">
-                        Status Jenis Pemeliharaan
+            {{-- Right Column: Status Card --}}
+            <div class="col-lg-5">
+                <div class="hero-efficiency-card">
+                    <div class="hero-eff-header">
+                        <i class="feather-shield-check me-1" style="color:#4ade80;"></i>
+                        Jenis Pemeliharaan
                     </div>
-                    <div style="font-family:'Outfit',sans-serif;font-size:24px;font-weight:900;color:#ffffff;margin-bottom:6px;">
+                    <div class="efficiency-display">
                         @if($data->jenis_pemeliharaan == 1)
-                            <span style="color:#93c5fd;"><i class="feather-settings me-1"></i> Mekanis</span>
+                            <span style="color:#93c5fd;"><i class="feather-settings me-2"></i>Mekanis</span>
                         @else
-                            <span style="color:#fde68a;"><i class="feather-user me-1"></i> Manual</span>
+                            <span style="color:#fde68a;"><i class="feather-user me-2"></i>Manual</span>
                         @endif
                     </div>
-                    <div style="font-size:12px;color:rgba(187,247,208,.7);">
-                        Blok {{ $data->blok ?? '-' }} &bull; Bak {{ $data->no_bak ?? '-' }}
+                    <div class="hero-eff-sub mt-2">
+                        Lokasi: Blok {{ $data->blok ?? '-' }} &bull; Bak {{ $data->no_bak ?? '-' }}
+                    </div>
+                    <div class="hero-eff-status">
+                        <span class="status-active">
+                            <i class="feather-check-circle me-1.5"></i> Pemeliharaan Selesai / Tuntas
+                        </span>
                     </div>
                 </div>
             </div>
@@ -332,7 +495,7 @@
                             <div class="detail-item">
                                 <span class="detail-label">Tanggal</span>
                                 <div class="detail-value">
-                                    {{ $data->tanggal ? $data->tanggal->locale('id')->translatedFormat('dddd, d MMMM Y') : '-' }}
+                                    {{ $data->tanggal ? $data->tanggal->locale('id')->translatedFormat('l, d F Y') : '-' }}
                                 </div>
                             </div>
                         </div>

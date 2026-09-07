@@ -58,7 +58,7 @@
     }
 
     .unit-hero-warn {
-        background: linear-gradient(135deg, #1a0a00 0%, #3b1600 50%, #92400e 100%);
+        background: linear-gradient(135deg, #022c14 0%, #064e3b 45%, #047857 100%);
         border-color: rgba(251,146,60,.3);
     }
 
@@ -376,6 +376,36 @@
         margin: 0 0 2px;
     }
 
+    /* Periode Filter Tab Buttons */
+    .btn-periode-tab {
+        border-radius: 8px;
+        font-size: 11.5px;
+        font-weight: 700;
+        color: #4b5563;
+        border: none;
+        padding: 5px 12px;
+        transition: all .2s ease;
+        background: transparent;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .btn-periode-tab:hover {
+        background: #e2e8f0;
+        color: #111827;
+    }
+    .btn-periode-tab.active {
+        background: #16a34a !important;
+        color: #ffffff !important;
+        box-shadow: 0 2px 8px rgba(22,163,74,.25);
+    }
+    html.app-skin-dark .btn-periode-tab { color: #9ca3af; }
+    html.app-skin-dark .btn-periode-tab:hover { background: #1e293b; color: #f3f4f6; }
+    html.app-skin-dark .btn-periode-tab.active { background: #16a34a !important; color: #ffffff !important; }
+    html.app-skin-dark #periodeFilterContainer { background: #0e3b26 !important; border-color: rgba(34,197,94,.2) !important; }
+    html.app-skin-dark .chart-param-guide { background: #0e3b26 !important; border-color: rgba(34,197,94,.2) !important; }
+    html.app-skin-dark .style-guide-items span { color: #9ca3af !important; }
+
     /* === SECTION HEADER === */
     .unit-section-header {
         display: flex;
@@ -598,64 +628,178 @@
     </section>
 
     {{-- ================================================================
-         3. VOLUME CHART — GRAFIK PENGALIRAN
+         3. VOLUME CHART — GRAFIK PENGALIRAN FLEXIBLE TIMEFRAME
          ================================================================ --}}
-    <section aria-label="Grafik Volume Pengaliran" class="mb-4">
+    <section aria-label="Grafik Volume Pengaliran & Dihasilkan" class="mb-4">
         <div class="chart-card-unit">
             <div class="chart-card-unit-header">
                 <div>
                     <h3 class="chart-card-unit-title">
-                        <i class="feather-trending-up" style="color:#16a34a;"></i>
-                        Grafik Total Volume Pengaliran
+                        <i class="feather-trending-up" style="color:#16a34a;font-size:18px;"></i>
+                        Grafik Volume Pengaliran &amp; Dihasilkan
                     </h3>
-                    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">
-                        <span id="filterLabelBulan" class="mod-pill mod-pill-ok" style="font-size:10px;">
-                            {{ $namaBulan[(int)$bulan] }} {{ $tahun }}
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;" id="filterBadgeGroup">
+                        <span id="filterLabelPeriode" class="mod-pill mod-pill-ok" style="font-size:10.5px;font-weight:700;">
+                            Harian: {{ $namaBulan[(int)($bulan ?? date('m'))] ?? '' }} {{ $tahun ?? date('Y') }}
                         </span>
-                        <span id="filterLabelJenis" class="mod-pill mod-pill-info" style="background:#dbeafe;color:#1d4ed8;border:1px solid #bfdbfe;font-size:10px;">
-                            {{ $jenis == 'blok' ? 'Blok' : 'Flat Bed' }}
+                        <span id="filterLabelJenis" class="mod-pill mod-pill-info" style="background:#dbeafe;color:#1d4ed8;border:1px solid #bfdbfe;font-size:10.5px;font-weight:700;">
+                            {{ ($jenis ?? 'flat_bed') == 'blok' ? 'Blok Lahan' : (($jenis ?? '') == 'no_bak' ? 'Nomor Bak' : 'Flat Bed') }}
                         </span>
-                        @if($nilai)
-                        <span id="filterLabelNilai" class="mod-pill mod-pill-muted" style="font-size:10px;">{{ $nilai }}</span>
+                        @if(!empty($nilai))
+                        <span id="filterLabelNilai" class="mod-pill mod-pill-muted" style="font-size:10.5px;font-weight:700;">{{ $nilai }}</span>
                         @endif
                     </div>
                 </div>
 
-                {{-- Filter Form --}}
-                <form id="filterGrafik" class="d-flex flex-wrap gap-2 align-items-center">
-                    <select name="tahun" id="tahun" class="form-select form-select-sm" style="width:85px;border-radius:10px;border-color:rgba(22,163,74,.3);font-size:12px;">
-                        @foreach($tahunList as $t)
-                            <option value="{{ $t }}" {{ $tahun == $t ? 'selected' : '' }}>{{ $t }}</option>
-                        @endforeach
-                    </select>
-                    <select name="bulan" id="bulan" class="form-select form-select-sm" style="width:110px;border-radius:10px;border-color:rgba(22,163,74,.3);font-size:12px;">
-                        @for($i = 1; $i <= 12; $i++)
-                            <option value="{{ $i }}" {{ $bulan == $i ? 'selected' : '' }}>
-                                {{ \Carbon\Carbon::create()->month($i)->translatedFormat('F') }}
-                            </option>
-                        @endfor
-                    </select>
-                    <select name="jenis" id="jenis" class="form-select form-select-sm" style="width:110px;border-radius:10px;border-color:rgba(22,163,74,.3);font-size:12px;">
-                        <option value="blok" {{ $jenis == 'blok' ? 'selected' : '' }}>Blok</option>
-                        <option value="flat_bed" {{ $jenis == 'flat_bed' ? 'selected' : '' }}>Nomor Bak</option>
-                    </select>
-                    <select name="nilai" id="nilai" class="form-select form-select-sm" style="width:120px;border-radius:10px;border-color:rgba(22,163,74,.3);font-size:12px;">
-                        <option value="">Semua</option>
-                        @foreach($pilihan as $item)
-                            <option value="{{ $item }}" {{ $nilai == $item ? 'selected' : '' }}>{{ $item }}</option>
-                        @endforeach
-                    </select>
-                    <button type="submit" class="btn-ptpn btn-ptpn-primary" style="padding:7px 14px;font-size:12px;">
-                        <i class="feather-filter" style="font-size:13px;"></i>
-                        <span class="d-none d-sm-inline">Filter</span>
+                {{-- Periode Filter Buttons Bar --}}
+                <div class="d-flex flex-wrap align-items-center gap-1.5 p-1 rounded-3" style="background:#f1f5f9;border:1px solid #e2e8f0;" id="periodeFilterContainer">
+                    <input type="hidden" id="periodeVal" name="periode" value="{{ $periode ?? 'harian' }}">
+                    <button type="button" class="btn btn-sm btn-periode-tab {{ ($periode ?? 'harian') == 'harian' ? 'active' : '' }}" data-periode="harian" onclick="setPeriodeFilter('harian')">
+                        <i class="feather-calendar"></i> Harian
                     </button>
-                </form>
-            </div>
-            <div style="padding:20px;">
-                <div style="position:relative;min-height:320px;">
-                    <div id="volumeChart" style="min-height:320px;"></div>
+                    <button type="button" class="btn btn-sm btn-periode-tab {{ ($periode ?? '') == 'mingguan' ? 'active' : '' }}" data-periode="mingguan" onclick="setPeriodeFilter('mingguan')">
+                        <i class="feather-grid"></i> Mingguan
+                    </button>
+                    <button type="button" class="btn btn-sm btn-periode-tab {{ ($periode ?? '') == 'bulanan' ? 'active' : '' }}" data-periode="bulanan" onclick="setPeriodeFilter('bulanan')">
+                        <i class="feather-columns"></i> Bulanan
+                    </button>
+                    <button type="button" class="btn btn-sm btn-periode-tab {{ ($periode ?? '') == 'tahunan' ? 'active' : '' }}" data-periode="tahunan" onclick="setPeriodeFilter('tahunan')">
+                        <i class="feather-bar-chart-2"></i> Tahunan
+                    </button>
+                    <button type="button" class="btn btn-sm btn-periode-tab {{ ($periode ?? '') == 'semua' ? 'active' : '' }}" data-periode="semua" onclick="setPeriodeFilter('semua')">
+                        <i class="feather-layers"></i> Semua Data
+                    </button>
+                    <!-- <button type="button" class="btn btn-sm btn-periode-tab {{ ($periode ?? '') == 'custom' ? 'active' : '' }}" data-periode="custom" onclick="setPeriodeFilter('custom')">
+                        <i class="feather-sliders"></i> Rentang Waktu
+                    </button> -->
                 </div>
             </div>
+
+            {{-- Controls & Date Picker Bar --}}
+            <div style="padding:14px 20px;background:#fafafa;border-bottom:1px solid rgba(22,163,74,.08);">
+                <form id="filterGrafik" class="row g-2 align-items-center" action="javascript:void(0);" onsubmit="event.preventDefault(); window.applyFilterGrafik(); return false;">
+                    {{-- Standard Year & Month dropdowns --}}
+                    <div class="col-auto filter-standard-group filter-year-group {{ in_array($periode ?? 'harian', ['harian','mingguan','bulanan']) ? '' : 'd-none' }}">
+                        <label class="form-label mb-1" style="font-size:10.5px;font-weight:700;color:#6b7280;">Tahun</label>
+                        <select name="tahun" id="tahun" class="form-select form-select-sm" style="border-radius:10px;border-color:rgba(22,163,74,.3);font-size:12px;font-weight:700;">
+                            @foreach($tahunList as $t)
+                                <option value="{{ $t }}" {{ ($tahun ?? date('Y')) == $t ? 'selected' : '' }}>{{ $t }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="col-auto filter-standard-group filter-month-group {{ in_array($periode ?? 'harian', ['harian','mingguan']) ? '' : 'd-none' }}" id="bulanGroup">
+                        <label class="form-label mb-1" style="font-size:10.5px;font-weight:700;color:#6b7280;">Bulan</label>
+                        <select name="bulan" id="bulan" class="form-select form-select-sm" style="border-radius:10px;border-color:rgba(22,163,74,.3);font-size:12px;font-weight:700;">
+                            @for($i = 1; $i <= 12; $i++)
+                                <option value="{{ $i }}" {{ ($bulan ?? date('m')) == $i ? 'selected' : '' }}>
+                                    {{ \Carbon\Carbon::create()->month($i)->translatedFormat('F') }}
+                                </option>
+                            @endfor
+                        </select>
+                    </div>
+
+                    {{-- Custom Date Range Inputs (Always Visible) --}}
+                    <div class="col-auto filter-custom-group">
+                        <label class="form-label mb-1" style="font-size:10.5px;font-weight:700;color:#16a34a;">Dari Tanggal</label>
+                        <input type="date" name="tgl_mulai" id="tgl_mulai" class="form-control form-control-sm"
+                            value="{{ $tglMulai ?? '2026-08-01' }}" style="border-radius:10px;border-color:rgba(22,163,74,.4);font-size:12px;font-weight:700;">
+                    </div>
+                    <div class="col-auto filter-custom-group">
+                        <label class="form-label mb-1" style="font-size:10.5px;font-weight:700;color:#16a34a;">Sampai Tanggal</label>
+                        <input type="date" name="tgl_selesai" id="tgl_selesai" class="form-control form-control-sm"
+                            value="{{ $tglSelesai ?? '2026-08-27' }}" style="border-radius:10px;border-color:rgba(22,163,74,.4);font-size:12px;font-weight:700;">
+                    </div>
+
+                    {{-- Location Filters --}}
+                    <div class="col-auto">
+                        <label class="form-label mb-1" style="font-size:10.5px;font-weight:700;color:#6b7280;">Jenis Lokasi</label>
+                        <select name="jenis" id="jenis" class="form-select form-select-sm" style="border-radius:10px;border-color:rgba(22,163,74,.3);font-size:12px;font-weight:700;">
+                            <option value="flat_bed" {{ ($jenis ?? 'flat_bed') == 'flat_bed' ? 'selected' : '' }}>Flat Bed</option>
+                            <option value="no_bak" {{ ($jenis ?? '') == 'no_bak' ? 'selected' : '' }}>Nomor Bak</option>
+                            <option value="blok" {{ ($jenis ?? '') == 'blok' ? 'selected' : '' }}>Blok Lahan</option>
+                        </select>
+                    </div>
+
+                    <div class="col-auto">
+                        <label class="form-label mb-1" style="font-size:10.5px;font-weight:700;color:#6b7280;">Filter Spesifik</label>
+                        <select name="nilai" id="nilai" class="form-select form-select-sm" style="border-radius:10px;border-color:rgba(22,163,74,.3);font-size:12px;font-weight:700;">
+                            <option value="">Semua Lokasi</option>
+                            @foreach($pilihan as $item)
+                                <option value="{{ $item }}" {{ ($nilai ?? '') == $item ? 'selected' : '' }}>{{ $item }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="col-auto align-self-end">
+                        <button type="button" id="btnTerapkanFilter" class="btn-ptpn btn-ptpn-primary" onclick="window.applyFilterGrafik()" style="padding:7px 16px;font-size:12px;font-weight:800;border-radius:10px;">
+                            <i class="feather-filter" style="font-size:13px;"></i> Terapkan Filter
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            {{-- Chart Canvas --}}
+            <div style="padding:20px;">
+                <div style="position:relative;min-height:330px;">
+                    <div id="volumeChart" style="min-height:330px;"></div>
+                </div>
+            </div>
+
+            {{-- Parameter Guide & Explanation Card --}}
+            <div class="chart-param-guide" style="padding:16px 20px;background:#f0fdf4;border-top:1px solid rgba(22,163,74,.15);">
+                <div class="d-flex align-items-center gap-2 mb-2" style="font-size:12.5px;font-weight:800;color:#14532d;">
+                    <i class="feather-info" style="color:#16a34a;font-size:16px;"></i>
+                    Panduan &amp; Penjelasan Parameter Grafik Data SIMOLI
+                </div>
+                <div class="row g-3 style-guide-items">
+                    <div class="col-md-3 col-sm-6">
+                        <div class="d-flex align-items-start gap-2">
+                            <div style="width:10px;height:10px;border-radius:50%;background:#16a34a;margin-top:4px;flex-shrink:0;"></div>
+                            <div>
+                                <strong style="font-size:11.5px;color:#15803d;display:block;">Vol. Dialirkan (m³)</strong>
+                                <span style="font-size:11px;color:#4b5563;line-height:1.4;display:block;">
+                                    Total debit limbah cair dari kolam IPAL yang dialirkan ke lahan Land Application (LA).
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="d-flex align-items-start gap-2">
+                            <div style="width:10px;height:10px;border-radius:50%;background:#0284c7;margin-top:4px;flex-shrink:0;"></div>
+                            <div>
+                                <strong style="font-size:11.5px;color:#0369a1;display:block;">Vol. Dihasilkan (m³)</strong>
+                                <span style="font-size:11px;color:#4b5563;line-height:1.4;display:block;">
+                                    Total limbah cair hasil dari pemrosesan Tandan Buah Segar (TBS) di Pabrik PKS.
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="d-flex align-items-start gap-2">
+                            <div style="width:10px;height:10px;border-radius:50%;background:#d97706;margin-top:4px;flex-shrink:0;"></div>
+                            <div>
+                                <strong style="font-size:11.5px;color:#b45309;display:block;">Efisiensi Pengaliran (%)</strong>
+                                <span style="font-size:11px;color:#4b5563;line-height:1.4;display:block;">
+                                    Rasio pemanfaatan limbah dialirkan terhadap volume limbah dihasilkan <code>(Dialirkan / Dihasilkan)</code>.
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="d-flex align-items-start gap-2">
+                            <div style="width:10px;height:10px;border-radius:50%;background:#7c3aed;margin-top:4px;flex-shrink:0;"></div>
+                            <div>
+                                <strong style="font-size:11.5px;color:#6d28d9;display:block;">Mode Periode &amp; Filter</strong>
+                                <span style="font-size:11px;color:#4b5563;line-height:1.4;display:block;">
+                                    Grafik mendukung tampilan <strong>Harian, Mingguan, Bulanan, Tahunan</strong>, serta <strong>Rentang Tanggal Custom</strong>.
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </section>
 
@@ -863,19 +1007,25 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!chartEl) return;
 
     var volumeChartOptions = {
-        series: [{
-            name: 'Volume Limbah Dialirkan (m³)',
-            data: @json($volumeGrafik)
-        }],
+        series: [
+            {
+                name: 'Volume Limbah Dialirkan (m³)',
+                data: @json($volumeGrafik ?? [])
+            },
+            {
+                name: 'Volume Limbah Dihasilkan (m³)',
+                data: @json($volumeDihasilkan ?? [])
+            }
+        ],
         chart: {
             type: 'area',
-            height: 320,
-            toolbar: { show: false },
+            height: 330,
+            toolbar: { show: true, tools: { download: true, selection: true, zoom: true, zoomin: true, zoomout: true, pan: true, reset: true } },
             fontFamily: fontFam,
             background: 'transparent',
             animations: { enabled: true, easing: 'easeinout', speed: 700 }
         },
-        colors: ['#16a34a'],
+        colors: ['#16a34a', '#0284c7'],
         fill: {
             type: 'gradient',
             gradient: {
@@ -887,67 +1037,173 @@ document.addEventListener('DOMContentLoaded', function() {
         },
         stroke: { curve: 'smooth', width: 2.5 },
         xaxis: {
-            categories: @json($labelHari),
+            categories: @json($labelHari ?? []),
             labels: { style: { colors: labelClr, fontSize: '11px', fontFamily: fontFam } },
             axisBorder: { show: false },
             axisTicks: { show: false }
         },
         yaxis: {
             min: 0,
-            labels: { style: { colors: labelClr, fontSize: '11px', fontFamily: fontFam } }
+            labels: {
+                style: { colors: labelClr, fontSize: '11px', fontFamily: fontFam },
+                formatter: function(val) { return Math.round(val).toLocaleString('id-ID'); }
+            }
         },
         grid: { borderColor: gridColor, strokeDashArray: 4 },
         markers: { size: 4, strokeWidth: 0, hover: { size: 6 } },
         tooltip: {
             theme: isDark ? 'dark' : 'light',
             style: { fontSize: '12px', fontFamily: fontFam },
-            y: { formatter: function(val) { return val + ' m³'; } }
+            y: { formatter: function(val) { return (val || 0).toLocaleString('id-ID') + ' m³'; } }
         }
     };
 
     var volumeChart = new ApexCharts(chartEl, volumeChartOptions);
     volumeChart.render();
 
-    /* Filter AJAX reload */
+    /* Function to fetch chart data asynchronously via AJAX without URL navigation */
+    window.applyFilterGrafik = function() {
+        var periode = document.getElementById('periodeVal') ? document.getElementById('periodeVal').value : 'harian';
+        var params = new URLSearchParams({
+            id_pks: '{{ Auth::user()->id_pks ?? 1 }}',
+            periode: periode,
+            tahun: document.getElementById('tahun') ? document.getElementById('tahun').value : '{{ $tahun }}',
+            bulan: document.getElementById('bulan') ? document.getElementById('bulan').value : '{{ $bulan }}',
+            jenis: document.getElementById('jenis') ? document.getElementById('jenis').value : 'flat_bed',
+            nilai: document.getElementById('nilai') ? document.getElementById('nilai').value : '',
+            tgl_mulai: document.getElementById('tgl_mulai') ? document.getElementById('tgl_mulai').value : '',
+            tgl_selesai: document.getElementById('tgl_selesai') ? document.getElementById('tgl_selesai').value : ''
+        });
+
+        fetch("{{ url('/api/sync/pull') }}?" + params.toString(), {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        }).then(function(r) { return r.json(); }).then(function(res) {
+            var payload = (res && res.data) ? (res.data.grafik_volume || res.data) : res;
+            if (!payload) return;
+
+            var categories = payload.labelHari || payload.labels || [];
+            var seriesDialirkan = payload.volumeGrafik || payload.volumeDialirkan || [];
+            var seriesDihasilkan = payload.volumeDihasilkan || [];
+
+            volumeChart.updateOptions({
+                xaxis: { categories: categories }
+            });
+            volumeChart.updateSeries([
+                {
+                    name: 'Volume Limbah Dialirkan (m³)',
+                    data: seriesDialirkan
+                },
+                {
+                    name: 'Volume Limbah Dihasilkan (m³)',
+                    data: seriesDihasilkan
+                }
+            ]);
+
+            /* Update filter badges using HTML DOM */
+            var lblPeriode = document.getElementById('filterLabelPeriode');
+            var lblJenis   = document.getElementById('filterLabelJenis');
+            var lblNilai   = document.getElementById('filterLabelNilai');
+            var bulanOpt   = document.getElementById('bulan');
+            var bulanText  = (bulanOpt && bulanOpt.options[bulanOpt.selectedIndex]) ? bulanOpt.options[bulanOpt.selectedIndex].text : '';
+
+            var jenisMap = {
+                'flat_bed': 'Flat Bed',
+                'no_bak': 'Nomor Bak',
+                'blok': 'Blok Lahan'
+            };
+            var curJenis = params.get('jenis') || 'flat_bed';
+
+            var pNames = {
+                'harian': 'Harian: ' + bulanText + ' ' + params.get('tahun'),
+                'mingguan': 'Mingguan: ' + bulanText + ' ' + params.get('tahun'),
+                'bulanan': 'Bulanan: Tahun ' + params.get('tahun'),
+                'tahunan': 'Grafik Semua Tahun',
+                'semua': 'Semua Periode',
+                'custom': 'Rentang: ' + (params.get('tgl_mulai') || '') + ' s.d ' + (params.get('tgl_selesai') || '')
+            };
+
+            if (lblPeriode) lblPeriode.textContent = pNames[periode] || 'Harian';
+            if (lblJenis)   lblJenis.textContent   = jenisMap[curJenis] || curJenis;
+            if (lblNilai)   lblNilai.textContent   = (params.get('nilai') && params.get('nilai') !== 'Semua') ? params.get('nilai') : 'Semua Lokasi';
+
+            /* Repopulate pilihan dropdown options via HTML DOM */
+            var nilaiSel = document.getElementById('nilai');
+            if (nilaiSel && payload.pilihan) {
+                var curVal = params.get('nilai');
+                var html = '<option value="">Semua Lokasi</option>';
+                (payload.pilihan || []).forEach(function(item) {
+                    var sel = item == curVal ? 'selected' : '';
+                    html += '<option value="' + item + '" ' + sel + '>' + item + '</option>';
+                });
+                nilaiSel.innerHTML = html;
+            }
+        }).catch(function(err) {
+            console.error('Error fetching grafik data:', err);
+        });
+    };
+
+    /* Tab Filter Switcher */
+    window.setPeriodeFilter = function(periode) {
+        var pInput = document.getElementById('periodeVal');
+        if (pInput) pInput.value = periode;
+
+        document.querySelectorAll('.btn-periode-tab').forEach(function(btn) {
+            if (btn.getAttribute('data-periode') === periode) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+
+        var yearGroup = document.querySelector('.filter-year-group');
+        var monthGroup = document.querySelector('.filter-month-group');
+        var customGroups = document.querySelectorAll('.filter-custom-group');
+
+        if (periode === 'custom') {
+            if (yearGroup) yearGroup.classList.add('d-none');
+            if (monthGroup) monthGroup.classList.add('d-none');
+        } else if (periode === 'tahunan' || periode === 'semua') {
+            if (yearGroup) yearGroup.classList.add('d-none');
+            if (monthGroup) monthGroup.classList.add('d-none');
+        } else if (periode === 'bulanan') {
+            if (yearGroup) yearGroup.classList.remove('d-none');
+            if (monthGroup) monthGroup.classList.add('d-none');
+        } else { // harian & mingguan
+            if (yearGroup) yearGroup.classList.remove('d-none');
+            if (monthGroup) monthGroup.classList.remove('d-none');
+        }
+
+        window.applyFilterGrafik();
+    };
+
+    /* Dynamic Location Options Change */
+    var jenisSel = document.getElementById('jenis');
+    if (jenisSel) {
+        jenisSel.addEventListener('change', function() {
+            var jenisVal = this.value;
+            fetch("{{ route('dashboard.pilihan-filter') }}?jenis=" + jenisVal, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            }).then(r => r.json()).then(res => {
+                var list = (res && res.data) ? res.data : res;
+                var nilaiSel = document.getElementById('nilai');
+                if (nilaiSel) {
+                    var html = '<option value="">Semua Lokasi</option>';
+                    (list || []).forEach(function(item) {
+                        html += '<option value="' + item + '">' + item + '</option>';
+                    });
+                    nilaiSel.innerHTML = html;
+                }
+            });
+        });
+    }
+
+    /* Prevent form submission GET redirect */
     var form = document.getElementById('filterGrafik');
     if (form) {
         form.addEventListener('submit', function(e) {
             e.preventDefault();
-            var params = new URLSearchParams({
-                tahun: document.getElementById('tahun').value,
-                bulan: document.getElementById('bulan').value,
-                jenis: document.getElementById('jenis').value,
-                nilai: document.getElementById('nilai').value
-            });
-            fetch("{{ route('dashboard.grafik-volume') }}?" + params.toString(), {
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
-            }).then(r => r.json()).then(data => {
-                volumeChart.updateOptions({
-                    xaxis: { categories: data.labelHari }
-                });
-                volumeChart.updateSeries([{
-                    name: 'Volume Limbah Dialirkan (m³)',
-                    data: data.volumeGrafik
-                }]);
-
-                /* update filter badges */
-                var lblBulan  = document.getElementById('filterLabelBulan');
-                var lblJenis  = document.getElementById('filterLabelJenis');
-                var lblNilai  = document.getElementById('filterLabelNilai');
-                var bulanOpt  = document.getElementById('bulan');
-                if (lblBulan)  lblBulan.textContent  = bulanOpt.options[bulanOpt.selectedIndex].text + ' ' + params.get('tahun');
-                if (lblJenis)  lblJenis.textContent  = params.get('jenis') === 'blok' ? 'Blok' : 'Flat Bed';
-                if (lblNilai && params.get('nilai')) lblNilai.textContent = params.get('nilai');
-
-                /* repopulate nilai options */
-                var nilaiSel = document.getElementById('nilai');
-                if (nilaiSel) {
-                    nilaiSel.innerHTML = '<option value="">Semua</option>';
-                    (data.pilihan || []).forEach(function(item) {
-                        nilaiSel.innerHTML += '<option value="' + item + '">' + item + '</option>';
-                    });
-                }
-            });
+            window.applyFilterGrafik();
+            return false;
         });
     }
 });
