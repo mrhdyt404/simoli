@@ -69,6 +69,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard/pilihan-filter', [DashboardController::class, 'pilihanFilter'])
         ->name('dashboard.pilihan-filter');
 
+    Route::get('/api/sync/pull', [\App\Http\Controllers\Api\SyncApiController::class, 'pull']);
+
     // Dedicated Field Operator Routes (Web Laporan Kerja Operator Lapangan)
     Route::prefix('operator')->name('operator.')->group(function () {
         Route::get('/', [\App\Http\Controllers\OperatorMonitoringController::class, 'index'])->name('index');

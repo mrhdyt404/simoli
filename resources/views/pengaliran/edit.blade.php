@@ -202,14 +202,14 @@
                 <div class="form-section-title"><i class="feather-droplet"></i> Data Bed &amp; Volume Limbah</div>
                 <div class="row g-3">
                     <div class="col-md-3">
-                        <label class="form-label" style="color:#16a34a;">Bed di alirkan <span class="text-danger">*</span></label>
+                        <label class="form-label">Vol. Dihasilkan <span class="text-danger">*</span></label>
                         <div class="input-group">
-                            <input type="number" name="flat_bed" style="color:#16a34a;"
-                                class="form-control @error('flat_bed') is-invalid @enderror"
-                                value="{{ old('flat_bed', $pengaliran->flat_bed) }}" min="0" step="1" required>
-                            <span class="input-group-text">Bed</span>
+                            <input type="number" name="vol_limbah_dihasilkan"
+                                class="form-control @error('vol_limbah_dihasilkan') is-invalid @enderror"
+                                value="{{ old('vol_limbah_dihasilkan', $pengaliran->vol_limbah_dihasilkan) }}" min="0" step="1" required>
+                            <span class="input-group-text">m³</span>
                         </div>
-                        @error('flat_bed') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        @error('vol_limbah_dihasilkan') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-3">
                         <label class="form-label" style="color:#059669;">Vol. Dialirkan <span class="text-danger">*</span></label>
@@ -222,14 +222,14 @@
                         @error('vol_limbah_dialirkan') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Vol. Dihasilkan <span class="text-danger">*</span></label>
+                        <label class="form-label" style="color:#16a34a;">Bed di alirkan <span class="text-danger">*</span></label>
                         <div class="input-group">
-                            <input type="number" name="vol_limbah_dihasilkan"
-                                class="form-control @error('vol_limbah_dihasilkan') is-invalid @enderror"
-                                value="{{ old('vol_limbah_dihasilkan', $pengaliran->vol_limbah_dihasilkan) }}" min="0" step="1" required>
-                            <span class="input-group-text">m³</span>
+                            <input type="number" name="flat_bed" style="color:#16a34a;"
+                                class="form-control @error('flat_bed') is-invalid @enderror"
+                                value="{{ old('flat_bed', $pengaliran->flat_bed) }}" min="0" step="1" required>
+                            <span class="input-group-text">Bed</span>
                         </div>
-                        @error('vol_limbah_dihasilkan') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        @error('flat_bed') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Luas Area <span class="text-danger">*</span></label>

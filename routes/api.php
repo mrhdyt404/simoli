@@ -27,3 +27,28 @@ Route::post('monitoring-alat-berat', [MonitoringApiController::class, 'storeMoni
 
 Route::get('pengaliran', [MonitoringApiController::class, 'pengaliranList']);
 Route::get('pemeliharaan', [MonitoringApiController::class, 'pemeliharaanList']);
+
+/*
+|--------------------------------------------------------------------------
+| IoT Pengaliran API Routes (PKS Sei Galuh / MQTT Integration)
+|--------------------------------------------------------------------------
+*/
+Route::prefix('iot')->group(function () {
+    // Health status check
+    Route::get('status', [\App\Http\Controllers\Api\IotPengaliranApiController::class, 'status']);
+
+    // Protected IoT Endpoints (Authentication & Authorization required)
+    Route::middleware('auth.iot')->group(function () {
+        Route::get('pengaliran/latest', [\App\Http\Controllers\Api\IotPengaliranApiController::class, 'latest']);
+        Route::get('pengaliran', [\App\Http\Controllers\Api\IotPengaliranApiController::class, 'index']);
+        Route::post('pengaliran', [\App\Http\Controllers\Api\IotPengaliranApiController::class, 'store']);
+        Route::post('pengaliran/publish', [\App\Http\Controllers\Api\IotPengaliranApiController::class, 'publish']);
+    });
+});
+
+// Aliases (Protected)
+Route::middleware('auth.iot')->group(function () {
+    Route::get('pengaliran/iot/latest', [\App\Http\Controllers\Api\IotPengaliranApiController::class, 'latest']);
+    Route::post('pengaliran/iot', [\App\Http\Controllers\Api\IotPengaliranApiController::class, 'store']);
+});
+
