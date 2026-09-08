@@ -456,8 +456,9 @@
                             @php 
                                 $maxVol = $totalVolDialirkan > 0 ? $totalVolDialirkan : 1; 
                                 $pct = min(100, ($item->vol_limbah_dialirkan / $maxVol) * 100); 
-                                $isOver = $item->vol_limbah_dialirkan > ($item->vol_limbah_dihasilkan ?? 0);
-                                $isUnder = (($item->vol_limbah_dihasilkan ?? 0) > 0 && $item->vol_limbah_dialirkan < (0.4 * $item->vol_limbah_dihasilkan));
+                                $debitSk = $item->pks && $item->pks->perizinanLa ? (float)$item->pks->perizinanLa->debit_maksimal_harian : null;
+                                $isOver = $debitSk && ($item->vol_limbah_dialirkan > $debitSk);
+                                $isUnder = $debitSk && ($item->vol_limbah_dialirkan > 0 && $item->vol_limbah_dialirkan < (0.4 * $debitSk));
                             @endphp
                             <div style="font-weight:800;font-size:13px;color:#1f2937;">
                                 {{ number_format($item->vol_limbah_dialirkan, 0, ',', '.') }}
@@ -465,11 +466,11 @@
                             </div>
                             <div class="vol-bar"><div class="vol-bar-fill" style="width:{{ $pct }}%"></div></div>
                             @if($isOver)
-                                <span class="badge bg-danger" style="font-size:9.5px;padding:2px 6px;border-radius:4px;margin-top:3px;display:inline-block;" title="Volume dialirkan melebihi volume dihasilkan">
-                                    ⚠️ Overflow (+{{ number_format($item->vol_limbah_dialirkan - $item->vol_limbah_dihasilkan) }} m³)
+                                <span class="badge bg-danger" style="font-size:9.5px;padding:2px 6px;border-radius:4px;margin-top:3px;display:inline-block;" title="Volume dialirkan melebihi kuota debit SK Izin LA ({{ number_format($debitSk) }} m³/hari)">
+                                    ⚠️ Overflow (+{{ number_format($item->vol_limbah_dialirkan - $debitSk) }} m³)
                                 </span>
                             @elseif($isUnder)
-                                <span class="badge bg-warning text-dark" style="font-size:9.5px;padding:2px 6px;border-radius:4px;margin-top:3px;display:inline-block;" title="Volume dialirkan di bawah 40% volume dihasilkan">
+                                <span class="badge bg-warning text-dark" style="font-size:9.5px;padding:2px 6px;border-radius:4px;margin-top:3px;display:inline-block;" title="Volume dialirkan di bawah 40% dari kuota SK Izin LA ({{ number_format($debitSk) }} m³/hari)">
                                     ⚠️ Underflow
                                 </span>
                             @endif

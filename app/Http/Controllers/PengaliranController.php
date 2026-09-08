@@ -27,7 +27,7 @@ class PengaliranController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        $query = Pengaliran::with('pks');
+        $query = Pengaliran::with(['pks.perizinanLa']);
 
         // Unit user: hanya lihat data milik PKS-nya sendiri
         if ($user->isUnit()) {
@@ -220,25 +220,21 @@ class PengaliranController extends Controller
 
         $debitIzin = $skIzin && $skIzin->debit_maksimal_harian ? (float) $skIzin->debit_maksimal_harian : null;
 
-        // Validasi wajib alasan jika:
-        // 1. Volume dialirkan melampaui batas kuota SK Izin LA
-        // 2. Volume dialirkan melebihi yang dihasilkan (overflow)
-        // 3. Volume dialirkan terlalu sedikit (< 40%) (underflow)
-        $isOverDebitIzin = $debitIzin && ($volDialirkan > $debitIzin);
-        $isOverFlow = $volDialirkan > $volDihasilkan;
-        $isUnderFlow = ($volDihasilkan > 0 && $volDialirkan < (0.4 * $volDihasilkan));
+        // Validasi wajib alasan berdasarkan Surat Izin (Debit Maksimal Harian):
+        // 1. Volume dialirkan melampaui batas kuota SK Izin LA (Overflow)
+        // 2. Volume dialirkan terlalu sedikit (< 40% dari kuota SK Izin LA) (Underflow)
+        $isOverFlow = $debitIzin && ($volDialirkan > $debitIzin);
+        $isUnderFlow = $debitIzin && ($volDialirkan > 0 && $volDialirkan < (0.4 * $debitIzin));
 
-        if ($isOverDebitIzin || $isOverFlow || $isUnderFlow) {
+        if ($isOverFlow || $isUnderFlow) {
             $rules['keterangan'] = 'required|string|min:5';
         }
 
         $ketMessage = 'Wajib mengisi keterangan/alasan.';
-        if ($isOverDebitIzin) {
-            $ketMessage = "Wajib mengisi justifikasi teknis darurat karena volume dialirkan ({$volDialirkan} m³) melampaui batas maksimal kuota SK Izin LA ({$debitIzin} m³/hari).";
-        } elseif ($isOverFlow) {
-            $ketMessage = 'Wajib mengisi alasan/justifikasi karena volume dialirkan melebihi volume limbah yang dihasilkan.';
+        if ($isOverFlow) {
+            $ketMessage = "Wajib mengisi justifikasi teknis darurat karena volume dialirkan ({$volDialirkan} m³) melampaui batas kuota SK Izin LA ({$debitIzin} m³/hari).";
         } elseif ($isUnderFlow) {
-            $ketMessage = 'Wajib mengisi keterangan kendala operasional karena volume dialirkan terlalu sedikit dibanding volume yang dihasilkan.';
+            $ketMessage = "Wajib mengisi keterangan kendala operasional karena volume dialirkan ({$volDialirkan} m³) di bawah 40% dari kuota SK Izin LA ({$debitIzin} m³/hari).";
         }
 
         $messages = [
@@ -328,21 +324,18 @@ class PengaliranController extends Controller
 
         $debitIzin = $skIzin && $skIzin->debit_maksimal_harian ? (float) $skIzin->debit_maksimal_harian : null;
 
-        $isOverDebitIzin = $debitIzin && ($volDialirkan > $debitIzin);
-        $isOverFlow = $volDialirkan > $volDihasilkan;
-        $isUnderFlow = ($volDihasilkan > 0 && $volDialirkan < (0.4 * $volDihasilkan));
+        $isOverFlow = $debitIzin && ($volDialirkan > $debitIzin);
+        $isUnderFlow = $debitIzin && ($volDialirkan > 0 && $volDialirkan < (0.4 * $debitIzin));
 
-        if ($isOverDebitIzin || $isOverFlow || $isUnderFlow) {
+        if ($isOverFlow || $isUnderFlow) {
             $rules['keterangan'] = 'required|string|min:5';
         }
 
         $ketMessage = 'Wajib mengisi keterangan/alasan.';
-        if ($isOverDebitIzin) {
-            $ketMessage = "Wajib mengisi justifikasi teknis darurat karena volume dialirkan ({$volDialirkan} m³) melampaui batas maksimal kuota SK Izin LA ({$debitIzin} m³/hari).";
-        } elseif ($isOverFlow) {
-            $ketMessage = 'Wajib mengisi alasan/justifikasi karena volume dialirkan melebihi volume limbah yang dihasilkan.';
+        if ($isOverFlow) {
+            $ketMessage = "Wajib mengisi justifikasi teknis darurat karena volume dialirkan ({$volDialirkan} m³) melampaui batas kuota SK Izin LA ({$debitIzin} m³/hari).";
         } elseif ($isUnderFlow) {
-            $ketMessage = 'Wajib mengisi keterangan kendala operasional karena volume dialirkan terlalu sedikit dibanding volume yang dihasilkan.';
+            $ketMessage = "Wajib mengisi keterangan kendala operasional karena volume dialirkan ({$volDialirkan} m³) di bawah 40% dari kuota SK Izin LA ({$debitIzin} m³/hari).";
         }
 
         $messages = [

@@ -713,8 +713,8 @@
             }
         }
 
-        // Jika kedua input masih 0 dan kosong, sembunyikan card deteksi
-        if (volDialirkan === 0 && volDihasilkan === 0) {
+        // Jika input masih 0 atau kosong, sembunyikan card deteksi
+        if (volDialirkan === 0) {
             card.style.display = 'none';
             ketReqBadge.style.display = 'none';
             ketField.required = false;
@@ -724,26 +724,25 @@
 
         card.style.display = 'block';
 
-        const ratio = volDihasilkan > 0 ? ((volDialirkan / volDihasilkan) * 100).toFixed(1) : 0;
-        const selisih = volDialirkan - volDihasilkan;
+        const ratioSk = debitIzin > 0 ? ((volDialirkan / debitIzin) * 100).toFixed(1) : 0;
+        const selisihSk = debitIzin > 0 ? (volDialirkan - debitIzin) : 0;
 
-        // KASUS 1: MELAMPAUI KUOTA SK IZIN LA (OVER-QUOTA SK KRITIS)
+        // KASUS 1: OVERFLOW (Vol Dialirkan > Debit Kuota SK)
         if (debitIzin && volDialirkan > debitIzin) {
-            const kelebihanSk = volDialirkan - debitIzin;
             card.style.background = '#fef2f2';
             card.style.border = '2px solid #ef4444';
             iconWrap.style.background = '#fee2e2';
             iconWrap.style.color = '#dc2626';
-            icon.className = 'feather-slash';
-            title.textContent = '⛔ PERINGATAN KRITIS: Melebihi Batas Kuota SK Izin LA!';
+            icon.className = 'feather-alert-triangle';
+            title.textContent = '⚠️ PERINGATAN: Volume Dialirkan Melebihi Kuota SK Izin LA (Overflow)!';
             title.style.color = '#991b1b';
 
             badge.style.background = '#dc2626';
             badge.style.color = '#ffffff';
-            badge.textContent = `Melampaui Batas SK: +${kelebihanSk.toLocaleString()} m³ (Maks: ${debitIzin.toLocaleString()} m³/hari)`;
+            badge.textContent = `⚠️ Overflow: ${ratioSk}% (+${selisihSk.toLocaleString()} m³ | Maks SK: ${debitIzin.toLocaleString()} m³/hari)`;
 
             desc.style.color = '#7f1d1d';
-            desc.innerHTML = `Volume yang dialirkan (<strong>${volDialirkan.toLocaleString()} m³</strong>) melampaui batas maksimal debit harian yang ditetapkan pada Surat Izin Land Application (<strong>${debitIzin.toLocaleString()} m³/hari</strong>). <strong>Wajib memberikan justifikasi teknis/alasan kondisi darurat pengaliran.</strong>`;
+            desc.innerHTML = `Volume yang dialirkan (<strong>${volDialirkan.toLocaleString()} m³</strong>) melampaui batas kuota debit maksimal harian Surat Izin Land Application (<strong>${debitIzin.toLocaleString()} m³/hari</strong>). <strong>Wajib memberikan justifikasi teknis/alasan kondisi darurat pengaliran.</strong>`;
 
             // Rekomendasi alasan over-quota
             suggestionsBox.style.display = 'block';
@@ -765,42 +764,8 @@
             ketCard.style.borderColor = '#fca5a5';
             volDialirkanInput.style.borderColor = '#ef4444';
         }
-        // KASUS 2: OVERFLOW (Vol Dialirkan > Vol Dihasilkan tapi masih <= Debit Izin SK)
-        else if (volDialirkan > volDihasilkan) {
-            card.style.background = '#fef2f2';
-            card.style.border = '1.5px solid #fca5a5';
-            iconWrap.style.background = '#fee2e2';
-            iconWrap.style.color = '#dc2626';
-            icon.className = 'feather-alert-triangle';
-            title.textContent = '⚠️ PERINGATAN: Volume Dialirkan Melebihi Limbah Dihasilkan (Overflow)!';
-            title.style.color = '#991b1b';
-
-            badge.style.background = '#ea580c';
-            badge.style.color = '#ffffff';
-            badge.textContent = `Rasio: ${ratio}% (+${selisih.toLocaleString()} m³) ${debitIzin ? '| Kuota SK: ' + debitIzin.toLocaleString() + ' m³' : ''}`;
-
-            desc.style.color = '#7f1d1d';
-            desc.innerHTML = `Volume yang dialirkan (<strong>${volDialirkan.toLocaleString()} m³</strong>) melebihi limbah yang dihasilkan pada hari yang sama (<strong>${volDihasilkan.toLocaleString()} m³</strong>). <strong>Wajib memberikan alasan teknis kelebihan pengaliran.</strong>`;
-
-            // Rekomendasi alasan
-            suggestionsBox.style.display = 'block';
-            chipsContainer.innerHTML = `
-                <button type="button" class="keterangan-chip" style="background:#fee2e2;color:#991b1b;border-color:#fca5a5;" onclick="setKeterangan('Pengaliran sisa cadangan limbah kolam anaerobik/cooling pond hari sebelumnya')">
-                    💧 Sisa Cadangan Kolam IPAL
-                </button>
-                <button type="button" class="keterangan-chip" style="background:#fee2e2;color:#991b1b;border-color:#fca5a5;" onclick="setKeterangan('Pengurasan dan normalisasi endapan kolam anaerob IPAL')">
-                    🔄 Pengurasan/Normalisasi Kolam
-                </button>
-            `;
-
-            ketReqBadge.style.display = 'inline-block';
-            ketReqBadge.textContent = 'Wajib Diisi (Alasan Kelebihan)';
-            ketField.required = true;
-            ketCard.style.borderColor = '#fca5a5';
-            volDialirkanInput.style.borderColor = '#f97316';
-        }
-        // KASUS 3: UNDERFLOW (Vol Dialirkan Terlalu Sedikit < 40% dari Dihasilkan)
-        else if (volDihasilkan > 0 && volDialirkan < (0.4 * volDihasilkan)) {
+        // KASUS 2: UNDERFLOW (Vol Dialirkan < 40% dari Debit Kuota SK)
+        else if (debitIzin && volDialirkan < (0.4 * debitIzin)) {
             card.style.background = '#fffbeb';
             card.style.border = '1.5px solid #fde68a';
             iconWrap.style.background = '#fef3c7';
@@ -811,10 +776,10 @@
 
             badge.style.background = '#d97706';
             badge.style.color = '#ffffff';
-            badge.textContent = `Rasio: ${ratio}% (Hanya ${volDialirkan.toLocaleString()} dari ${volDihasilkan.toLocaleString()} m³)`;
+            badge.textContent = `⚠️ Underflow: ${ratioSk}% (Hanya ${volDialirkan.toLocaleString()} dari Kuota SK ${debitIzin.toLocaleString()} m³) `;
 
             desc.style.color = '#78350f';
-            desc.innerHTML = `Volume yang dialirkan (<strong>${volDialirkan.toLocaleString()} m³</strong>) jauh lebih kecil dari volume limbah yang dihasilkan (<strong>${volDihasilkan.toLocaleString()} m³</strong>). <strong>Wajib memberikan keterangan kendala operasional pengaliran.</strong>`;
+            desc.innerHTML = `Volume yang dialirkan (<strong>${volDialirkan.toLocaleString()} m³</strong>) berada jauh di bawah batas normal kuota SK Izin LA (<strong>${debitIzin.toLocaleString()} m³/hari</strong>). <strong>Wajib memberikan keterangan kendala operasional pengaliran.</strong>`;
 
             // Rekomendasi kendala
             suggestionsBox.style.display = 'block';
@@ -837,24 +802,24 @@
             ketReqBadge.textContent = 'Wajib Diisi (Keterangan Kendala)';
             ketField.required = true;
             ketCard.style.borderColor = '#fde68a';
-            volDialirkanInput.style.borderColor = '';
+            volDialirkanInput.style.borderColor = '#d97706';
         }
-        // KASUS 4: NORMAL & MEMENUHI KUOTA
+        // KASUS 3: NORMAL (40% s/d 100% Kuota SK)
         else {
             card.style.background = '#f0fdf4';
             card.style.border = '1.5px solid #bbf7d0';
             iconWrap.style.background = '#dcfce7';
             iconWrap.style.color = '#16a34a';
             icon.className = 'feather-check-circle';
-            title.textContent = '✅ Status Pengaliran Normal & Memenuhi Batas SK';
+            title.textContent = '✅ Status Pengaliran Normal & Sesuai Kuota SK Izin LA';
             title.style.color = '#14532d';
 
             badge.style.background = '#16a34a';
             badge.style.color = '#ffffff';
-            badge.textContent = `Rasio: ${ratio}% (Normal)`;
+            badge.textContent = debitIzin ? `✅ Normal: ${ratioSk}% (${volDialirkan.toLocaleString()} / ${debitIzin.toLocaleString()} m³)` : `✅ Normal: ${volDialirkan.toLocaleString()} m³`;
 
             desc.style.color = '#166534';
-            desc.innerHTML = `Volume dialirkan (<strong>${volDialirkan.toLocaleString()} m³</strong>) seimbang dengan volume dihasilkan (<strong>${volDihasilkan.toLocaleString()} m³</strong>) dan berada dalam batas kuota SK Izin LA${debitIzin ? ' (' + debitIzin.toLocaleString() + ' m³/hari)' : ''}.`;
+            desc.innerHTML = `Volume dialirkan (<strong>${volDialirkan.toLocaleString()} m³</strong>) berada dalam batas kuota aman sesuai Surat Izin Land Application${debitIzin ? ' (' + debitIzin.toLocaleString() + ' m³/hari)' : ''}.`;
 
             suggestionsBox.style.display = 'none';
             ketReqBadge.style.display = 'none';
