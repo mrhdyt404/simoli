@@ -60,10 +60,10 @@
 
     /* === HERO BANNER === */
     .admin-hero {
-        background: linear-gradient(135deg, #030d07 0%, #0a2317 35%, #0e3b26 65%, #16a34a 100%);
+        background: linear-gradient(135deg, var(--theme-hero-from, #030d07) 0%, var(--theme-hero-mid, #0a2317) 35%, var(--theme-hero-to, #0e3b26) 65%, var(--theme-hero-accent, #16a34a) 100%);
         border-radius: 20px;
-        border: 1px solid rgba(34, 197, 94, 0.2);
-        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(34, 197, 94, 0.05) inset;
+        border: 1px solid var(--theme-hero-border, rgba(34, 197, 94, 0.2));
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
         position: relative;
         overflow: hidden;
         margin-bottom: 28px;
@@ -76,7 +76,7 @@
         top: -100px; right: -100px;
         width: 400px; height: 400px;
         border-radius: 50%;
-        background: radial-gradient(circle, rgba(34, 197, 94, 0.2) 0%, transparent 70%);
+        background: radial-gradient(circle, var(--theme-glow, rgba(34, 197, 94, 0.25)) 0%, transparent 70%);
         pointer-events: none;
     }
 
@@ -86,7 +86,7 @@
         bottom: -80px; left: 20%;
         width: 300px; height: 300px;
         border-radius: 50%;
-        background: radial-gradient(circle, rgba(212, 160, 23, 0.12) 0%, transparent 70%);
+        background: radial-gradient(circle, var(--theme-glow, rgba(212, 160, 23, 0.12)) 0%, transparent 70%);
         pointer-events: none;
     }
 
@@ -103,9 +103,9 @@
         gap: 7px;
         padding: 5px 13px;
         border-radius: 50px;
-        background: rgba(34, 197, 94, 0.12);
-        border: 1px solid rgba(34, 197, 94, 0.3);
-        color: #86efac;
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        color: var(--ptpn-200, #bbf7d0);
         font-size: 10.5px;
         font-weight: 700;
         text-transform: uppercase;
@@ -116,7 +116,8 @@
     .live-dot {
         width: 8px; height: 8px;
         border-radius: 50%;
-        background: #4ade80;
+        background: var(--theme-accent, #4ade80);
+        box-shadow: 0 0 8px var(--theme-glow, rgba(34, 197, 94, 0.8));
         animation: livePulse 2s ease-in-out infinite;
         display: inline-block;
     }
@@ -133,7 +134,7 @@
 
     .admin-hero-sub {
         font-size: clamp(12px, 1vw + 9px, 14px);
-        color: rgba(187, 247, 208, 0.75);
+        color: rgba(255, 255, 255, 0.82);
         line-height: 1.6;
         margin-bottom: 24px;
         max-width: 540px;
@@ -213,14 +214,14 @@
         gap: 10px;
         margin-bottom: 18px;
         padding-bottom: 12px;
-        border-bottom: 2px solid rgba(22, 163, 74, 0.12);
+        border-bottom: 2px solid var(--theme-border, rgba(22, 163, 74, 0.12));
     }
 
     .section-title {
         font-family: 'Outfit', sans-serif;
         font-size: clamp(14px, 1vw + 10px, 17px);
         font-weight: 800;
-        color: #14532d;
+        color: var(--ptpn-900, #14532d);
         display: flex;
         align-items: center;
         gap: 8px;
@@ -230,17 +231,17 @@
     .section-title-dot {
         width: 8px; height: 8px;
         border-radius: 50%;
-        background: linear-gradient(135deg, #16a34a, #4ade80);
-        box-shadow: 0 0 6px rgba(34, 197, 94, 0.6);
+        background: linear-gradient(135deg, var(--theme-primary, #16a34a), var(--theme-accent, #4ade80));
+        box-shadow: 0 0 6px var(--theme-glow, rgba(34, 197, 94, 0.6));
     }
 
     /* === KPI CARDS === */
     .kpi-card {
         background: #ffffff;
         border-radius: 18px;
-        border: 1px solid rgba(22, 163, 74, 0.1);
+        border: 1px solid var(--theme-border, rgba(22, 163, 74, 0.1));
         padding: 20px;
-        box-shadow: 0 2px 12px rgba(22, 163, 74, 0.06);
+        box-shadow: 0 2px 12px var(--theme-border, rgba(22, 163, 74, 0.06));
         transition: all 0.25s ease;
         height: 100%;
         position: relative;
@@ -256,15 +257,15 @@
         border-radius: 18px 18px 0 0;
     }
 
-    .kpi-card-green::after  { background: linear-gradient(90deg, #16a34a, #4ade80); }
+    .kpi-card-green::after  { background: linear-gradient(90deg, var(--theme-primary, #16a34a), var(--theme-accent, #4ade80)); }
     .kpi-card-gold::after   { background: linear-gradient(90deg, #d4a017, #fbbf24); }
     .kpi-card-blue::after   { background: linear-gradient(90deg, #1d4ed8, #60a5fa); }
     .kpi-card-purple::after { background: linear-gradient(90deg, #7c3aed, #c084fc); }
 
     .kpi-card:hover {
         transform: translateY(-4px);
-        box-shadow: 0 12px 30px rgba(22, 163, 74, 0.12);
-        border-color: rgba(22, 163, 74, 0.25);
+        box-shadow: 0 12px 30px var(--theme-glow, rgba(22, 163, 74, 0.12));
+        border-color: var(--theme-primary, rgba(22, 163, 74, 0.25));
     }
 
     .kpi-label {
@@ -986,8 +987,13 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     var isDark    = document.documentElement.classList.contains('app-skin-dark');
-    var gridColor = isDark ? 'rgba(34,197,94,0.06)' : 'rgba(22,163,74,0.06)';
-    var labelClr  = isDark ? '#6b8f72' : '#6b7280';
+    var curTheme  = window.SimoliTheme && window.SimoliTheme.currentConfig ? window.SimoliTheme.currentConfig : null;
+    var primary   = (curTheme && curTheme.themeData) ? curTheme.themeData.primary : '#16a34a';
+    var accent    = (curTheme && curTheme.themeData) ? curTheme.themeData.accent : '#4ade80';
+    var secondary = (curTheme && curTheme.themeData) ? curTheme.themeData.secondary : '#d97706';
+
+    var gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+    var labelClr  = isDark ? '#9ca3af' : '#6b7280';
     var bgCard    = isDark ? '#0a2317' : '#ffffff';
     var fontFam   = "'Outfit', 'Plus Jakarta Sans', sans-serif";
 
@@ -999,11 +1005,11 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     /* ── 1. DONUT: Kelengkapan Hari Ini ── */
-    new ApexCharts(document.querySelector('#statusDonutChart'), {
+    var chartStatusDonut = new ApexCharts(document.querySelector('#statusDonutChart'), {
         series: [{{ $sudahLengkap }}, {{ $sebagian }}, {{ $belumAda }}],
         chart: { ...chartDefaults, type: 'donut', height: 230 },
         labels: ['Lengkap', 'Sebagian', 'Belum Input'],
-        colors: ['#16a34a', '#d97706', '#ef4444'],
+        colors: [primary, '#d97706', '#ef4444'],
         plotOptions: {
             pie: {
                 donut: {
@@ -1024,20 +1030,21 @@ document.addEventListener('DOMContentLoaded', function() {
         legend: { position: 'bottom', fontSize: '11px', fontFamily: fontFam, labels: { colors: labelClr } },
         stroke: { width: 2, colors: [bgCard] },
         dataLabels: { enabled: false }
-    }).render();
+    });
+    chartStatusDonut.render();
 
     /* ── 2. AREA: Trend 7 Hari ── */
     var trendDays   = {!! json_encode(array_column((array)($trendData ?? []), 'label')) !!};
     var trendPengal = {!! json_encode(array_column((array)($trendData ?? []), 'pengaliran')) !!};
     var trendPemeli = {!! json_encode(array_column((array)($trendData ?? []), 'pemeliharaan')) !!};
 
-    new ApexCharts(document.querySelector('#trendChart'), {
+    var chartTrend = new ApexCharts(document.querySelector('#trendChart'), {
         series: [
             { name: 'Pengaliran LA', data: trendPengal },
             { name: 'Pemeliharaan',  data: trendPemeli }
         ],
         chart: { ...chartDefaults, type: 'area', height: 280 },
-        colors: ['#16a34a', '#d97706'],
+        colors: [primary, secondary],
         fill: {
             type: 'gradient',
             gradient: {
@@ -1062,19 +1069,20 @@ document.addEventListener('DOMContentLoaded', function() {
             theme: isDark ? 'dark' : 'light',
             style: { fontSize: '12px', fontFamily: fontFam }
         }
-    }).render();
+    });
+    chartTrend.render();
 
     /* ── 3. COLUMN: Volume per PKS ── */
     var pksNames = {!! json_encode(array_column((array)($statsPerPks ?? []), 'akro')) !!};
     var pksVols  = {!! json_encode(array_column((array)($statsPerPks ?? []), 'vol_dialirkan')) !!};
 
-    new ApexCharts(document.querySelector('#volPerPksChart'), {
+    var chartVolPerPks = new ApexCharts(document.querySelector('#volPerPksChart'), {
         series: [{ name: 'Vol. Dialirkan (m³)', data: pksVols }],
         chart: { ...chartDefaults, type: 'bar', height: 280 },
-        colors: ['#16a34a'],
+        colors: [primary],
         fill: {
             type: 'gradient',
-            gradient: { shade: 'light', type: 'vertical', shadeIntensity: 0.3, gradientToColors: ['#4ade80'], stops: [0, 100] }
+            gradient: { shade: 'light', type: 'vertical', shadeIntensity: 0.3, gradientToColors: [accent], stops: [0, 100] }
         },
         plotOptions: { bar: { borderRadius: 6, columnWidth: '55%' } },
         xaxis: {
@@ -1086,20 +1094,21 @@ document.addEventListener('DOMContentLoaded', function() {
         grid: { borderColor: gridColor, strokeDashArray: 4 },
         dataLabels: { enabled: false },
         tooltip: { theme: isDark ? 'dark' : 'light', style: { fontSize: '11px', fontFamily: fontFam } }
-    }).render();
+    });
+    chartVolPerPks.render();
 
     /* ── 4. STACKED: Pemeliharaan per PKS ── */
     var maintFlat = {!! json_encode(array_column((array)($statsPerPks ?? []), 'flat_bed_m')) !!};
     var maintLong = {!! json_encode(array_column((array)($statsPerPks ?? []), 'long_bed')) !!};
     var maintPks  = {!! json_encode(array_column((array)($statsPerPks ?? []), 'akro')) !!};
 
-    new ApexCharts(document.querySelector('#maintPerPksChart'), {
+    var chartMaintPerPks = new ApexCharts(document.querySelector('#maintPerPksChart'), {
         series: [
             { name: 'Flat Bed', data: maintFlat },
             { name: 'Long Bed', data: maintLong }
         ],
         chart: { ...chartDefaults, type: 'bar', height: 280, stacked: true },
-        colors: ['#d97706', '#16a34a'],
+        colors: [secondary, primary],
         plotOptions: { bar: { borderRadius: 4, columnWidth: '55%' } },
         xaxis: {
             categories: maintPks,
@@ -1111,7 +1120,75 @@ document.addEventListener('DOMContentLoaded', function() {
         dataLabels: { enabled: false },
         legend: { position: 'top', horizontalAlign: 'right', fontSize: '11px', fontFamily: fontFam, labels: { colors: labelClr } },
         tooltip: { theme: isDark ? 'dark' : 'light', style: { fontSize: '11px', fontFamily: fontFam } }
-    }).render();
+    });
+    chartMaintPerPks.render();
+
+    /* ── Reactive Listener for Theme Changes ── */
+    window.addEventListener('simoli:theme-changed', function(e) {
+        var d = e.detail;
+        var p = d.primary;
+        var sec = d.secondary || '#d97706';
+        var acc = d.accent || p;
+        var dark = d.isDark;
+        var lClr = dark ? '#9ca3af' : '#6b7280';
+        var gClr = dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+        var bg = dark ? '#0a2317' : '#ffffff';
+
+        if (chartStatusDonut) {
+            chartStatusDonut.updateOptions({
+                colors: [p, sec, '#ef4444'],
+                stroke: { colors: [bg] },
+                plotOptions: {
+                    pie: {
+                        donut: {
+                            labels: {
+                                name: { color: lClr },
+                                value: { color: dark ? '#d1fae5' : p },
+                                total: { color: lClr }
+                            }
+                        }
+                    }
+                },
+                legend: { labels: { colors: lClr } }
+            });
+        }
+
+        if (chartTrend) {
+            chartTrend.updateOptions({
+                colors: [p, sec],
+                grid: { borderColor: gClr },
+                xaxis: { labels: { style: { colors: lClr } } },
+                yaxis: { labels: { style: { colors: lClr } } },
+                legend: { labels: { colors: lClr } },
+                tooltip: { theme: dark ? 'dark' : 'light' }
+            });
+        }
+
+        if (chartVolPerPks) {
+            chartVolPerPks.updateOptions({
+                colors: [p],
+                fill: {
+                    type: 'gradient',
+                    gradient: { shade: 'light', type: 'vertical', shadeIntensity: 0.3, gradientToColors: [acc], stops: [0, 100] }
+                },
+                grid: { borderColor: gClr },
+                xaxis: { labels: { style: { colors: lClr } } },
+                yaxis: { labels: { style: { colors: lClr } } },
+                tooltip: { theme: dark ? 'dark' : 'light' }
+            });
+        }
+
+        if (chartMaintPerPks) {
+            chartMaintPerPks.updateOptions({
+                colors: [sec, p],
+                grid: { borderColor: gClr },
+                xaxis: { labels: { style: { colors: lClr } } },
+                yaxis: { labels: { style: { colors: lClr } } },
+                legend: { labels: { colors: lClr } },
+                tooltip: { theme: dark ? 'dark' : 'light' }
+            });
+        }
+    });
 });
 </script>
 @endsection

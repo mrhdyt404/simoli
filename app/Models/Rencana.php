@@ -12,6 +12,7 @@ class Rencana extends Model
 
     protected $fillable = [
         'id_pks',
+        'nama',
         'flat_bed',
         'long_bed',
         'tahun',

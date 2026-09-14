@@ -48,6 +48,33 @@ class PemetaanLaController extends Controller
             $query->where('kategori_peta', $request->kategori);
         }
 
+        if ($request->filled('format')) {
+            $fmt = strtolower($request->format);
+            if ($fmt === 'pdf') {
+                $query->where(function($q) {
+                    $q->where('tipe_file', 'pdf')
+                      ->orWhere('file_peta', 'like', '%.pdf');
+                });
+            } elseif ($fmt === 'image') {
+                $query->where(function($q) {
+                    $q->whereIn('tipe_file', ['jpg', 'jpeg', 'png', 'webp', 'svg'])
+                      ->orWhere('file_peta', 'like', '%.jpg')
+                      ->orWhere('file_peta', 'like', '%.jpeg')
+                      ->orWhere('file_peta', 'like', '%.png')
+                      ->orWhere('file_peta', 'like', '%.webp');
+                });
+            } elseif ($fmt === 'spasial') {
+                $query->where(function($q) {
+                    $q->whereNotIn('tipe_file', ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'svg'])
+                      ->where('file_peta', 'not like', '%.pdf')
+                      ->where('file_peta', 'not like', '%.jpg')
+                      ->where('file_peta', 'not like', '%.jpeg')
+                      ->where('file_peta', 'not like', '%.png')
+                      ->where('file_peta', 'not like', '%.webp');
+                });
+            }
+        }
+
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
@@ -63,10 +90,35 @@ class PemetaanLaController extends Controller
             });
         }
 
-        $petaList = $query->orderBy('tahun_peta', 'desc')->orderBy('created_at', 'desc')->paginate(9)->withQueryString();
+        $petaList = $query->orderBy('tahun_peta', 'desc')->orderBy('created_at', 'desc')->paginate(12)->withQueryString();
 
         // KPI Ringkasan
-        $totalPeta = ArsipPetaLa::count();
+        $kpiQuery = ArsipPetaLa::query();
+        if (!$user->isAdmin()) {
+            $kpiQuery->where('id_pks', $user->id_pks);
+        }
+
+        $totalPeta = (clone $kpiQuery)->count();
+        $totalGambar = (clone $kpiQuery)->where(function($q) {
+            $q->whereIn('tipe_file', ['jpg', 'jpeg', 'png', 'webp', 'svg'])
+              ->orWhere('file_peta', 'like', '%.jpg')
+              ->orWhere('file_peta', 'like', '%.jpeg')
+              ->orWhere('file_peta', 'like', '%.png')
+              ->orWhere('file_peta', 'like', '%.webp');
+        })->count();
+        $totalPdf = (clone $kpiQuery)->where(function($q) {
+            $q->where('tipe_file', 'pdf')
+              ->orWhere('file_peta', 'like', '%.pdf');
+        })->count();
+        $totalSpasial = (clone $kpiQuery)->where(function($q) {
+            $q->whereNotIn('tipe_file', ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'svg'])
+              ->where('file_peta', 'not like', '%.pdf')
+              ->where('file_peta', 'not like', '%.jpg')
+              ->where('file_peta', 'not like', '%.jpeg')
+              ->where('file_peta', 'not like', '%.png')
+              ->where('file_peta', 'not like', '%.webp');
+        })->count();
+
         $kategoriList = [
             'Peta Lokasi Land Application',
             'Peta Layout IPAL / Kolam',
@@ -82,6 +134,9 @@ class PemetaanLaController extends Controller
             'pksAktif',
             'selectedPksId',
             'totalPeta',
+            'totalGambar',
+            'totalPdf',
+            'totalSpasial',
             'kategoriList',
             'daftarPks'
         ));
@@ -187,6 +242,11 @@ class PemetaanLaController extends Controller
             abort(403, 'Anda tidak memiliki hak untuk mengedit arsip peta unit PKS lain.');
         }
 
+        if (!$user->isAdmin() && $peta->is_locked) {
+            return redirect()->route('pemetaan-la.show', $peta->id)
+                ->with('error', 'Dokumen arsip peta ini telah dikunci oleh Administrator Regional dan tidak dapat diedit.');
+        }
+
         if (!$user->isAdmin()) {
             $daftarPks = Pks::where('id_pks', $user->id_pks)->get();
         } else {
@@ -215,6 +275,11 @@ class PemetaanLaController extends Controller
 
         if (!$user->isAdmin() && $peta->id_pks != $user->id_pks) {
             abort(403, 'Anda tidak memiliki hak untuk memperbarui arsip peta unit PKS lain.');
+        }
+
+        if (!$user->isAdmin() && $peta->is_locked) {
+            return redirect()->route('pemetaan-la.show', $peta->id)
+                ->with('error', 'Dokumen arsip peta ini telah dikunci oleh Administrator Regional dan tidak dapat diedit.');
         }
 
         $request->validate([
@@ -263,16 +328,17 @@ class PemetaanLaController extends Controller
     }
 
     /**
-     * Hapus Berkas Peta
+     * Hapus Berkas Peta (Hanya Admin)
      */
     public function destroy(string $id)
     {
-        $peta = ArsipPetaLa::findOrFail($id);
         $user = Auth::user();
 
-        if (!$user->isAdmin() && $peta->id_pks != $user->id_pks) {
-            abort(403, 'Anda tidak memiliki hak untuk menghapus arsip peta unit PKS lain.');
+        if (!$user->isAdmin()) {
+            abort(403, 'Akses ditolak. Unit PKS tidak diperbolehkan menghapus data arsip peta.');
         }
+
+        $peta = ArsipPetaLa::findOrFail($id);
 
         if ($peta->file_peta && file_exists(public_path('uploads/peta_la/' . $peta->file_peta))) {
             @unlink(public_path('uploads/peta_la/' . $peta->file_peta));
@@ -282,5 +348,83 @@ class PemetaanLaController extends Controller
 
         return redirect()->route('pemetaan-la.index')
             ->with('success', 'Arsip Berkas Peta Land Application berhasil dihapus.');
+    }
+
+    /**
+     * Kunci / Buka Kunci Edit Data Arsip Peta (Admin Only)
+     */
+    public function toggleLock(Request $request, string $id)
+    {
+        $user = Auth::user();
+
+        if (!$user->isAdmin()) {
+            abort(403, 'Hanya Administrator Regional yang berhak mengunci atau membuka kunci data arsip.');
+        }
+
+        $peta = ArsipPetaLa::findOrFail($id);
+        $peta->is_locked = !$peta->is_locked;
+        $peta->save();
+
+        $msg = $peta->is_locked
+            ? 'Arsip Peta "' . $peta->nama_peta . '" berhasil DIKUNCI. Unit PKS tidak dapat mengedit arsip ini.'
+            : 'Kunci Arsip Peta "' . $peta->nama_peta . '" berhasil DIBUKA. Unit PKS kini dapat mengedit.';
+
+        return redirect()->back()->with('success', $msg);
+    }
+
+    /**
+     * Kunci / Buka Kunci Semua Data Arsip Peta LA (Admin Only - Semua Unit / Unit Tertentu)
+     */
+    public function bulkLock(Request $request)
+    {
+        $user = Auth::user();
+
+        if (!$user->isAdmin()) {
+            abort(403, 'Hanya Administrator Regional yang berhak mengunci atau membuka kunci data arsip.');
+        }
+
+        $action = $request->input('action', 'lock'); // 'lock' or 'unlock'
+        $isLocked = ($action === 'lock');
+        $idPks = $request->input('id_pks');
+
+        $query = ArsipPetaLa::query();
+        if ($idPks && $idPks !== 'all') {
+            $query->where('id_pks', $idPks);
+            $pks = Pks::find($idPks);
+            $targetName = $pks ? 'Unit ' . $pks->nama : 'Unit Terpilih';
+        } else {
+            $targetName = 'SEMUA UNIT PKS';
+        }
+
+        $totalUpdated = $query->update(['is_locked' => $isLocked]);
+
+        $msg = $isLocked
+            ? "Berhasil! Seluruh data arsip peta Land Application ({$totalUpdated} berkas) untuk {$targetName} telah DIKUNCI. Pengguna Unit tidak dapat mengedit."
+            : "Berhasil! Seluruh data arsip peta Land Application ({$totalUpdated} berkas) untuk {$targetName} telah DIBUKA KUNCI. Pengguna Unit kini dapat mengedit.";
+
+        return redirect()->back()->with('success', $msg);
+    }
+
+    /**
+     * Kunci / Buka Kunci Semua Arsip Peta & Izin LA Sekaligus untuk Semua Unit
+     */
+    public function bulkLockAll(Request $request)
+    {
+        $user = Auth::user();
+
+        if (!$user->isAdmin()) {
+            abort(403, 'Hanya Administrator Regional yang berhak mengunci atau membuka kunci data arsip.');
+        }
+
+        $action = $request->input('action', 'lock');
+        $isLocked = ($action === 'lock');
+
+        $totalPeta = ArsipPetaLa::query()->update(['is_locked' => $isLocked]);
+        $totalIzin = \App\Models\PerizinanLa::query()->update(['is_locked' => $isLocked]);
+
+        $statusText = $isLocked ? 'DIKUNCI' : 'DIBUKA KUNCI';
+        $msg = "Berhasil! Seluruh data Arsip Peta ({$totalPeta} berkas) dan Arsip SK Izin LA ({$totalIzin} dokumen) untuk SEMUA UNIT telah {$statusText}.";
+
+        return redirect()->back()->with('success', $msg);
     }
 }

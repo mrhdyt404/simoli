@@ -13,6 +13,15 @@
 @section('content')
 <div class="row justify-content-center">
     <div class="col-lg-8">
+        @if($peta->is_locked)
+        <div class="alert alert-warning d-flex align-items-center gap-2 mb-3 rounded-3" role="alert">
+            <i class="feather-lock text-danger" style="font-size:18px;"></i>
+            <div style="font-size:13px;">
+                <strong>Status Arsip Terkunci:</strong> Arsip ini dikunci oleh Admin sehingga user Unit tidak dapat mengubahnya.
+            </div>
+        </div>
+        @endif
+
         <form action="{{ route('pemetaan-la.update', $peta->id) }}" method="POST" enctype="multipart/form-data">
             @csrf
             @method('PUT')

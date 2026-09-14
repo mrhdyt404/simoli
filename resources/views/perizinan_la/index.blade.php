@@ -11,7 +11,63 @@
 @endsection
 
 @section('page-actions')
-    <div class="d-flex gap-2">
+    <div class="d-flex gap-2 flex-wrap">
+        @if(Auth::user()->isAdmin())
+        <div class="dropdown">
+            <button class="btn-ptpn btn-ptpn-outline dropdown-toggle d-inline-flex align-items-center gap-1.5" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="border-color:#dc2626;color:#dc2626;">
+                <i class="feather-lock text-danger" style="font-size:15px;"></i>
+                <span>Kunci / Buka Semua</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow border-0" style="border-radius:12px;font-size:13px;min-width:260px;">
+                <li><h6 class="dropdown-header text-uppercase fw-bold text-muted" style="font-size:11px;">Kontrol Dokumen SK Izin LA</h6></li>
+                <li>
+                    <form action="{{ route('perizinan-la.bulk-lock') }}" method="POST" class="m-0 p-0" onsubmit="return confirm('Apakah Anda yakin ingin MENGUNCI SEMUA data dokumen SK perizinan untuk SEMUA UNIT? Unit PKS tidak akan dapat mengedit arsip SK.');">
+                        @csrf
+                        <input type="hidden" name="action" value="lock">
+                        <input type="hidden" name="id_pks" value="all">
+                        <button type="submit" class="dropdown-item d-flex align-items-center gap-2 py-2 text-danger fw-semibold">
+                            <i class="feather-lock text-danger"></i>
+                            <span>Kunci Semua SK Izin (Semua Unit)</span>
+                        </button>
+                    </form>
+                </li>
+                <li>
+                    <form action="{{ route('perizinan-la.bulk-lock') }}" method="POST" class="m-0 p-0" onsubmit="return confirm('Apakah Anda yakin ingin MEMBUKA KUNCI SEMUA data dokumen SK perizinan untuk SEMUA UNIT?');">
+                        @csrf
+                        <input type="hidden" name="action" value="unlock">
+                        <input type="hidden" name="id_pks" value="all">
+                        <button type="submit" class="dropdown-item d-flex align-items-center gap-2 py-2 text-success fw-semibold">
+                            <i class="feather-unlock text-success"></i>
+                            <span>Buka Kunci Semua SK Izin</span>
+                        </button>
+                    </form>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li><h6 class="dropdown-header text-uppercase fw-bold text-muted" style="font-size:11px;">Kontrol Global (Peta &amp; SK Izin)</h6></li>
+                <li>
+                    <form action="{{ route('pemetaan-la.bulk-lock-all') }}" method="POST" class="m-0 p-0" onsubmit="return confirm('PERINGATAN: Apakah Anda yakin ingin MENGUNCI SEMUA data Arsip Peta DAN Dokumen SK Izin untuk SEMUA UNIT sekaligus?');">
+                        @csrf
+                        <input type="hidden" name="action" value="lock">
+                        <button type="submit" class="dropdown-item d-flex align-items-center gap-2 py-2 text-danger fw-bold">
+                            <i class="feather-shield text-danger"></i>
+                            <span>Kunci Semua Peta &amp; Izin (Global)</span>
+                        </button>
+                    </form>
+                </li>
+                <li>
+                    <form action="{{ route('pemetaan-la.bulk-lock-all') }}" method="POST" class="m-0 p-0" onsubmit="return confirm('Apakah Anda yakin ingin MEMBUKA KUNCI SEMUA data Arsip Peta DAN Dokumen SK Izin untuk SEMUA UNIT?');">
+                        @csrf
+                        <input type="hidden" name="action" value="unlock">
+                        <button type="submit" class="dropdown-item d-flex align-items-center gap-2 py-2 text-success fw-bold">
+                            <i class="feather-check-circle text-success"></i>
+                            <span>Buka Semua Peta &amp; Izin (Global)</span>
+                        </button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+        @endif
+
         <a href="{{ route('pemetaan-la.index') }}" class="btn-ptpn btn-ptpn-outline">
             <i class="feather-map" style="font-size:15px;"></i>
             <span>Arsip Peta LA</span>
@@ -189,6 +245,11 @@
                     <i class="feather-file-text"></i>
                 </div>
                 <div class="text-end">
+                    @if($item->is_locked)
+                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-0.5 rounded-pill mb-1 d-inline-block" style="font-size:10px;font-weight:700;">
+                            <i class="feather-lock"></i> Terkunci
+                        </span>
+                    @endif
                     @php
                         $badgeClass = 'badge-status-aktif';
                         if ($item->status_label === 'Kedaluwarsa') {
@@ -259,19 +320,35 @@
                     @endif
                 </div>
 
-                <div class="d-flex align-items-center gap-2 flex-nowrap">
+                <div class="d-flex align-items-center p-2 gap-1 flex-nowrap">
                     <a href="{{ route('perizinan-la.show', $item->id) }}" class="btn btn-sm btn-light border text-secondary d-inline-flex align-items-center justify-content-center px-2.5 py-1.5" title="Detail Arsip" style="border-radius:9px;">
-                        <i class="feather-info" style="font-size:15px;"></i>
+                        <i class="feather-info" style="font-size:14.5px;"></i>
                     </a>
-                    @if(Auth::user()->isAdmin() || Auth::user()->id_pks == $item->id_pks)
+
+                    {{-- Edit: Admin atau Unit jika tidak terkunci --}}
+                    @if(Auth::user()->isAdmin() || (Auth::user()->id_pks == $item->id_pks && !$item->is_locked))
                     <a href="{{ route('perizinan-la.edit', $item->id) }}" class="btn btn-sm btn-light border text-warning d-inline-flex align-items-center justify-content-center px-2.5 py-1.5" title="Edit Metadata" style="border-radius:9px;">
-                        <i class="feather-edit-2" style="font-size:15px;"></i>
+                        <i class="feather-edit-2" style="font-size:14.5px;"></i>
                     </a>
+                    @elseif(Auth::user()->id_pks == $item->id_pks && $item->is_locked)
+                    <button type="button" class="btn btn-sm btn-light border text-muted opacity-50 d-inline-flex align-items-center justify-content-center px-2.5 py-1.5" title="Data dikunci oleh Admin (Tidak dapat diedit)" style="border-radius:9px;" disabled>
+                        <i class="feather-lock text-danger" style="font-size:14.5px;"></i>
+                    </button>
+                    @endif
+
+                    {{-- Admin Only Actions: Lock/Unlock & Delete --}}
+                    @if(Auth::user()->isAdmin())
+                    <form action="{{ route('perizinan-la.toggle-lock', $item->id) }}" method="POST" class="d-inline m-0 p-0">
+                        @csrf
+                        <button type="submit" class="btn btn-sm btn-light border {{ $item->is_locked ? 'text-danger' : 'text-secondary' }} d-inline-flex align-items-center justify-content-center px-2.5 py-1.5" title="{{ $item->is_locked ? 'Buka Kunci Arsip (Unlock)' : 'Kunci Arsip (Lock)' }}" style="border-radius:9px;">
+                            <i class="{{ $item->is_locked ? 'feather-lock text-danger' : 'feather-unlock' }}" style="font-size:14.5px;"></i>
+                        </button>
+                    </form>
                     <form action="{{ route('perizinan-la.destroy', $item->id) }}" method="POST" class="d-inline m-0 p-0" onsubmit="return confirm('Apakah Anda yakin ingin menghapus arsip SK ini?');">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="btn btn-sm btn-light border text-danger d-inline-flex align-items-center justify-content-center px-2.5 py-1.5" title="Hapus Arsip" style="border-radius:9px;">
-                            <i class="feather-trash-2" style="font-size:15px;"></i>
+                            <i class="feather-trash-2" style="font-size:14.5px;"></i>
                         </button>
                     </form>
                     @endif

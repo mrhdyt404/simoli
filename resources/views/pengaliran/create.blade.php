@@ -324,7 +324,7 @@
 </div>
 @endif
 
-<form action="{{ route('pengaliran.store') }}" method="POST" enctype="multipart/form-data">
+<form action="{{ route('pengaliran.store') }}" method="POST" enctype="multipart/form-data" id="pengaliranForm">
     @csrf
     <div class="row g-4">
 
@@ -572,27 +572,32 @@
             </div>
 
             {{-- Foto Dokumentasi --}}
-            <div class="form-card">
-                <div class="form-section-title">
-                    <i class="feather-camera"></i>
-                    Foto Dokumentasi
+            <div class="form-card" id="foto_card">
+                <div class="form-section-title d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="feather-camera"></i>
+                        Foto Dokumentasi
+                    </div>
+                    <span class="badge bg-danger" style="font-size:10.5px;letter-spacing:.3px;">Wajib Diunggah *</span>
                 </div>
                 <div class="photo-upload-wrap">
-                    <label class="photo-upload-area d-block" for="foto_field">
-                        <div style="font-size:32px;color:#86efac;margin-bottom:8px;">
-                            <i class="feather-image"></i>
+                    <label class="photo-upload-area d-block" id="photo_upload_area" for="foto_field">
+                        <div style="font-size:32px;color:#16a34a;margin-bottom:8px;">
+                            <i class="feather-camera"></i>
                         </div>
                         <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:4px;" id="fileLabel">
-                            Klik untuk pilih foto
+                            Klik untuk ambil / pilih foto dokumentasi
                         </div>
-                        <div style="font-size:11px;color:#6b7280;">JPG, JPEG, PNG (maks 2MB)</div>
+                        <div style="font-size:11px;color:#6b7280;">Wajib diisi: JPG, JPEG, PNG (maks 2MB)</div>
                         <input type="file" name="foto" id="foto_field"
                             class="@error('foto') is-invalid @enderror"
                             accept="image/*" style="opacity:0;position:absolute;inset:0;cursor:pointer;"
+                            required
                             onchange="updateFileLabel(this)">
                     </label>
                 </div>
-                @error('foto') <div class="text-danger mt-1" style="font-size:12px;">{{ $message }}</div> @enderror
+                <div id="photo_error_text" class="text-danger mt-2" style="font-size:12px;font-weight:700;display:none;"></div>
+                @error('foto') <div class="text-danger mt-1" style="font-size:12px;font-weight:700;">{{ $message }}</div> @enderror
             </div>
 
             {{-- Submit --}}
@@ -625,12 +630,23 @@
 
     function updateFileLabel(input) {
         const label = document.getElementById('fileLabel');
+        const photoArea = document.getElementById('photo_upload_area');
+        const photoError = document.getElementById('photo_error_text');
         if (input.files && input.files.length > 0) {
             label.textContent = '✓ ' + input.files[0].name;
             label.style.color = '#16a34a';
+            if (photoArea) {
+                photoArea.style.borderColor = '#22c55e';
+                photoArea.style.background = '#f0fdf4';
+            }
+            if (photoError) photoError.style.display = 'none';
         } else {
-            label.textContent = 'Klik untuk pilih foto';
+            label.textContent = 'Klik untuk ambil / pilih foto dokumentasi';
             label.style.color = '';
+            if (photoArea) {
+                photoArea.style.borderColor = '';
+                photoArea.style.background = '';
+            }
         }
     }
 
@@ -850,6 +866,31 @@
             }
             // Trigger check on initial load
             checkVolumeDetection();
+        }
+
+        const form = document.getElementById('pengaliranForm');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                const fotoInput = document.getElementById('foto_field');
+                const photoArea = document.getElementById('photo_upload_area');
+                const photoError = document.getElementById('photo_error_text');
+                
+                if (!fotoInput || !fotoInput.files || fotoInput.files.length === 0) {
+                    e.preventDefault();
+                    if (photoArea) {
+                        photoArea.style.borderColor = '#ef4444';
+                        photoArea.style.background = '#fef2f2';
+                    }
+                    if (photoError) {
+                        photoError.textContent = '⚠️ Foto dokumentasi pengaliran wajib diunggah sebelum menyimpan laporan!';
+                        photoError.style.display = 'block';
+                    }
+                    if (photoArea) {
+                        photoArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                    return false;
+                }
+            });
         }
     });
 </script>

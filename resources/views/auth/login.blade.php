@@ -21,7 +21,11 @@
     <!-- Icons -->
     <link rel="stylesheet" href="{{ asset('duraluxadmin/assets/vendors/css/feather.min.css') }}">
     <link rel="stylesheet" href="{{ asset('duraluxadmin/assets/css/bootstrap.min.css') }}">
-
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://unpkg.com/feather-icons@4.29.2/dist/feather.min.js"></script>
+    <script>
+        feather.replace();
+    </script>
     <style>
         /* ================================================================
            SIMOLI LOGIN — HIJAU PTPN FULL REDESIGN
@@ -449,6 +453,39 @@
             .login-headline { font-size: clamp(26px, 3vw + 10px, 38px); }
             .login-features { display: none; }
         }
+
+.login-input-wrap {
+    position: relative;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+
+    border: none;
+    background: transparent;
+    padding: 5px;
+
+    cursor: pointer;
+
+    color: #6b7280;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.password-toggle:hover {
+    color: #111827;
+}
+
+.password-toggle svg {
+    width: 18px;
+    height: 18px;
+}
+
     </style>
 </head>
 <body>
@@ -553,9 +590,10 @@
                     @enderror
                 </div>
 
-                {{-- Password --}}
+                {{-- Password --}}       
                 <div class="login-form-group">
                     <label class="login-label" for="password">Password</label>
+
                     <div class="login-input-wrap">
                         <input
                             type="password"
@@ -566,10 +604,23 @@
                             autocomplete="current-password"
                             required
                         >
+
+                        <!-- Icon Lock -->
                         <i class="feather-lock login-input-icon"></i>
+
+                        <!-- Toggle Password -->
+                        <button
+                            type="button"
+                            id="togglePassword"
+                            class="password-toggle"
+                            aria-label="Tampilkan password"
+                        >
+                            <i class="feather-eye"></i>
+                        </button>
                     </div>
+
                     @error('password')
-                    <p class="login-error-text">{{ $message }}</p>
+                        <p class="login-error-text">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -588,6 +639,36 @@
 </div>
 
 <!-- PWA Service Worker Registration -->
+ <script src="https://unpkg.com/feather-icons@4.29.2/dist/feather.min.js"></script>
+ <script src="https://cdn.jsdelivr.net/npm/feather-icons@4.29.2/dist/feather.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const passwordInput = document.getElementById('password');
+    const togglePassword = document.getElementById('togglePassword');
+
+    togglePassword.addEventListener('click', function () {
+        const isPassword = passwordInput.type === 'password';
+
+        passwordInput.type = isPassword ? 'text' : 'password';
+
+        // Ganti icon
+        this.innerHTML = isPassword
+            ? '<i data-feather="eye-off"></i>'
+            : '<i data-feather="eye"></i>';
+
+        // Update accessibility label
+        this.setAttribute(
+            'aria-label',
+            isPassword ? 'Sembunyikan password' : 'Tampilkan password'
+        );
+
+        // Render Feather Icon
+        if (typeof feather !== 'undefined') {
+            feather.replace();
+        }
+    });
+});
+</script>
 <script>
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', function() {

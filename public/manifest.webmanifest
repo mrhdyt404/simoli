@@ -1,7 +1,7 @@
 {
   "name": "SIMOLI - Monitoring Lapangan",
   "short_name": "SIMOLI",
-  "description": "Sistem Informasi Monitoring Lapangan Alat Berat & Limbah Sawit (Offline-First PWA)",
+  "description": "Sistem Monitoring Limbah & Alat Berat",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

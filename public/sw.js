@@ -1,4 +1,4 @@
-const CACHE_NAME = 'simoli-pwa-v6';
+const CACHE_NAME = 'simoli-pwa-v7';
 
 const STATIC_ASSETS = [
     '/manifest.webmanifest',
@@ -7,6 +7,7 @@ const STATIC_ASSETS = [
     '/logo/Logo%20SIMOLI.png',
     '/js/simoli-offline-db.js',
     '/js/simoli-sync-manager.js',
+    '/js/simoli-notifications.js',
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css',
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js',
     'https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.css',
@@ -227,6 +228,7 @@ function generateOfflineCreateFormHTML() {
     <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
     <script src="/js/simoli-offline-db.js"></script>
     <script src="/js/simoli-sync-manager.js"></script>
+    <script src="/js/simoli-notifications.js"></script>
 
     <script>
         feather.replace();
@@ -485,6 +487,60 @@ self.addEventListener('fetch', (event) => {
                     return networkResponse;
                 })
                 .catch(() => new Response('', { status: 408, statusText: 'Offline' }));
+        })
+    );
+});
+
+// Notification Click Event (PWA Window Focus / Navigation)
+self.addEventListener('notificationclick', (event) => {
+    event.notification.close();
+
+    const targetUrl = (event.notification.data && event.notification.data.url) 
+        ? event.notification.data.url 
+        : '/operator';
+
+    event.waitUntil(
+        clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+            // Check if there is already an open window
+            for (const client of clientList) {
+                if ('focus' in client) {
+                    if (client.url.includes('/operator')) {
+                        client.navigate(targetUrl);
+                        return client.focus();
+                    }
+                }
+            }
+            if (clients.openWindow) {
+                return clients.openWindow(targetUrl);
+            }
+        })
+    );
+});
+
+// Push Notification Event (Web Push Fallback)
+self.addEventListener('push', (event) => {
+    let payload = {
+        title: 'SIMOLI Monitoring',
+        body: 'Pemberitahuan baru dari SIMOLI',
+        icon: '/logo/Icon%20SIMOLI.png',
+        url: '/operator'
+    };
+
+    if (event.data) {
+        try {
+            payload = event.data.json();
+        } catch (e) {
+            payload.body = event.data.text();
+        }
+    }
+
+    event.waitUntil(
+        self.registration.showNotification(payload.title || 'SIMOLI Monitoring', {
+            body: payload.body,
+            icon: payload.icon || '/logo/Icon%20SIMOLI.png',
+            badge: '/logo/Icon%20SIMOLI.png',
+            vibrate: [200, 100, 200],
+            data: { url: payload.url || '/operator' }
         })
     );
 });

@@ -29,6 +29,69 @@
     </div>
 </div>
 
+<!-- PWA Notification & Shift Reminder Banner Slot -->
+<div id="simoli-reminder-banner-slot">
+    @php
+        $todayStr = \Carbon\Carbon::now('Asia/Jakarta')->toDateString();
+        $todayFormatted = \Carbon\Carbon::now('Asia/Jakarta')->translatedFormat('l, d F Y');
+        $hasTodayInput = $logs->where('tanggal', $todayStr)->count() > 0;
+        $uncompletedToday = $logs->where('tanggal', $todayStr)->filter(fn($l) => empty($l->foto_sesudah) || empty($l->hm_akhir))->count();
+        $curHour = (int) \Carbon\Carbon::now('Asia/Jakarta')->format('H');
+    @endphp
+
+    @if(!$hasTodayInput)
+        <div class="op-card mb-3 p-3 shadow-sm border-0" style="background: {{ $curHour >= 16 ? '#FEF2F2' : ($curHour >= 12 ? '#FFFBEB' : '#EFF6FF') }}; border-left: 4px solid {{ $curHour >= 16 ? '#EF4444' : ($curHour >= 12 ? '#F59E0B' : '#0F52BA') }} !important;">
+            <div class="d-flex align-items-start gap-2.5">
+                <i class="feather-alert-triangle fs-3 {{ $curHour >= 16 ? 'text-danger' : ($curHour >= 12 ? 'text-warning' : 'text-primary') }} flex-shrink-0 mt-0.5"></i>
+                <div class="w-100">
+                    <div class="fw-bold fs-14 text-dark mb-0.5">
+                        {{ $curHour >= 16 ? 'Peringatan: Laporan Kerja Hari Ini Belum Diisi!' : 'Pengingat Shift: Belum Ada Input Hari Ini' }}
+                    </div>
+                    <div class="text-muted fs-12 mb-2">
+                        Halo <strong>{{ Auth::user()->username }}</strong>, Anda belum mencatat data operasional alat berat untuk hari ini (<strong>{{ $todayFormatted }}</strong>).
+                    </div>
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <a href="{{ route('operator.create') }}" class="btn btn-sm btn-op-primary px-3 py-1.5 fs-12 fw-bold rounded-pill" style="width: auto;">
+                            <i class="feather-plus-circle me-1"></i>Input Laporan Sekarang
+                        </a>
+                        <button type="button" class="btn btn-sm btn-outline-secondary px-2.5 py-1.5 fs-11 rounded-pill" onclick="SimoliNotify.testNotification()" title="Uji Notifikasi PWA">
+                            <i class="feather-bell me-1"></i>Uji Notifikasi
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @elseif($uncompletedToday > 0)
+        <div class="op-card mb-3 p-3 shadow-sm border-0" style="background: #FFFBEB; border-left: 4px solid #F59E0B !important;">
+            <div class="d-flex align-items-start gap-2.5">
+                <i class="feather-clock fs-3 text-warning flex-shrink-0 mt-0.5"></i>
+                <div>
+                    <div class="fw-bold fs-14 text-dark mb-0.5">Shift Sedang Berjalan ({{ $uncompletedToday }} Belum Selesai)</div>
+                    <div class="text-muted fs-12 mb-2">
+                        Terdapat laporan kerja hari ini yang belum ditutup (Foto sesudah & HM akhir). Lengkapi sebelum shift berakhir.
+                    </div>
+                    <a href="#recent-logs" class="btn btn-sm btn-warning text-dark px-3 py-1 fs-12 fw-bold rounded-pill border-0 shadow-sm">
+                        <i class="feather-edit-2 me-1"></i>Selesaikan Shift
+                    </a>
+                </div>
+            </div>
+        </div>
+    @else
+        <div class="op-card mb-3 p-3 shadow-sm border-0" style="background: #F0FDF4; border-left: 4px solid #10B981 !important;">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="feather-check-circle fs-3 text-success flex-shrink-0"></i>
+                    <div>
+                        <div class="fw-bold fs-13 text-dark">Laporan Hari Ini Telah Terisi</div>
+                        <div class="text-muted fs-11">Data operasional kerja hari ini ({{ $todayFormatted }}) sudah tercatat dengan lengkap.</div>
+                    </div>
+                </div>
+                <span class="badge bg-success rounded-pill px-2.5 py-1 fs-11 fw-bold">✓ Lengkap</span>
+            </div>
+        </div>
+    @endif
+</div>
+
 <!-- Offline Outbox Queue Card (Rendered via IndexedDB JS) -->
 <div id="simoli-offline-queue-card" class="op-card mb-3 border-warning" style="display: none; background: #FFFDF5;">
     <div class="op-card-header bg-warning-subtle text-dark d-flex justify-content-between align-items-center py-2 px-3">

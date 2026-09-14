@@ -27,9 +27,14 @@ Route::middleware('auth')->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Arsip Dokumen Peta Land Application CRUD
+    Route::post('pemetaan-la/bulk-lock', [PemetaanLaController::class, 'bulkLock'])->name('pemetaan-la.bulk-lock');
+    Route::post('pemetaan-la/bulk-lock-all', [PemetaanLaController::class, 'bulkLockAll'])->name('pemetaan-la.bulk-lock-all');
+    Route::post('pemetaan-la/{id}/toggle-lock', [PemetaanLaController::class, 'toggleLock'])->name('pemetaan-la.toggle-lock');
     Route::resource('pemetaan-la', PemetaanLaController::class);
 
     // Perizinan Land Application CRUD
+    Route::post('perizinan-la/bulk-lock', [PerizinanLaController::class, 'bulkLock'])->name('perizinan-la.bulk-lock');
+    Route::post('perizinan-la/{id}/toggle-lock', [PerizinanLaController::class, 'toggleLock'])->name('perizinan-la.toggle-lock');
     Route::resource('perizinan-la', PerizinanLaController::class);
 
     // Pengaliran CRUD
@@ -53,6 +58,8 @@ Route::middleware('auth')->group(function () {
     Route::resource('monitoring-alat-berat', MonitoringAlatBeratController::class);
 
     // Data Pengguna (Admin)
+    Route::post('pengguna/pks/{id}/asisten', [UserController::class, 'updatePksAsisten'])->name('pengguna.pks.asisten');
+    Route::post('pengguna/pks/{id}/test-wa', [UserController::class, 'testPksWa'])->name('pengguna.pks.test-wa');
     Route::resource('pengguna', UserController::class);
 
     // Report
@@ -84,6 +91,9 @@ Route::middleware('auth')->group(function () {
         Route::put('/alat-berat/{id}', [\App\Http\Controllers\OperatorMonitoringController::class, 'alatBeratUpdate'])->name('alat-berat.update');
         Route::patch('/alat-berat/{id}/status', [\App\Http\Controllers\OperatorMonitoringController::class, 'alatBeratUpdateStatus'])->name('alat-berat.update-status');
         Route::delete('/alat-berat/{id}', [\App\Http\Controllers\OperatorMonitoringController::class, 'alatBeratDestroy'])->name('alat-berat.destroy');
+
+        // PWA Notification & Shift Input Status
+        Route::get('/check-today-input', [\App\Http\Controllers\OperatorMonitoringController::class, 'checkTodayInput'])->name('check-today-input');
     });
 
 });

@@ -448,6 +448,17 @@ class SyncApiController extends Controller
 
             DB::commit();
 
+            // Kirim notifikasi WhatsApp ke Asisten Unit PKS untuk laporan yang baru tersinkronkan
+            try {
+                $waService = app(\App\Services\SidobeWaService::class);
+                $syncedLogs = MonitoringAlatBerat::with(['pks', 'alatBerat'])->whereIn('uuid', $syncedUuids)->get();
+                foreach ($syncedLogs as $sLog) {
+                    $waService->sendOperatorInputNotification($sLog);
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('[Sidobe WA Sync Notification Error] ' . $e->getMessage());
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => count($syncedUuids) . ' data berhasil disinkronkan ke server.',
@@ -503,5 +514,70 @@ class SyncApiController extends Controller
         } catch (\Exception $e) {
             return null;
         }
+    }
+
+    /**
+     * Check if operator / unit has inputted work logs today (PWA Notification API)
+     */
+    public function checkTodayInput(Request $request)
+    {
+        $user = $this->getAuthenticatedUser($request);
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated',
+            ], 401);
+        }
+
+        $now = Carbon::now('Asia/Jakarta');
+        $today = $now->toDateString();
+        $todayFormatted = $now->translatedFormat('l, d F Y');
+        $currentHour = (int) $now->format('H');
+
+        $query = MonitoringAlatBerat::with('alatBerat')
+            ->whereDate('tanggal', $today);
+
+        if ($user->id_pks) {
+            $query->where('id_pks', $user->id_pks);
+        }
+
+        if ($user->isFieldUser() && $user->isOperator()) {
+            $query->where('operator', $user->username);
+        }
+
+        $todayLogs = $query->orderBy('id', 'desc')->get();
+        $totalToday = $todayLogs->count();
+        $hasInputToday = $totalToday > 0;
+
+        $uncompletedCount = $todayLogs->filter(function ($item) {
+            return empty($item->foto_sesudah) || empty($item->hm_akhir);
+        })->count();
+
+        $latestLog = $todayLogs->first();
+
+        return response()->json([
+            'success' => true,
+            'has_input_today' => $hasInputToday,
+            'total_today' => $totalToday,
+            'uncompleted_shifts' => $uncompletedCount,
+            'completed_shifts' => $totalToday - $uncompletedCount,
+            'today_date' => $today,
+            'today_formatted' => $todayFormatted,
+            'current_hour' => $currentHour,
+            'operator_name' => $user->username,
+            'pks_name' => $user->pks ? $user->pks->nama : 'PKS Unit',
+            'latest_log' => $latestLog ? [
+                'id' => $latestLog->id,
+                'alat' => $latestLog->alatBerat ? $latestLog->alatBerat->kode_alat : 'Unit',
+                'kegiatan' => $latestLog->kegiatan,
+                'created_at' => $latestLog->created_at ? $latestLog->created_at->format('H:i') : null,
+                'is_completed' => $latestLog->isCompleted(),
+            ] : null,
+            'message' => $hasInputToday
+                ? ($uncompletedCount > 0
+                    ? "Terdapat {$uncompletedCount} shift yang belum diselesaikan hari ini."
+                    : "Laporan kerja hari ini telah lengkap ({$totalToday} laporan).")
+                : "Anda belum menginput data laporan kerja operasional hari ini ({$todayFormatted})."
+        ]);
     }
 }

@@ -26,41 +26,90 @@
     <link rel="stylesheet" href="{{ asset('duraluxadmin/assets/vendors/css/vendors.min.css') }}" />
     <link rel="stylesheet" href="{{ asset('duraluxadmin/assets/vendors/css/feather.min.css') }}" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons@4.29.2/dist/feather.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="{{ asset('duraluxadmin/assets/vendors/css/daterangepicker.min.css') }}" />
     <link rel="stylesheet" href="{{ asset('duraluxadmin/assets/css/theme.min.css') }}" />
 
     @yield('styles')
 
+    <script>
+        (function() {
+            try {
+                var savedTheme = localStorage.getItem('simoli_custom_theme_v1');
+                if (savedTheme) {
+                    var config = JSON.parse(savedTheme);
+                    var root = document.documentElement;
+                    if (config.mode === 'dark' || (config.mode === 'auto' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                        root.classList.add('app-skin-dark');
+                    } else if (config.mode === 'light') {
+                        root.classList.remove('app-skin-dark');
+                    }
+                    if (config.themeKey) {
+                        root.setAttribute('data-simoli-theme', config.themeKey);
+                    }
+                }
+            } catch (e) {}
+        })();
+    </script>
     <style>
         /* ================================================================
-           SIMOLI DESIGN SYSTEM — HIJAU PTPN GLOSSY GRADIENT
+           SIMOLI DESIGN SYSTEM — HIJAU PTPN GLOSSY GRADIENT & DYNAMIC THEMES
            Version 3.0 | PTPN IV Land Application Monitoring System
            ================================================================ */
 
         /* === DESIGN TOKENS === */
         :root {
-            /* PTPN Green Palette */
-            --ptpn-50:  #f0fdf4;
-            --ptpn-100: #dcfce7;
-            --ptpn-200: #bbf7d0;
-            --ptpn-300: #86efac;
-            --ptpn-400: #4ade80;
-            --ptpn-500: #22c55e;
-            --ptpn-600: #16a34a;
-            --ptpn-700: #15803d;
-            --ptpn-800: #166534;
-            --ptpn-900: #14532d;
-            --ptpn-950: #052e16;
+            /* Theme Dynamic Base Tokens (Default: Zamrud PTPN) */
+            --theme-primary:        #16a34a;
+            --theme-primary-hover:  #15803d;
+            --theme-primary-subtle: #f0fdf4;
+            --theme-primary-light:  #dcfce7;
+            --theme-primary-200:    #bbf7d0;
+            --theme-primary-300:    #86efac;
+            --theme-accent:         #4ade80;
+            --theme-accent-500:     #22c55e;
+            --theme-primary-800:    #166534;
+            --theme-primary-dark:   #14532d;
+            --theme-primary-darker: #052e16;
+            --theme-secondary:      #d4a017;
+            --theme-glow:           rgba(34, 197, 94, 0.35);
+            --theme-border:         rgba(22, 163, 74, 0.18);
+
+            /* Hero Banner Dynamic Gradient Stops */
+            --theme-hero-from:   #030d07;
+            --theme-hero-mid:    #0a2317;
+            --theme-hero-to:     #0e3b26;
+            --theme-hero-accent: #16a34a;
+            --theme-hero-border: rgba(34, 197, 94, 0.25);
+
+            /* Sidebar gradient stops */
+            --theme-sidebar-from:   #030d07;
+            --theme-sidebar-mid:    #0a2317;
+            --theme-sidebar-to:     #0e3b26;
+            --theme-sidebar-border: rgba(34, 197, 94, 0.12);
+
+            /* PTPN Legacy Mappings linked to Theme Variables */
+            --ptpn-50:  var(--theme-primary-subtle, #f0fdf4);
+            --ptpn-100: var(--theme-primary-light, #dcfce7);
+            --ptpn-200: var(--theme-primary-200, #bbf7d0);
+            --ptpn-300: var(--theme-primary-300, #86efac);
+            --ptpn-400: var(--theme-accent, #4ade80);
+            --ptpn-500: var(--theme-accent-500, #22c55e);
+            --ptpn-600: var(--theme-primary, #16a34a);
+            --ptpn-700: var(--theme-primary-hover, #15803d);
+            --ptpn-800: var(--theme-primary-800, #166534);
+            --ptpn-900: var(--theme-primary-dark, #14532d);
+            --ptpn-950: var(--theme-primary-darker, #052e16);
 
             /* Gold Accent */
-            --ptpn-gold:    #d4a017;
+            --ptpn-gold:    var(--theme-secondary, #d4a017);
             --ptpn-gold-lt: #fef3c7;
 
             /* Sidebar gradient stops */
-            --sidebar-from:  #030d07;
-            --sidebar-mid:   #0a2317;
-            --sidebar-to:    #0e3b26;
+            --sidebar-from:  var(--theme-sidebar-from, #030d07);
+            --sidebar-mid:   var(--theme-sidebar-mid, #0a2317);
+            --sidebar-to:    var(--theme-sidebar-to, #0e3b26);
 
             /* Typography */
             --font-main:    'Plus Jakarta Sans', sans-serif;
@@ -938,6 +987,11 @@
             display: none;
         }
 
+        .logo-lg {
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: 12px;
+        }
+
         .simoli-app.sidebar-mini .sidebar-brand-logo img.logo-sm {
             display: block;
         }
@@ -1352,9 +1406,381 @@
             width: 16px !important; height: 16px !important;
         }
 
+        /* ================================================================
+           THEME CUSTOMIZER DRAWER & CONTROLS
+           ================================================================ */
+        .btn-theme-customizer-trigger {
+            position: relative;
+            background: rgba(22, 163, 74, 0.08);
+            border: 1px solid var(--theme-border, rgba(22, 163, 74, 0.2));
+            color: var(--ptpn-700);
+            transition: all 0.25s ease;
+        }
+
+        .btn-theme-customizer-trigger:hover {
+            background: var(--theme-primary, #16a34a);
+            color: #ffffff;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-glow-green);
+        }
+
+        .theme-trigger-indicator {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--theme-accent, #4ade80);
+            box-shadow: 0 0 6px var(--theme-glow, rgba(34, 197, 94, 0.8));
+            animation: livePulse 2s infinite ease-in-out;
+        }
+
+        /* Drawer Overlay */
+        .simoli-theme-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 1060;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .simoli-theme-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Drawer Container */
+        .simoli-theme-drawer {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 380px;
+            max-width: 90vw;
+            height: 100vh;
+            background: #ffffff;
+            box-shadow: -10px 0 40px rgba(0, 0, 0, 0.25);
+            z-index: 1070;
+            transform: translateX(100%);
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .simoli-theme-drawer.open {
+            transform: translateX(0);
+        }
+
+        html.app-skin-dark .simoli-theme-drawer {
+            background: #0a2317;
+            color: #e2f5ea;
+            border-left: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        .theme-drawer-header {
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(22, 163, 74, 0.12);
+            background: linear-gradient(180deg, var(--ptpn-50, #f0fdf4) 0%, #ffffff 100%);
+        }
+
+        html.app-skin-dark .theme-drawer-header {
+            background: linear-gradient(180deg, #0e3b26 0%, #0a2317 100%);
+            border-bottom-color: rgba(34, 197, 94, 0.15);
+        }
+
+        .theme-drawer-title {
+            font-family: var(--font-heading);
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--ptpn-900, #14532d);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        html.app-skin-dark .theme-drawer-title {
+            color: #d1fae5;
+        }
+
+        .theme-drawer-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 1px solid rgba(22, 163, 74, 0.2);
+            background: transparent;
+            color: var(--ptpn-800, #166534);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .theme-drawer-close:hover {
+            background: #fee2e2;
+            color: #dc2626;
+            border-color: #fca5a5;
+        }
+
+        .theme-drawer-body {
+            padding: 20px 24px;
+            overflow-y: auto;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .theme-section-title {
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--ptpn-700, #15803d);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        html.app-skin-dark .theme-section-title {
+            color: #86efac;
+        }
+
+        /* Live Preview Mini Card */
+        .theme-preview-card {
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid var(--theme-border, rgba(22, 163, 74, 0.2));
+            box-shadow: var(--shadow-md);
+            transition: all 0.3s ease;
+        }
+
+        .theme-preview-hero {
+            padding: 16px;
+            background: linear-gradient(135deg, var(--theme-hero-from) 0%, var(--theme-hero-mid) 50%, var(--theme-hero-accent) 100%);
+            color: #ffffff;
+        }
+
+        .theme-preview-body {
+            padding: 14px 16px;
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        html.app-skin-dark .theme-preview-body {
+            background: #0e3b26;
+        }
+
+        /* Swatches Grid */
+        .theme-swatches-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .theme-swatch-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            border: 1.5px solid rgba(22, 163, 74, 0.15);
+            background: #ffffff;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            text-align: left;
+            width: 100%;
+        }
+
+        html.app-skin-dark .theme-swatch-item {
+            background: #0e3b26;
+            border-color: rgba(34, 197, 94, 0.2);
+            color: #e2f5ea;
+        }
+
+        .theme-swatch-item:hover {
+            transform: translateY(-2px);
+            border-color: var(--theme-primary, #16a34a);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .theme-swatch-item.active {
+            border-color: var(--theme-primary, #16a34a);
+            background: var(--theme-primary-subtle, #f0fdf4);
+            box-shadow: 0 0 0 2px var(--theme-primary, #16a34a);
+        }
+
+        html.app-skin-dark .theme-swatch-item.active {
+            background: rgba(34, 197, 94, 0.15);
+        }
+
+        .theme-swatch-dot {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+            border: 2px solid #ffffff;
+        }
+
+        .theme-swatch-info {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            flex: 1;
+        }
+
+        .theme-swatch-name {
+            font-size: 12px;
+            font-weight: 700;
+            color: #1f2937;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        html.app-skin-dark .theme-swatch-name {
+            color: #d1fae5;
+        }
+
+        .theme-swatch-badge {
+            font-size: 9.5px;
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        html.app-skin-dark .theme-swatch-badge {
+            color: #9ca3af;
+        }
+
+        /* Color Picker Input Box */
+        .theme-custom-picker-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: 12px;
+            border: 1.5px solid rgba(22, 163, 74, 0.2);
+            background: #ffffff;
+        }
+
+        html.app-skin-dark .theme-custom-picker-box {
+            background: #0e3b26;
+            border-color: rgba(34, 197, 94, 0.25);
+        }
+
+        .theme-color-input-native {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            padding: 0;
+            background: none;
+        }
+
+        .theme-color-input-native::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+
+        .theme-color-input-native::-webkit-color-swatch {
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,.2);
+        }
+
+        .theme-hex-input {
+            flex: 1;
+            font-family: monospace;
+            font-weight: 700;
+            font-size: 13px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(22, 163, 74, 0.2);
+            outline: none;
+            text-transform: uppercase;
+        }
+
+        html.app-skin-dark .theme-hex-input {
+            background: #0a2317;
+            border-color: rgba(34, 197, 94, 0.25);
+            color: #ffffff;
+        }
+
+        /* Mode Selection Buttons */
+        .theme-mode-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .theme-mode-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            padding: 12px 8px;
+            border-radius: 12px;
+            border: 1.5px solid rgba(22, 163, 74, 0.15);
+            background: #ffffff;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 11px;
+            font-weight: 700;
+            color: #4b5563;
+        }
+
+        html.app-skin-dark .theme-mode-btn {
+            background: #0e3b26;
+            border-color: rgba(34, 197, 94, 0.2);
+            color: #d1fae5;
+        }
+
+        .theme-mode-btn.active {
+            border-color: var(--theme-primary, #16a34a);
+            background: var(--theme-primary-subtle, #f0fdf4);
+            color: var(--theme-primary-dark, #14532d);
+            box-shadow: 0 0 0 2px var(--theme-primary, #16a34a);
+        }
+
+        html.app-skin-dark .theme-mode-btn.active {
+            background: rgba(34, 197, 94, 0.2);
+            color: #ffffff;
+        }
+
+        .theme-drawer-footer {
+            padding: 16px 24px;
+            border-top: 1px solid rgba(22, 163, 74, 0.12);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #ffffff;
+        }
+
+        html.app-skin-dark .theme-drawer-footer {
+            background: #0a2317;
+            border-top-color: rgba(34, 197, 94, 0.15);
+        }
+
         /* Print override */
         @media print {
-            .simoli-sidebar, .simoli-header { display: none !important; }
+            .simoli-sidebar, .simoli-header, .simoli-theme-drawer, .simoli-theme-overlay { display: none !important; }
             .simoli-main { margin-left: 0 !important; padding-top: 0 !important; }
         }
     </style>
@@ -1374,11 +1800,11 @@
         {{-- Brand Header --}}
         <div class="sidebar-brand">
             <a href="{{ url('/dashboard') }}" class="sidebar-brand-logo" title="SIMOLI Dashboard">
-                <img src="{{ asset('logo/Logo%20SIMOLI.png') }}" alt="SIMOLI" class="logo-lg" />
+                <img src="{{ asset('logo/Icon%20SIMOLI.png') }}" alt="SIMOLI" class="logo-lg" />
                 <img src="{{ asset('logo/Icon%20SIMOLI.png') }}" alt="SIMOLI" class="logo-sm" style="display: none;" />
                 <div class="sidebar-logo-text">
                     <span class="logo-name">SIMOLI</span>
-                    <span class="logo-sub">PTPN IV &bull; Land Aplikasi</span>
+                    <span class="logo-sub">PTPN IV Regional III</span>
                 </div>
             </a>
             <button type="button" class="sidebar-toggle-btn" id="sidebarToggleBtn"
@@ -1425,49 +1851,49 @@
                             </a>
                         </li>
                         <li>
-                            <a class="nav-link-simoli {{ request()->is('pemetaan-la*') ? 'active' : '' }}"
-                               href="{{ route('pemetaan-la.index') }}">
-                                <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-map"></i></span>
-                                <span class="nav-label-text">Arsip Peta LA</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="nav-link-simoli {{ request()->is('perizinan-la*') ? 'active' : '' }}"
-                               href="{{ route('perizinan-la.index') }}">
-                                <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-file-text"></i></span>
-                                <span class="nav-label-text">Arsip SK Izin LA</span>
-                            </a>
-                        </li>
-                        <li>
                             <a class="nav-link-simoli {{ request()->is('report-pemeliharaan*') ? 'active' : '' }}"
-                               href="{{ route('report-pemeliharaan') }}">
-                                <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-tool"></i></span>
-                                <span class="nav-label-text">Pemeliharaan</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="nav-link-simoli {{ request()->is('report-rencana*') ? 'active' : '' }}"
-                               href="{{ route('report-rencana') }}">
-                                <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-clipboard"></i></span>
-                                <span class="nav-label-text">Rencana Tahunan</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="nav-link-simoli {{ request()->is('report-alat-berat*') ? 'active' : '' }}"
-                               href="{{ route('report-alat-berat') }}">
-                                <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-truck"></i></span>
-                                <span class="nav-label-text">Laporan Alat Berat</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="nav-link-simoli {{ request()->is('monitoring-alat-berat*') ? 'active' : '' }}"
-                               href="{{ route('monitoring-alat-berat.index') }}">
-                                <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-activity"></i></span>
-                                <span class="nav-label-text">Log Monitoring</span>
-                            </a>
-                        </li>
-                    </ul>
+                            href="{{ route('report-pemeliharaan') }}">
+                            <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-tool"></i></span>
+                            <span class="nav-label-text">Pemeliharaan</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="nav-link-simoli {{ request()->is('report-alat-berat*') ? 'active' : '' }}"
+                        href="{{ route('report-alat-berat') }}">
+                        <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-truck"></i></span>
+                        <span class="nav-label-text">Laporan Alat Berat</span>
+                    </a>
                 </li>
+                <li>
+                    <a class="nav-link-simoli {{ request()->is('monitoring-alat-berat*') ? 'active' : '' }}"
+                    href="{{ route('monitoring-alat-berat.index') }}">
+                    <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-activity"></i></span>
+                    <span class="nav-label-text">Log Monitoring</span>
+                </a>
+            </li>
+            <li>
+                <a class="nav-link-simoli {{ request()->is('report-rencana*') ? 'active' : '' }}"
+                href="{{ route('report-rencana') }}">
+                <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-clipboard"></i></span>
+                <span class="nav-label-text">Rencana Tahunan</span>
+            </a>
+        </li>
+                </ul>
+            </li>
+            <li>
+                <a class="nav-link-simoli {{ request()->is('pemetaan-la*') ? 'active' : '' }}"
+                href="{{ route('pemetaan-la.index') }}">
+                    <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-map"></i></span>
+                    <span class="nav-label-text">Arsip Peta LA</span>
+                </a>
+            </li>
+            <li>
+                <a class="nav-link-simoli {{ request()->is('perizinan-la*') ? 'active' : '' }}"
+                href="{{ route('perizinan-la.index') }}">
+                    <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-file-text"></i></span>
+                    <span class="nav-label-text">Arsip SK Izin LA</span>
+                </a>
+            </li>
 
                 {{-- Section: Master Data --}}
                 <li class="nav-section-label">Kelola Data</li>
@@ -1521,6 +1947,34 @@
                             </a>
                         </li>
                         <li>
+                            <a class="nav-link-simoli {{ request()->is('pemeliharaan*') ? 'active' : '' }}"
+                            href="{{ route('pemeliharaan.index') }}">
+                            <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-tool"></i></span>
+                            <span class="nav-label-text">Pemeliharaan Bed</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="nav-link-simoli {{ request()->is('alat-berat*') ? 'active' : '' }}"
+                            href="{{ route('alat-berat.index') }}">
+                            <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-truck"></i></span>
+                            <span class="nav-label-text">Data Alat Berat</span>
+                        </a>
+                        </li>
+                        <li>
+                            <a class="nav-link-simoli {{ request()->is('monitoring-alat-berat*') ? 'active' : '' }}"
+                            href="{{ route('monitoring-alat-berat.index') }}">
+                            <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-activity"></i></span>
+                            <span class="nav-label-text">Monitoring Alat Berat</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="nav-link-simoli {{ request()->is('rencana*') ? 'active' : '' }}"
+                        href="{{ route('rencana.index') }}">
+                        <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-clipboard"></i></span>
+                        <span class="nav-label-text">Rencana Tahunan</span>
+                    </a>
+                </li>
+                        <li>
                             <a class="nav-link-simoli {{ request()->is('pemetaan-la*') ? 'active' : '' }}"
                                href="{{ route('pemetaan-la.index') }}">
                                 <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-map"></i></span>
@@ -1532,34 +1986,6 @@
                                href="{{ route('perizinan-la.index') }}">
                                 <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-file-text"></i></span>
                                 <span class="nav-label-text">Arsip SK Izin LA</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="nav-link-simoli {{ request()->is('pemeliharaan*') ? 'active' : '' }}"
-                               href="{{ route('pemeliharaan.index') }}">
-                                <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-tool"></i></span>
-                                <span class="nav-label-text">Pemeliharaan Bed</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="nav-link-simoli {{ request()->is('rencana*') ? 'active' : '' }}"
-                               href="{{ route('rencana.index') }}">
-                                <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-clipboard"></i></span>
-                                <span class="nav-label-text">Rencana Tahunan</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="nav-link-simoli {{ request()->is('alat-berat*') ? 'active' : '' }}"
-                               href="{{ route('alat-berat.index') }}">
-                                <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-truck"></i></span>
-                                <span class="nav-label-text">Data Alat Berat</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="nav-link-simoli {{ request()->is('monitoring-alat-berat*') ? 'active' : '' }}"
-                               href="{{ route('monitoring-alat-berat.index') }}">
-                                <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-activity"></i></span>
-                                <span class="nav-label-text">Monitoring Alat Berat</span>
                             </a>
                         </li>
                     </ul>
@@ -1620,14 +2046,30 @@
             </a> -->
 
             {{-- Dark/Light Toggle --}}
-            <div class="dark-light-theme">
+            <!-- <div class="dark-light-theme">
                 <button type="button" class="hdr-icon-btn dark-button" title="Mode Gelap">
                     <i class="feather-moon" style="font-size:16px;"></i>
                 </button>
                 <button type="button" class="hdr-icon-btn light-button" style="display:none;" title="Mode Terang">
                     <i class="feather-sun" style="font-size:16px;"></i>
                 </button>
-            </div>
+            </div> -->
+
+            {{-- Theme Customizer Trigger Button --}}
+            <button type="button" class="hdr-icon-btn btn-theme-customizer-trigger"
+                    id="btnOpenThemeCustomizer"
+                    title="Kustomisasi Tema Warna Dashboard"
+                    aria-label="Kustomisasi Tema Warna Dashboard"
+                    onclick="window.SimoliTheme && window.SimoliTheme.openCustomizer()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;" aria-hidden="true">
+                    <circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/>
+                    <circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/>
+                    <circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/>
+                    <circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/>
+                    <path d="M12 2C6.49 2 2 6.49 2 12c0 4.97 3.65 9.07 8.35 9.87.55.09 1-.35 1-.9 0-.48-.2-.93-.52-1.28-.48-.52-.73-1.22-.73-1.99 0-1.66 1.34-3 3-3h1.9c3.87 0 7-3.13 7-7 0-5.51-4.49-10-10-10z"/>
+                </svg>
+                <span class="theme-trigger-indicator"></span>
+            </button>
 
             {{-- User Dropdown --}}
             <div class="dropdown">
@@ -1660,6 +2102,16 @@
 
                     <a href="{{ url('/dashboard') }}" class="dropdown-item rounded-2 py-2" style="font-size:12.5px;font-weight:600;">
                         <i class="feather-grid me-2 text-success"></i> Dashboard Utama
+                    </a>
+                    <a href="javascript:void(0);" onclick="window.SimoliTheme && window.SimoliTheme.openCustomizer()" class="dropdown-item rounded-2 py-2 d-flex align-items-center gap-2" style="font-size:12.5px;font-weight:600;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary flex-shrink-0" aria-hidden="true">
+                            <circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/>
+                            <circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/>
+                            <circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/>
+                            <circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/>
+                            <path d="M12 2C6.49 2 2 6.49 2 12c0 4.97 3.65 9.07 8.35 9.87.55.09 1-.35 1-.9 0-.48-.2-.93-.52-1.28-.48-.52-.73-1.22-.73-1.99 0-1.66 1.34-3 3-3h1.9c3.87 0 7-3.13 7-7 0-5.51-4.49-10-10-10z"/>
+                        </svg>
+                        <span>Kustom Tema Warna</span>
                     </a>
                     @if(Auth::user()->isAdmin())
                     <a href="{{ route('pengguna.index') }}" class="dropdown-item rounded-2 py-2" style="font-size:12.5px;font-weight:600;">
@@ -1741,6 +2193,166 @@
     </main>
 
     {{-- ============================================================
+         THEME CUSTOMIZER DRAWER (SLIDE-OVER PANEL)
+         ============================================================ --}}
+    <div class="simoli-theme-overlay" id="simoliThemeOverlay" onclick="window.SimoliTheme && window.SimoliTheme.closeCustomizer()"></div>
+
+    <aside class="simoli-theme-drawer" id="simoliThemeDrawer" aria-label="Panel Kustomisasi Tema SIMOLI">
+        <div class="theme-drawer-header">
+            <h5 class="theme-drawer-title d-flex align-items-center gap-2">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--theme-primary, #16a34a);flex-shrink:0;" aria-hidden="true">
+                    <circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/>
+                    <circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/>
+                    <circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/>
+                    <circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/>
+                    <path d="M12 2C6.49 2 2 6.49 2 12c0 4.97 3.65 9.07 8.35 9.87.55.09 1-.35 1-.9 0-.48-.2-.93-.52-1.28-.48-.52-.73-1.22-.73-1.99 0-1.66 1.34-3 3-3h1.9c3.87 0 7-3.13 7-7 0-5.51-4.49-10-10-10z"/>
+                </svg>
+                <span>Kustom Tema Tampilan</span>
+            </h5>
+            <button type="button" class="theme-drawer-close" aria-label="Tutup" onclick="window.SimoliTheme && window.SimoliTheme.closeCustomizer()">
+                <i class="feather-x" style="font-size:16px;"></i>
+            </button>
+        </div>
+
+        <div class="theme-drawer-body">
+            {{-- 1. Live Preview Mockup --}}
+            <div>
+                <div class="theme-section-title">
+                    <i class="feather-eye"></i> Pratinjau Tema
+                </div>
+                <div class="theme-preview-card" id="themePreviewCard">
+                    <div class="theme-preview-hero" id="themePreviewHero">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="status-pill" id="themePreviewBadge" style="background:rgba(255,255,255,0.2);color:#fff;font-size:9.5px;padding:2px 8px;">Standar PTPN IV</span>
+                            <i class="feather-shield text-white" style="font-size:13px;"></i>
+                        </div>
+                        <div style="font-size:13px;font-weight:800;" id="themePreviewName">Zamrud PTPN</div>
+                        <div style="font-size:10px;opacity:0.8;">Monitoring Land Aplikasi & IPAL</div>
+                    </div>
+                    <div class="theme-preview-body">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="live-dot-sm dot-green"></span>
+                            <span style="font-size:11px;font-weight:700;">Aktif</span>
+                        </div>
+                        <button type="button" id="themePreviewBtn" class="btn-ptpn btn-ptpn-primary" style="padding:4px 12px;font-size:11px;border-radius:6px;pointer-events:none;">
+                            Tombol Aksi
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {{-- 2. Preset Themes --}}
+            <div>
+                <div class="theme-section-title">
+                    <i class="feather-layout"></i> Palet Tema Pilihan (7 Preset)
+                </div>
+                <div class="theme-swatches-grid">
+                    <button type="button" class="theme-swatch-item active" data-theme-key="emerald" onclick="window.SimoliTheme && window.SimoliTheme.setPreset('emerald')">
+                        <span class="theme-swatch-dot" style="background:linear-gradient(135deg,#22c55e,#16a34a);"></span>
+                        <div class="theme-swatch-info">
+                            <span class="theme-swatch-name">Zamrud PTPN</span>
+                            <span class="theme-swatch-badge">Standar Hijau</span>
+                        </div>
+                    </button>
+                    <button type="button" class="theme-swatch-item" data-theme-key="sapphire" onclick="window.SimoliTheme && window.SimoliTheme.setPreset('sapphire')">
+                        <span class="theme-swatch-dot" style="background:linear-gradient(135deg,#3b82f6,#2563eb);"></span>
+                        <div class="theme-swatch-info">
+                            <span class="theme-swatch-name">Biru Samudera</span>
+                            <span class="theme-swatch-badge">Sapphire Navy</span>
+                        </div>
+                    </button>
+                    <button type="button" class="theme-swatch-item" data-theme-key="amethyst" onclick="window.SimoliTheme && window.SimoliTheme.setPreset('amethyst')">
+                        <span class="theme-swatch-dot" style="background:linear-gradient(135deg,#a855f7,#7c3aed);"></span>
+                        <div class="theme-swatch-info">
+                            <span class="theme-swatch-name">Ungu Nebula</span>
+                            <span class="theme-swatch-badge">Violet Glow</span>
+                        </div>
+                    </button>
+                    <button type="button" class="theme-swatch-item" data-theme-key="amber" onclick="window.SimoliTheme && window.SimoliTheme.setPreset('amber')">
+                        <span class="theme-swatch-dot" style="background:linear-gradient(135deg,#f59e0b,#d97706);"></span>
+                        <div class="theme-swatch-info">
+                            <span class="theme-swatch-name">Emas Tembaga</span>
+                            <span class="theme-swatch-badge">Sunset Amber</span>
+                        </div>
+                    </button>
+                    <button type="button" class="theme-swatch-item" data-theme-key="teal" onclick="window.SimoliTheme && window.SimoliTheme.setPreset('teal')">
+                        <span class="theme-swatch-dot" style="background:linear-gradient(135deg,#14b8a6,#0d9488);"></span>
+                        <div class="theme-swatch-info">
+                            <span class="theme-swatch-name">Hijau Teal</span>
+                            <span class="theme-swatch-badge">Tropical Cyan</span>
+                        </div>
+                    </button>
+                    <button type="button" class="theme-swatch-item" data-theme-key="slate" onclick="window.SimoliTheme && window.SimoliTheme.setPreset('slate')">
+                        <span class="theme-swatch-dot" style="background:linear-gradient(135deg,#64748b,#334155);"></span>
+                        <div class="theme-swatch-info">
+                            <span class="theme-swatch-name">Obsidian Slate</span>
+                            <span class="theme-swatch-badge">Modern Graphite</span>
+                        </div>
+                    </button>
+                    <button type="button" class="theme-swatch-item" data-theme-key="rose" onclick="window.SimoliTheme && window.SimoliTheme.setPreset('rose')">
+                        <span class="theme-swatch-dot" style="background:linear-gradient(135deg,#f43f5e,#e11d48);"></span>
+                        <div class="theme-swatch-info">
+                            <span class="theme-swatch-name">Rose Ruby</span>
+                            <span class="theme-swatch-badge">Crimson Elite</span>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            {{-- 3. Custom Color Picker --}}
+            <div>
+                <div class="theme-section-title">
+                    <i class="feather-sliders"></i> Warna Kustom Mandiri
+                </div>
+                <div class="theme-custom-picker-box">
+                    <input type="color" id="customColorPickerInput" class="theme-color-input-native" value="#16a34a"
+                           onchange="window.SimoliTheme && window.SimoliTheme.setCustomHex(this.value)">
+                    <input type="text" id="customColorTextInput" class="theme-hex-input" value="#16A34A" maxlength="7"
+                           placeholder="#16A34A"
+                           onchange="window.SimoliTheme && window.SimoliTheme.setCustomHex(this.value)">
+                    <button type="button" class="btn-ptpn btn-ptpn-primary" style="padding:7px 12px;font-size:12px;"
+                            onclick="var val = document.getElementById('customColorTextInput').value; window.SimoliTheme && window.SimoliTheme.setCustomHex(val);">
+                        Terapkan
+                    </button>
+                </div>
+                <div style="font-size:10.5px;color:#6b7280;margin-top:6px;">
+                    Gradasi sidebar, kartu hero, border, dan chart warna akan dikalkulasi otomatis.
+                </div>
+            </div>
+
+            {{-- 4. Mode Selection --}}
+            <div>
+                <div class="theme-section-title">
+                    <i class="feather-sun"></i> Mode Tampilan
+                </div>
+                <div class="theme-mode-grid">
+                    <button type="button" class="theme-mode-btn active" data-mode="light" onclick="window.SimoliTheme && window.SimoliTheme.setMode('light')">
+                        <i class="feather-sun text-warning" style="font-size:18px;"></i>
+                        <span>Terang</span>
+                    </button>
+                    <button type="button" class="theme-mode-btn" data-mode="dark" onclick="window.SimoliTheme && window.SimoliTheme.setMode('dark')">
+                        <i class="feather-moon text-primary" style="font-size:18px;"></i>
+                        <span>Gelap</span>
+                    </button>
+                    <button type="button" class="theme-mode-btn" data-mode="auto" onclick="window.SimoliTheme && window.SimoliTheme.setMode('auto')">
+                        <i class="feather-monitor text-secondary" style="font-size:18px;"></i>
+                        <span>Sistem</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="theme-drawer-footer">
+            <button type="button" class="btn-ptpn btn-ptpn-outline flex-1 justify-content-center" style="font-size:12px;padding:8px 12px;" onclick="window.SimoliTheme && window.SimoliTheme.resetToDefault()">
+                <i class="feather-refresh-cw"></i> Reset Standar
+            </button>
+            <button type="button" class="btn-ptpn btn-ptpn-primary flex-1 justify-content-center" style="font-size:12px;padding:8px 12px;" onclick="window.SimoliTheme && window.SimoliTheme.closeCustomizer()">
+                <i class="feather-check"></i> Selesai
+            </button>
+        </div>
+    </aside>
+
+    {{-- ============================================================
          SCRIPTS
          ============================================================ --}}
     <script src="{{ asset('duraluxadmin/assets/vendors/js/vendors.min.js') }}"></script>
@@ -1749,6 +2361,7 @@
     @yield('scripts')
     <script src="{{ asset('duraluxadmin/assets/js/theme-customizer-init.min.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="{{ asset('js/simoli-theme-manager.js') }}"></script>
 
     <!-- SIMOLI Sidebar Controller -->
     <script>

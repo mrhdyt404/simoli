@@ -15,10 +15,31 @@
         <a href="{{ route('pemetaan-la.index') }}" class="btn-ptpn btn-ptpn-outline">
             <i class="feather-arrow-left"></i> Kembali
         </a>
-        @if(Auth::user()->isAdmin() || Auth::user()->id_pks == $peta->id_pks)
+        @if(Auth::user()->isAdmin() || (Auth::user()->id_pks == $peta->id_pks && !$peta->is_locked))
         <a href="{{ route('pemetaan-la.edit', $peta->id) }}" class="btn-ptpn btn-ptpn-primary">
             <i class="feather-edit-2"></i> Edit Metadata / Ganti Berkas
         </a>
+        @elseif(Auth::user()->id_pks == $peta->id_pks && $peta->is_locked)
+        <button type="button" class="btn-ptpn btn-ptpn-outline text-muted opacity-75" title="Data arsip dikunci oleh Admin" disabled>
+            <i class="feather-lock text-danger"></i> Terkunci oleh Admin
+        </button>
+        @endif
+
+        @if(Auth::user()->isAdmin())
+        <form action="{{ route('pemetaan-la.toggle-lock', $peta->id) }}" method="POST" class="d-inline m-0 p-0">
+            @csrf
+            <button type="submit" class="btn-ptpn {{ $peta->is_locked ? 'btn-ptpn-outline text-danger' : 'btn-ptpn-outline' }}" title="{{ $peta->is_locked ? 'Buka Kunci Arsip' : 'Kunci Arsip Peta' }}">
+                <i class="{{ $peta->is_locked ? 'feather-lock text-danger' : 'feather-unlock' }}"></i>
+                <span>{{ $peta->is_locked ? 'Buka Kunci' : 'Kunci Arsip' }}</span>
+            </button>
+        </form>
+        <form action="{{ route('pemetaan-la.destroy', $peta->id) }}" method="POST" class="d-inline m-0 p-0" onsubmit="return confirm('Apakah Anda yakin ingin menghapus arsip peta ini?');">
+            @csrf
+            @method('DELETE')
+            <button type="submit" class="btn-ptpn btn-ptpn-outline text-danger" title="Hapus Arsip">
+                <i class="feather-trash-2"></i> Hapus
+            </button>
+        </form>
         @endif
     </div>
 @endsection
@@ -39,6 +60,13 @@
                     <div style="font-size:36px;color:#16a34a;margin-bottom:6px;">
                         <i class="feather-map"></i>
                     </div>
+                    @if($peta->is_locked)
+                    <div class="mb-2">
+                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-1 rounded-pill" style="font-size:11.5px;font-weight:700;">
+                            <i class="feather-lock"></i> Dikunci oleh Admin
+                        </span>
+                    </div>
+                    @endif
                     <span class="badge bg-success px-3 py-1 rounded-pill mb-2" style="font-size:12px;">
                         {{ $peta->kategori_peta }}
                     </span>

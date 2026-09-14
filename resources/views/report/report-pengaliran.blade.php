@@ -917,43 +917,19 @@
                     {{-- Right Corporate Logos --}}
                     <div class="col-md-5 col-12">
                         <div class="corp-logos-container">
-                            {{-- BUMN Logo SVG --}}
+                            {{-- BUMN Logo --}}
                             <div class="corp-logo-item" title="BUMN Untuk Indonesia">
-                                <svg width="125" height="42" viewBox="0 0 200 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <text x="5" y="38" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-weight="900" font-size="34" fill="#0066b2" letter-spacing="-1">BUMN</text>
-                                    <path d="M125 18H132V38H125V18Z" fill="#00a3e0"/>
-                                    <text x="138" y="27" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-weight="800" font-size="10" fill="#0066b2" letter-spacing="0.5">UNTUK</text>
-                                    <text x="138" y="38" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-weight="900" font-size="10" fill="#0066b2" letter-spacing="0.5">INDONESIA</text>
-                                </svg>
+                                <img src="{{ asset('img/png-transparent-bumn-untuk-indonesia-thumbnail.png') }}" alt="BUMN Untuk Indonesia" style="max-height: 40px; width: auto; object-fit: contain;">
                             </div>
 
-                            {{-- PTPN 4 Logo SVG --}}
+                            {{-- PTPN 4 Logo --}}
                             <div class="corp-logo-item" title="PTPN 4">
-                                <svg width="75" height="46" viewBox="0 0 90 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <!-- Sprout Top Leaf (Orange) -->
-                                    <path d="M45 4C45 4 38 12 45 20C52 12 45 4 45 4Z" fill="#f97316"/>
-                                    <!-- Left Leaf Wing (Orange/Gold) -->
-                                    <path d="M34 16C34 16 33 22 41 22C39 16 34 16 34 16Z" fill="#f59e0b"/>
-                                    <!-- Right Leaf Wing (Orange/Gold) -->
-                                    <path d="M56 16C56 16 57 22 49 22C51 16 56 16 56 16Z" fill="#f59e0b"/>
-                                    <!-- Bottom Palm Fronds (Green) -->
-                                    <path d="M26 26C32 24 45 25 45 34C45 25 58 24 64 26C60 38 52 38 45 36C38 38 30 38 26 26Z" fill="#15803d"/>
-                                    <path d="M22 34C28 32 45 33 45 42C45 33 62 32 68 34C64 44 54 44 45 42C36 44 26 44 22 34Z" fill="#166534"/>
-                                    <!-- Text PTPN 4 -->
-                                    <text x="45" y="55" text-anchor="middle" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-weight="900" font-size="11" fill="#15803d" letter-spacing="0.5">PTPN 4</text>
-                                </svg>
+                                <img src="{{ asset('img/Logo PTPN IV-CyWK9qsP.png') }}" alt="PTPN IV" style="max-height: 48px; width: auto; object-fit: contain;">
                             </div>
 
-                            {{-- Perkebunan Nusantara Logo SVG --}}
+                            {{-- Perkebunan Nusantara Logo --}}
                             <div class="corp-logo-item" title="Perkebunan Nusantara">
-                                <svg width="135" height="42" viewBox="0 0 160 55" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <!-- Ribbon waving shapes -->
-                                    <path d="M8 22C24 6 52 38 72 16C62 26 40 10 24 24C16 30 10 26 8 22Z" fill="#16a34a"/>
-                                    <path d="M18 26C34 12 60 40 80 20C70 28 50 16 34 28C26 34 20 30 18 26Z" fill="#eab308"/>
-                                    <path d="M28 30C44 18 68 42 88 24C78 30 58 22 44 32C36 38 30 34 28 30Z" fill="#0284c7"/>
-                                    <!-- Subtitle text -->
-                                    <text x="48" y="48" text-anchor="middle" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-weight="800" font-size="8.5" fill="#0f172a" letter-spacing="0.2">Perkebunan Nusantara</text>
-                                </svg>
+                                <img src="{{ asset('img/logo-perkebunan-nusantara-ptpn-png-svg.webp') }}" alt="Perkebunan Nusantara" style="max-height: 44px; width: auto; object-fit: contain;">
                             </div>
                         </div>
                     </div>

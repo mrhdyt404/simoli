@@ -484,6 +484,12 @@
                     <span>Online</span>
                 </span>
 
+                <!-- Notification Status & Test Button -->
+                <button type="button" id="simoli-notif-toggle-btn" class="btn btn-sm btn-outline-light rounded-pill px-2.5 py-1 fs-11 fw-semibold d-inline-flex align-items-center gap-1" onclick="SimoliNotify.testNotification()" title="Status & Uji Notifikasi PWA">
+                    <i class="feather-bell"></i>
+                    <span class="d-none d-sm-inline ms-1">Notifikasi</span>
+                </button>
+
                 <!-- Sync Trigger Button -->
                 <button type="button" id="simoli-sync-btn" class="sync-btn" onclick="SimoliSync.pushPendingQueue(true)" title="Sinkronkan Data Offline">
                     <i class="feather-refresh-cw"></i>
@@ -553,6 +559,7 @@
     <!-- PWA Offline-First Scripts -->
     <script src="/js/simoli-offline-db.js"></script>
     <script src="/js/simoli-sync-manager.js"></script>
+    <script src="/js/simoli-notifications.js"></script>
 
     <script>
         if (window.feather) {
@@ -605,6 +612,21 @@
                     .catch((err) => console.warn('[PWA] Service Worker registration failed:', err));
             });
         }
+
+        // Trigger PWA notification on flash success
+        @if(session('success'))
+            document.addEventListener('DOMContentLoaded', () => {
+                if (window.SimoliNotify) {
+                    SimoliNotify.send({
+                        title: '📝 Berhasil Disimpan',
+                        body: '{{ addslashes(session('success')) }}',
+                        type: 'success',
+                        tag: 'simoli-flash-' + Date.now(),
+                        url: '{{ route('operator.index') }}'
+                    });
+                }
+            });
+        @endif
     </script>
     @yield('scripts')
 </body>

@@ -17,6 +17,7 @@ Route::get('user', [AuthController::class, 'user']);
 // PWA Offline-First Sync Routes
 Route::get('sync/pull', [SyncApiController::class, 'pull']);
 Route::post('sync/push', [SyncApiController::class, 'push']);
+Route::get('operator/check-today-input', [SyncApiController::class, 'checkTodayInput']);
 
 Route::get('dashboard/stats', [MonitoringApiController::class, 'dashboardStats']);
 Route::get('master-data', [MonitoringApiController::class, 'masterData']);

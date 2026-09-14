@@ -59,7 +59,58 @@ class UserController extends Controller
         $totalMandor = User::where('level_akses', 'mandor')->count();
         $totalOperator = User::where('level_akses', 'operator')->count();
 
-        return view('pengguna.index', compact('users', 'totalUsers', 'totalAdmin', 'totalUnit', 'totalMandor', 'totalOperator'));
+        $pksList = Pks::orderBy('id_pks')->get();
+
+        return view('pengguna.index', compact('users', 'totalUsers', 'totalAdmin', 'totalUnit', 'totalMandor', 'totalOperator', 'pksList'));
+    }
+
+    public function updatePksAsisten(Request $request, $id)
+    {
+        $this->requireAdmin();
+
+        $pks = Pks::findOrFail($id);
+
+        $validated = $request->validate([
+            'asisten' => 'nullable|string|max:100',
+            'wa_asisten' => 'nullable|string|max:30',
+        ]);
+
+        $pks->update([
+            'asisten' => $validated['asisten'] ?? null,
+            'wa_asisten' => $validated['wa_asisten'] ?? null,
+        ]);
+
+        return redirect()->back()->with('success', "Kontak Asisten & Nomor WhatsApp untuk {$pks->nama} berhasil diperbarui.");
+    }
+
+    public function testPksWa(Request $request, $id, \App\Services\SidobeWaService $waService)
+    {
+        $this->requireAdmin();
+
+        $pks = Pks::findOrFail($id);
+
+        if (empty($pks->wa_asisten)) {
+            return redirect()->back()->with('error', "Nomor WhatsApp Asisten untuk {$pks->nama} belum diisi.");
+        }
+
+        $now = now()->format('d-m-Y H:i:s');
+        $namaAsisten = $pks->asisten ?: 'Bapak/Ibu Asisten';
+        $message = "🔔 *TES NOTIFIKASI SIMOLI — PTPN IV*\n"
+            . "-------------------------------------------\n"
+            . "Halo {$namaAsisten},\n"
+            . "Ini adalah pesan verifikasi koneksi gateway Sidobe WhatsApp untuk Unit *{$pks->nama}*.\n\n"
+            . "✅ *Status Gateway:* Terhubung & Aktif\n"
+            . "⏰ *Waktu:* {$now} WIB\n\n"
+            . "_Sistem SIMOLI siap mengirimkan notifikasi monitoring alat berat & pengingat harian ke nomor ini._";
+
+        $result = $waService->sendMessage($pks->wa_asisten, $message);
+
+        if ($result['success']) {
+            return redirect()->back()->with('success', "Pesan tes WhatsApp berhasil dikirim ke {$pks->wa_asisten} ({$pks->nama}).");
+        } else {
+            $errDetail = $result['message'] ?? ($result['error'] ?? 'Respon API gagal');
+            return redirect()->back()->with('error', "Gagal mengirim pesan tes WA ke {$pks->wa_asisten}: {$errDetail}");
+        }
     }
 
     public function create()

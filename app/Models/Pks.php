@@ -15,6 +15,8 @@ class Pks extends Model
         'kode',
         'nama',
         'manager',
+        'asisten',
+        'wa_asisten',
         'akro',
     ];
 

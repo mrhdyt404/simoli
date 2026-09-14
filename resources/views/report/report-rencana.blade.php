@@ -396,7 +396,8 @@
                 <thead>
                     <tr>
                         <th style="width:50px;text-align:center;">No</th>
-                        <th style="min-width:120px;">Tahun</th>
+                        <th style="min-width:;">kebun</th>
+                        <th style="min-width:;">Tahun</th>
                         <th style="text-align:right;min-width:140px;">Flat Bed</th>
                         <th style="text-align:right;min-width:140px;">Long Bed</th>
                         <th style="text-align:right;min-width:140px;">Total Bed</th>
@@ -406,7 +407,8 @@
                     @foreach($items as $j => $item)
                     <tr>
                         <td style="text-align:center;font-weight:700;color:#9ca3af;">{{ $j + 1 }}</td>
-                        <td><span class="mod-pill mod-pill-ok" style="font-size:11px;">{{ $item->tahun }}</span></td>
+                        <td><span class="mod-pill mod-pill-ok" style="font-size:11px;">{{ $item->nama_pks}}</span></td>
+                        <td><span class="mod-pill mod-pill-ok" style="font-size:11px;">{{ $item->tahun}}</span></td>
                         <td style="text-align:right;font-weight:700;color:#1d4ed8;">{{ number_format($item->flat_bed) }}</td>
                         <td style="text-align:right;font-weight:700;color:#b45309;">{{ number_format($item->long_bed) }}</td>
                         <td style="text-align:right;font-weight:800;color:#14532d;">{{ number_format($item->flat_bed + $item->long_bed) }}</td>

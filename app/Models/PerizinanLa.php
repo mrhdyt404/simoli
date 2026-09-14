@@ -31,6 +31,7 @@ class PerizinanLa extends Model
         'file_peta',
         'status_izin',
         'keterangan',
+        'is_locked',
     ];
 
     protected $casts = [
@@ -43,6 +44,7 @@ class PerizinanLa extends Model
         'luas_areal_izin' => 'float',
         'lat_titik_penaatan' => 'float',
         'long_titik_penaatan' => 'float',
+        'is_locked' => 'boolean',
     ];
 
     public function pks()

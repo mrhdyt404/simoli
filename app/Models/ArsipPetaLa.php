@@ -17,6 +17,11 @@ class ArsipPetaLa extends Model
         'tipe_file',
         'ukuran_file',
         'keterangan',
+        'is_locked',
+    ];
+
+    protected $casts = [
+        'is_locked' => 'boolean',
     ];
 
     public function pks()

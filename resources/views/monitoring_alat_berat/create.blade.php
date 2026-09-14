@@ -308,7 +308,7 @@
                         <div class="photo-upload-box" onclick="document.getElementById('foto_sebelum').click()">
                             <i class="feather-upload-cloud d-block mb-2" style="font-size: 28px; color: #16a34a;"></i>
                             <small class="text-muted d-block" id="label_sebelum">Klik untuk upload foto sebelum</small>
-                            <input type="file" name="foto_sebelum" id="foto_sebelum" class="d-none" accept="image/*" onchange="previewImage(this, 'preview_sebelum', 'label_sebelum'); getGpsAwal();">
+                            <input type="file" name="foto_sebelum" id="foto_sebelum" class="d-none" accept="image/*" onchange="previewImage(this, 'preview_sebelum', 'label_sebelum'); getGpsAwal();" required>
                         </div>
                         <img id="preview_sebelum" class="photo-preview-img" alt="Preview Sebelum">
                     </div>

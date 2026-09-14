@@ -422,6 +422,160 @@
         @endif
     </div>
 
+    {{-- ================================================================
+         4. KONTAK WHATSAPP ASISTEN UNIT PKS (GATEWAY SIDOBE)
+         ================================================================ --}}
+    @if(isset($pksList) && $pksList->count() > 0)
+    <div class="usr-table-card mt-4">
+        <div class="usr-table-header" style="background: linear-gradient(135deg, rgba(22,163,74,0.06), rgba(34,197,94,0.02));">
+            <div>
+                <h3 class="usr-table-title">
+                    <i class="feather-message-circle" style="color:#25d366;font-size:20px;"></i>
+                    Kontak WhatsApp Asisten Unit PKS (Notifikasi Sidobe)
+                </h3>
+                <small style="color:#6b7280;font-size:12px;display:block;margin-top:2px;">
+                    Nomor WhatsApp ini otomatis menerima notifikasi real-time saat operator mengisi laporan kerja serta pengingat harian.
+                </small>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="mod-pill mod-pill-ok" style="font-size:11px;font-weight:700;">
+                    <i class="feather-check-circle me-1"></i> Sidobe WA Gateway Active
+                </span>
+            </div>
+        </div>
+
+        <div class="table-responsive" style="-webkit-overflow-scrolling: touch;">
+            <table class="usr-table" role="table" aria-label="Daftar Kontak Asisten Unit PKS">
+                <thead>
+                    <tr>
+                        <th style="width:50px;text-align:center;">#</th>
+                        <th style="min-width:140px;">Unit PKS</th>
+                        <th style="min-width:160px;">Nama Asisten PKS</th>
+                        <th style="min-width:160px;">No. WhatsApp Asisten</th>
+                        <th style="width:140px;text-align:center;">Status Notif WA</th>
+                        <th style="width:160px;text-align:center;">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($pksList as $idx => $pksItem)
+                    <tr>
+                        <td style="text-align:center;font-weight:700;color:#9ca3af;font-size:12px;">
+                            {{ $idx + 1 }}
+                        </td>
+                        <td>
+                            <div style="font-weight:700;color:#14532d;font-size:13px;">{{ $pksItem->nama }}</div>
+                            <small style="color:#6b7280;font-size:11px;">Kode: {{ $pksItem->kode ?? '-' }} | Akro: {{ $pksItem->akro ?? '-' }}</small>
+                        </td>
+                        <td>
+                            @if(!empty($pksItem->asisten))
+                                <div class="d-flex align-items-center gap-2">
+                                    <div style="width:28px;height:28px;border-radius:50%;background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;flex-shrink:0;">
+                                        {{ strtoupper(substr($pksItem->asisten, 0, 1)) }}
+                                    </div>
+                                    <span style="font-weight:700;color:#1f2937;font-size:12.5px;">{{ $pksItem->asisten }}</span>
+                                </div>
+                            @else
+                                <span class="text-muted fst-italic" style="font-size:12px;">Belum diatur</span>
+                            @endif
+                        </td>
+                        <td>
+                            @if(!empty($pksItem->wa_asisten))
+                                <div class="d-flex align-items-center gap-1.5">
+                                    <i class="feather-phone" style="color:#25d366;font-size:13px;"></i>
+                                    <code style="font-weight:800;color:#166534;background:#f0fdf4;border:1px solid #bbf7d0;padding:3px 7px;border-radius:6px;font-size:12px;">
+                                        {{ $pksItem->wa_asisten }}
+                                    </code>
+                                </div>
+                            @else
+                                <span class="text-muted fst-italic" style="font-size:12px;">-</span>
+                            @endif
+                        </td>
+                        <td style="text-align:center;">
+                            @if(!empty($pksItem->wa_asisten))
+                                <span class="mod-pill mod-pill-ok" style="font-size:10.5px;font-weight:700;">
+                                    <i class="feather-check me-1"></i> Aktif
+                                </span>
+                            @else
+                                <span class="mod-pill mod-pill-warn" style="font-size:10.5px;font-weight:700;">
+                                    <i class="feather-alert-circle me-1"></i> Kosong
+                                </span>
+                            @endif
+                        </td>
+                        <td style="text-align:center;">
+                            <div class="d-flex gap-1.5 justify-content-center align-items-center">
+                                <button type="button" class="btn btn-sm btn-outline-success btn-edit-asisten" 
+                                        data-id="{{ $pksItem->id_pks }}"
+                                        data-nama="{{ $pksItem->nama }}"
+                                        data-asisten="{{ $pksItem->asisten ?? '' }}"
+                                        data-wa="{{ $pksItem->wa_asisten ?? '' }}"
+                                        title="Ubah Kontak Asisten & WA"
+                                        style="border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:4px;">
+                                    <i class="feather-edit-3"></i> Edit
+                                </button>
+                                @if(!empty($pksItem->wa_asisten))
+                                <form action="{{ route('pengguna.pks.test-wa', $pksItem->id_pks) }}" method="POST" class="d-inline form-test-wa">
+                                    @csrf
+                                    <button type="button" class="btn btn-sm btn-outline-primary btn-test-wa" 
+                                            title="Kirim Pesan Tes WhatsApp ke {{ $pksItem->wa_asisten }}"
+                                            style="border-radius:8px;padding:4px 8px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:4px;">
+                                        <i class="feather-send"></i> Tes
+                                    </button>
+                                </form>
+                                @endif
+                            </div>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+    @endif
+
+    {{-- MODAL EDIT ASISTEN PKS --}}
+    <div class="modal fade" id="modalEditAsisten" tabindex="-1" aria-labelledby="modalEditAsistenLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius:18px;border:none;box-shadow:0 10px 30px rgba(0,0,0,0.15);">
+                <form id="formEditAsisten" method="POST" action="">
+                    @csrf
+                    <div class="modal-header" style="background:#052e16;color:#86efac;border-top-left-radius:18px;border-top-right-radius:18px;padding:16px 20px;">
+                        <h5 class="modal-title fs-15 fw-bold" id="modalEditAsistenLabel" style="color:#ffffff;display:flex;align-items:center;gap:8px;">
+                            <i class="feather-message-circle" style="color:#25d366;"></i>
+                            Atur Kontak Asisten PKS
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted fs-12 text-uppercase">Unit PKS</label>
+                            <input type="text" id="modalPksName" class="form-control fw-bold" readonly style="background:#f3f4f6;color:#14532d;">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold fs-12 text-uppercase text-dark">Nama Asisten Unit <span class="text-danger">*</span></label>
+                            <input type="text" name="asisten" id="modalAsisten" class="form-control" placeholder="Contoh: Bpk. Bambang Sutrisno" required style="border-radius:10px;padding:9px 12px;">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label fw-bold fs-12 text-uppercase text-dark">Nomor WhatsApp Asisten <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-muted fw-bold" style="border-top-left-radius:10px;border-bottom-left-radius:10px;">+62</span>
+                                <input type="text" name="wa_asisten" id="modalWaAsisten" class="form-control" placeholder="Contoh: 081234567890 atau 6281234567890" required style="border-top-right-radius:10px;border-bottom-right-radius:10px;padding:9px 12px;">
+                            </div>
+                            <small class="text-muted" style="font-size:11px;display:block;margin-top:4px;">
+                                <i class="feather-info me-1"></i> Format dapat diawali 08... atau 628... Sistem Sidobe otomatis memformat nomor.
+                            </small>
+                        </div>
+                    </div>
+                    <div class="modal-footer p-3 bg-light" style="border-bottom-left-radius:18px;border-bottom-right-radius:18px;">
+                        <button type="button" class="btn btn-secondary px-3" data-bs-dismiss="modal" style="border-radius:10px;font-size:13px;">Batal</button>
+                        <button type="submit" class="btn-ptpn btn-ptpn-primary px-4" style="border-radius:10px;font-size:13px;">
+                            <i class="feather-save me-1"></i> Simpan Kontak
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
 </article>
 @endsection
 
@@ -429,6 +583,7 @@
 <script src="{{ asset('duraluxadmin/assets/vendors/js/sweetalert2.min.js') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Delete user handler
     document.querySelectorAll('.btn-delete').forEach(function(btn) {
         btn.addEventListener('click', function(e) {
             e.preventDefault();
@@ -441,6 +596,56 @@ document.addEventListener('DOMContentLoaded', function() {
                 confirmButtonColor: '#dc2626',
                 cancelButtonColor: '#6b7280',
                 confirmButtonText: 'Ya, Hapus!',
+                cancelButtonText: 'Batal',
+                reverseButtons: true,
+                borderRadius: '16px'
+            }).then((result) => {
+                if (result.value) {
+                    form.submit();
+                }
+            });
+        });
+    });
+
+    // Edit Asisten Modal handler
+    const modalEl = document.getElementById('modalEditAsisten');
+    const bsModal = modalEl ? new bootstrap.Modal(modalEl) : null;
+    const formEditAsisten = document.getElementById('formEditAsisten');
+    const modalPksName = document.getElementById('modalPksName');
+    const modalAsisten = document.getElementById('modalAsisten');
+    const modalWaAsisten = document.getElementById('modalWaAsisten');
+
+    document.querySelectorAll('.btn-edit-asisten').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const pksId = this.dataset.id;
+            const pksName = this.dataset.nama;
+            const asisten = this.dataset.asisten;
+            const wa = this.dataset.wa;
+
+            if (formEditAsisten) {
+                formEditAsisten.action = '/pengguna/pks/' + pksId + '/asisten';
+            }
+            if (modalPksName) modalPksName.value = pksName;
+            if (modalAsisten) modalAsisten.value = asisten;
+            if (modalWaAsisten) modalWaAsisten.value = wa;
+
+            if (bsModal) bsModal.show();
+        });
+    });
+
+    // Test WA handler
+    document.querySelectorAll('.btn-test-wa').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const form = this.closest('form');
+            Swal.fire({
+                title: 'Kirim Pesan Tes WA?',
+                text: 'Sistem akan mengirimkan pesan uji koneksi WhatsApp via Gateway Sidobe ke nomor asisten.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#16a34a',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Kirim Sekarang',
                 cancelButtonText: 'Batal',
                 reverseButtons: true,
                 borderRadius: '16px'

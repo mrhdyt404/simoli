@@ -163,6 +163,11 @@ class PerizinanLaController extends Controller
             abort(403, 'Anda tidak memiliki hak untuk mengedit arsip izin unit PKS lain.');
         }
 
+        if (!$user->isAdmin() && $perizinan->is_locked) {
+            return redirect()->route('perizinan-la.show', $perizinan->id)
+                ->with('error', 'Dokumen SK izin ini telah dikunci oleh Administrator Regional dan tidak dapat diedit.');
+        }
+
         if (!$user->isAdmin()) {
             $daftarPks = Pks::where('id_pks', $user->id_pks)->get();
         } else {
@@ -182,6 +187,11 @@ class PerizinanLaController extends Controller
 
         if (!$user->isAdmin() && $perizinan->id_pks != $user->id_pks) {
             abort(403, 'Anda tidak memiliki hak untuk memperbarui arsip izin unit PKS lain.');
+        }
+
+        if (!$user->isAdmin() && $perizinan->is_locked) {
+            return redirect()->route('perizinan-la.show', $perizinan->id)
+                ->with('error', 'Dokumen SK izin ini telah dikunci oleh Administrator Regional dan tidak dapat diedit.');
         }
 
         $request->validate([
@@ -235,16 +245,17 @@ class PerizinanLaController extends Controller
     }
 
     /**
-     * Hapus Arsip Dokumen SK
+     * Hapus Arsip Dokumen SK (Hanya Admin)
      */
     public function destroy(string $id)
     {
-        $perizinan = PerizinanLa::findOrFail($id);
         $user = Auth::user();
 
-        if (!$user->isAdmin() && $perizinan->id_pks != $user->id_pks) {
-            abort(403, 'Anda tidak memiliki hak untuk menghapus arsip unit PKS lain.');
+        if (!$user->isAdmin()) {
+            abort(403, 'Akses ditolak. Unit PKS tidak diperbolehkan menghapus data arsip perizinan.');
         }
+
+        $perizinan = PerizinanLa::findOrFail($id);
 
         if ($perizinan->file_sk && file_exists(public_path('uploads/perizinan_la/' . $perizinan->file_sk))) {
             @unlink(public_path('uploads/perizinan_la/' . $perizinan->file_sk));
@@ -254,5 +265,60 @@ class PerizinanLaController extends Controller
 
         return redirect()->route('perizinan-la.index')
             ->with('success', 'Arsip Dokumen SK Perizinan LA berhasil dihapus.');
+    }
+
+    /**
+     * Kunci / Buka Kunci Edit Data Arsip SK (Admin Only)
+     */
+    public function toggleLock(Request $request, string $id)
+    {
+        $user = Auth::user();
+
+        if (!$user->isAdmin()) {
+            abort(403, 'Hanya Administrator Regional yang berhak mengunci atau membuka kunci data arsip.');
+        }
+
+        $perizinan = PerizinanLa::findOrFail($id);
+        $perizinan->is_locked = !$perizinan->is_locked;
+        $perizinan->save();
+
+        $msg = $perizinan->is_locked
+            ? 'Arsip SK "' . $perizinan->nomor_sk . '" berhasil DIKUNCI. Unit PKS tidak dapat mengedit arsip ini.'
+            : 'Kunci Arsip SK "' . $perizinan->nomor_sk . '" berhasil DIBUKA. Unit PKS kini dapat mengedit.';
+
+        return redirect()->back()->with('success', $msg);
+    }
+
+    /**
+     * Kunci / Buka Kunci Semua Data Arsip Dokumen SK Izin LA (Admin Only - Semua Unit / Unit Tertentu)
+     */
+    public function bulkLock(Request $request)
+    {
+        $user = Auth::user();
+
+        if (!$user->isAdmin()) {
+            abort(403, 'Hanya Administrator Regional yang berhak mengunci atau membuka kunci data arsip.');
+        }
+
+        $action = $request->input('action', 'lock'); // 'lock' or 'unlock'
+        $isLocked = ($action === 'lock');
+        $idPks = $request->input('id_pks');
+
+        $query = PerizinanLa::query();
+        if ($idPks && $idPks !== 'all') {
+            $query->where('id_pks', $idPks);
+            $pks = Pks::find($idPks);
+            $targetName = $pks ? 'Unit ' . $pks->nama : 'Unit Terpilih';
+        } else {
+            $targetName = 'SEMUA UNIT PKS';
+        }
+
+        $totalUpdated = $query->update(['is_locked' => $isLocked]);
+
+        $msg = $isLocked
+            ? "Berhasil! Seluruh dokumen SK Izin Land Application ({$totalUpdated} dokumen) untuk {$targetName} telah DIKUNCI. Pengguna Unit tidak dapat mengedit."
+            : "Berhasil! Seluruh dokumen SK Izin Land Application ({$totalUpdated} dokumen) untuk {$targetName} telah DIBUKA KUNCI. Pengguna Unit kini dapat mengedit.";
+
+        return redirect()->back()->with('success', $msg);
     }
 }

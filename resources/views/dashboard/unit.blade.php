@@ -53,8 +53,8 @@
     }
 
     .unit-hero-ok {
-        background: linear-gradient(135deg, #030d07 0%, #0a2317 40%, #166534 80%, #16a34a 100%);
-        border-color: rgba(34,197,94,.25);
+        background: linear-gradient(135deg, var(--theme-hero-from, #030d07) 0%, var(--theme-hero-mid, #0a2317) 40%, var(--theme-primary-800, #166534) 80%, var(--theme-hero-accent, #16a34a) 100%);
+        border-color: var(--theme-hero-border, rgba(34,197,94,.25));
     }
 
     .unit-hero-warn {
@@ -211,15 +211,15 @@
     .stat-card {
         background: #ffffff;
         border-radius: 16px;
-        border: 1px solid rgba(22,163,74,.1);
-        box-shadow: 0 2px 12px rgba(22,163,74,.06);
+        border: 1px solid var(--theme-border, rgba(22,163,74,.1));
+        box-shadow: 0 2px 12px var(--theme-border, rgba(22,163,74,.06));
         padding: 18px 20px;
         height: 100%;
         transition: all .2s ease;
         animation: fadeUpCard .4s ease-out;
     }
 
-    .stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(22,163,74,.1); }
+    .stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px var(--theme-glow, rgba(22,163,74,.1)); }
 
     .stat-card-header {
         display: flex;
@@ -227,14 +227,14 @@
         justify-content: space-between;
         margin-bottom: 16px;
         padding-bottom: 12px;
-        border-bottom: 1px solid rgba(22,163,74,.08);
+        border-bottom: 1px solid var(--theme-border, rgba(22,163,74,.08));
     }
 
     .stat-card-title {
         font-family: 'Outfit', sans-serif;
         font-size: 14px;
         font-weight: 800;
-        color: #14532d;
+        color: var(--ptpn-900, #14532d);
         display: flex;
         align-items: center;
         gap: 7px;
@@ -349,15 +349,15 @@
     .chart-card-unit {
         background: #ffffff;
         border-radius: 16px;
-        border: 1px solid rgba(22,163,74,.1);
-        box-shadow: 0 2px 12px rgba(22,163,74,.06);
+        border: 1px solid var(--theme-border, rgba(22,163,74,.1));
+        box-shadow: 0 2px 12px var(--theme-border, rgba(22,163,74,.06));
         overflow: hidden;
         animation: fadeUpCard .4s ease-out .15s both;
     }
 
     .chart-card-unit-header {
         padding: 16px 20px;
-        border-bottom: 1px solid rgba(22,163,74,.08);
+        border-bottom: 1px solid var(--theme-border, rgba(22,163,74,.08));
         display: flex;
         align-items: flex-start;
         justify-content: space-between;
@@ -369,7 +369,7 @@
         font-family: 'Outfit', sans-serif;
         font-size: 14px;
         font-weight: 800;
-        color: #14532d;
+        color: var(--ptpn-900, #14532d);
         display: flex;
         align-items: center;
         gap: 7px;
@@ -395,13 +395,13 @@
         color: #111827;
     }
     .btn-periode-tab.active {
-        background: #16a34a !important;
+        background: var(--theme-primary, #16a34a) !important;
         color: #ffffff !important;
-        box-shadow: 0 2px 8px rgba(22,163,74,.25);
+        box-shadow: 0 2px 8px var(--theme-glow, rgba(22,163,74,.25));
     }
     html.app-skin-dark .btn-periode-tab { color: #9ca3af; }
     html.app-skin-dark .btn-periode-tab:hover { background: #1e293b; color: #f3f4f6; }
-    html.app-skin-dark .btn-periode-tab.active { background: #16a34a !important; color: #ffffff !important; }
+    html.app-skin-dark .btn-periode-tab.active { background: var(--theme-primary, #16a34a) !important; color: #ffffff !important; }
     html.app-skin-dark #periodeFilterContainer { background: #0e3b26 !important; border-color: rgba(34,197,94,.2) !important; }
     html.app-skin-dark .chart-param-guide { background: #0e3b26 !important; border-color: rgba(34,197,94,.2) !important; }
     html.app-skin-dark .style-guide-items span { color: #9ca3af !important; }
@@ -415,14 +415,14 @@
         gap: 10px;
         margin-bottom: 16px;
         padding-bottom: 10px;
-        border-bottom: 2px solid rgba(22,163,74,.1);
+        border-bottom: 2px solid var(--theme-border, rgba(22,163,74,.1));
     }
 
     .unit-section-title {
         font-family: 'Outfit', sans-serif;
         font-size: clamp(14px, 1vw + 10px, 16px);
         font-weight: 800;
-        color: #14532d;
+        color: var(--ptpn-900, #14532d);
         display: flex;
         align-items: center;
         gap: 8px;
@@ -432,8 +432,8 @@
     .unit-section-dot {
         width: 8px; height: 8px;
         border-radius: 50%;
-        background: linear-gradient(135deg, #16a34a, #4ade80);
-        box-shadow: 0 0 6px rgba(34,197,94,.5);
+        background: linear-gradient(135deg, var(--theme-primary, #16a34a), var(--theme-accent, #4ade80));
+        box-shadow: 0 0 6px var(--theme-glow, rgba(34,197,94,.5));
     }
 
     /* === DARK MODE === */
@@ -999,9 +999,13 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     var isDark    = document.documentElement.classList.contains('app-skin-dark');
-    var fontFam   = "'Outfit','Plus Jakarta Sans',sans-serif";
-    var labelClr  = isDark ? '#6b8f72' : '#6b7280';
-    var gridColor = isDark ? 'rgba(34,197,94,0.06)' : 'rgba(22,163,74,0.06)';
+    var curTheme  = window.SimoliTheme && window.SimoliTheme.currentConfig ? window.SimoliTheme.currentConfig : null;
+    var primary   = (curTheme && curTheme.themeData) ? curTheme.themeData.primary : '#16a34a';
+    var secondary = (curTheme && curTheme.themeData) ? (curTheme.themeData.secondary || '#0284c7') : '#0284c7';
+
+    var gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+    var labelClr  = isDark ? '#9ca3af' : '#6b7280';
+    var fontFam   = "'Outfit', 'Plus Jakarta Sans', sans-serif";
 
     var chartEl = document.querySelector('#volumeChart');
     if (!chartEl) return;
@@ -1025,7 +1029,7 @@ document.addEventListener('DOMContentLoaded', function() {
             background: 'transparent',
             animations: { enabled: true, easing: 'easeinout', speed: 700 }
         },
-        colors: ['#16a34a', '#0284c7'],
+        colors: [primary, secondary],
         fill: {
             type: 'gradient',
             gradient: {
@@ -1060,6 +1064,26 @@ document.addEventListener('DOMContentLoaded', function() {
 
     var volumeChart = new ApexCharts(chartEl, volumeChartOptions);
     volumeChart.render();
+
+    /* ── Reactive Listener for Theme Changes ── */
+    window.addEventListener('simoli:theme-changed', function(e) {
+        var d = e.detail;
+        var p = d.primary;
+        var sec = d.secondary || '#0284c7';
+        var dark = d.isDark;
+        var lClr = dark ? '#9ca3af' : '#6b7280';
+        var gClr = dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+
+        if (volumeChart) {
+            volumeChart.updateOptions({
+                colors: [p, sec],
+                grid: { borderColor: gClr },
+                xaxis: { labels: { style: { colors: lClr } } },
+                yaxis: { labels: { style: { colors: lClr } } },
+                tooltip: { theme: dark ? 'dark' : 'light' }
+            });
+        }
+    });
 
     /* Function to fetch chart data asynchronously via AJAX without URL navigation */
     window.applyFilterGrafik = function() {

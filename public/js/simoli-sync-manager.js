@@ -223,7 +223,9 @@ const SimoliSync = (() => {
                 const syncedUuids = result.synced_uuids || [];
                 await SimoliDB.markAsSynced(syncedUuids);
 
-                if (window.showToastNotification) {
+                if (window.SimoliNotify && syncedUuids.length > 0) {
+                    SimoliNotify.notifySyncSuccess(syncedUuids.length);
+                } else if (window.showToastNotification) {
                     showToastNotification(`✓ ${syncedUuids.length} laporan berhasil tersinkron ke database server!`, 'success');
                 }
             } else {
@@ -310,7 +312,17 @@ const SimoliSync = (() => {
         await SimoliDB.addToQueue(reportObject);
         await updateNetworkStatusUI();
 
-        // 2. If online, trigger background push immediately
+        // 2. Trigger PWA Input Notification
+        if (window.SimoliNotify) {
+            SimoliNotify.notifyInputSuccess({
+                operator: reportObject.operator,
+                alat: reportObject.alat_berat_id,
+                tanggal: reportObject.tanggal,
+                is_offline: !navigator.onLine
+            });
+        }
+
+        // 3. If online, trigger background push immediately
         if (navigator.onLine) {
             pushPendingQueue(false);
         }

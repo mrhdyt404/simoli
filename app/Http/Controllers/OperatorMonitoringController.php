@@ -391,6 +391,13 @@ class OperatorMonitoringController extends Controller
             }
         }
 
+        // Kirim notifikasi WhatsApp ke Asisten Unit PKS via Sidobe
+        try {
+            app(\App\Services\SidobeWaService::class)->sendOperatorInputNotification($log);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('[Sidobe WA Notification Error] ' . $e->getMessage());
+        }
+
         return redirect()->route('operator.index')->with('success', 'Laporan kerja alat berat berhasil disimpan!');
     }
 
@@ -634,6 +641,13 @@ class OperatorMonitoringController extends Controller
             }
         }
 
+        // Kirim notifikasi WhatsApp pembaruan/penyelesaian shift ke Asisten Unit PKS via Sidobe
+        try {
+            app(\App\Services\SidobeWaService::class)->sendOperatorInputNotification($log);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('[Sidobe WA Notification Error] ' . $e->getMessage());
+        }
+
         return redirect()->route('operator.index')->with('success', 'Laporan kerja berhasil diperbarui!');
     }
 
@@ -793,5 +807,87 @@ class OperatorMonitoringController extends Controller
         $alatBerat->delete();
 
         return redirect()->route('operator.alat-berat.index')->with('success', 'Unit alat berat berhasil dihapus!');
+    }
+
+    /**
+     * Check if operator / unit has inputted work logs today (PWA Notification & Reminder API)
+     */
+    public function checkTodayInput(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated'
+            ], 401);
+        }
+
+        $now = Carbon::now('Asia/Jakarta');
+        $today = $now->toDateString();
+        $todayFormatted = $now->translatedFormat('l, d F Y');
+        $currentHour = (int) $now->format('H');
+
+        $query = MonitoringAlatBerat::with('alatBerat')
+            ->whereDate('tanggal', $today);
+
+        if ($user->id_pks) {
+            $query->where('id_pks', $user->id_pks);
+        }
+
+        // If field operator, specifically check if they themselves have logged
+        if ($user->isOperator()) {
+            $query->where('operator', $user->username);
+        }
+
+        $todayLogs = $query->orderBy('id', 'desc')->get();
+        $totalToday = $todayLogs->count();
+        $hasInputToday = $totalToday > 0;
+
+        $uncompletedLogs = $todayLogs->filter(function ($item) {
+            return empty($item->foto_sesudah) || empty($item->hm_akhir);
+        });
+        $uncompletedCount = $uncompletedLogs->count();
+
+        $latestLog = $todayLogs->first();
+
+        // Reminder urgency based on time of day
+        $urgency = 'normal';
+        if (!$hasInputToday) {
+            if ($currentHour >= 16) {
+                $urgency = 'critical'; // End of workday, no input yet!
+            } elseif ($currentHour >= 12) {
+                $urgency = 'high'; // Mid-day reminder
+            } elseif ($currentHour >= 8) {
+                $urgency = 'medium'; // Morning shift start
+            }
+        } elseif ($uncompletedCount > 0 && $currentHour >= 15) {
+            $urgency = 'high'; // Shift nearing end, uncompleted
+        }
+
+        return response()->json([
+            'success' => true,
+            'has_input_today' => $hasInputToday,
+            'total_today' => $totalToday,
+            'uncompleted_shifts' => $uncompletedCount,
+            'completed_shifts' => $totalToday - $uncompletedCount,
+            'today_date' => $today,
+            'today_formatted' => $todayFormatted,
+            'current_hour' => $currentHour,
+            'urgency' => $urgency,
+            'operator_name' => $user->username,
+            'pks_name' => $user->pks ? $user->pks->nama : 'PKS Unit',
+            'latest_log' => $latestLog ? [
+                'id' => $latestLog->id,
+                'alat' => $latestLog->alatBerat ? $latestLog->alatBerat->kode_alat : 'Unit',
+                'kegiatan' => $latestLog->kegiatan,
+                'created_at' => $latestLog->created_at ? $latestLog->created_at->format('H:i') : null,
+                'is_completed' => $latestLog->isCompleted(),
+            ] : null,
+            'message' => $hasInputToday
+                ? ($uncompletedCount > 0
+                    ? "Terdapat {$uncompletedCount} shift yang belum diselesaikan hari ini."
+                    : "Laporan kerja hari ini telah lengkap ({$totalToday} laporan).")
+                : "Anda belum menginput data laporan kerja operasional hari ini ({$todayFormatted})."
+        ]);
     }
 }
