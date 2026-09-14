@@ -206,7 +206,7 @@ class PengaliranController extends Controller
             'rotasi' => 'nullable|string',
             'keterangan' => 'nullable|string',
             'id_pks' => 'required|integer',
-            'foto' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'foto' => 'required|image|mimes:jpg,jpeg,png|max:2048',
         ];
 
         $volDihasilkan = (int) $request->vol_limbah_dihasilkan;
@@ -238,6 +238,7 @@ class PengaliranController extends Controller
         }
 
         $messages = [
+            'foto.required' => 'Foto dokumentasi pengaliran wajib diunggah sebelum mengirim laporan.',
             'foto.image' => 'File yang diunggah harus berupa gambar.',
             'foto.mimes' => 'Foto dokumentasi harus berformat JPG, JPEG, atau PNG.',
             'foto.max' => 'Ukuran foto maksimal 2 MB.',
@@ -310,7 +311,7 @@ class PengaliranController extends Controller
             'rotasi' => 'nullable|string',
             'keterangan' => 'nullable|string',
             'id_pks' => 'required|integer',
-            'foto' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'foto' => $pengaliran->foto ? 'nullable|image|mimes:jpg,jpeg,png|max:2048' : 'required|image|mimes:jpg,jpeg,png|max:2048',
         ];
 
         $volDihasilkan = (int) $request->vol_limbah_dihasilkan;
@@ -339,6 +340,7 @@ class PengaliranController extends Controller
         }
 
         $messages = [
+            'foto.required' => 'Foto dokumentasi pengaliran wajib diunggah.',
             'foto.image' => 'File yang diunggah harus berupa gambar.',
             'foto.mimes' => 'Foto dokumentasi harus berformat JPG, JPEG, atau PNG.',
             'foto.max' => 'Ukuran foto maksimal 2 MB.',

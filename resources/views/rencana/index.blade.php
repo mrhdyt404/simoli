@@ -12,13 +12,13 @@
 
 @section('page-actions')
     <div class="d-flex align-items-center gap-2 flex-wrap">
-        <a href="{{ route('report-pemeliharaan') }}" class="btn-ptpn btn-ptpn-outline" style="font-weight:700;">
+        <a href="{{ route('report-rencana') }}" class="btn-ptpn btn-ptpn-outline" style="font-weight:700;">
             <i class="feather-printer" style="font-size:14px;"></i>
             <span>Export / Cetak PDF</span>
         </a>
-        <a href="{{ route('pemeliharaan.create') }}" class="btn-ptpn btn-ptpn-primary">
+        <a href="{{ route('rencana.create') }}" class="btn-ptpn btn-ptpn-primary">
             <i class="feather-plus" style="font-size:15px;"></i>
-            <span>Tambah Data</span>
+            <span>Tambah Rencana</span>
         </a>
     </div>
 @endsection

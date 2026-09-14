@@ -17,6 +17,9 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             AlatBeratSeeder::class,
+            MandorUserSeeder::class,
+            OperatorUserSeeder::class,
+            DummyRencanaSeeder::class,
         ]);
     }
 }

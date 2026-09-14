@@ -31,7 +31,11 @@ class ReportPemeliharaanController extends Controller
         // Official PKS sequence: TPU, TME, SPA, SGO, SBT, LDA, SGH, TAN, TER, STA, SRO, SIN
         $pksOrder = ['TPU', 'TME', 'SPA', 'SGO', 'SBT', 'LDA', 'SGH', 'TAN', 'TER', 'STA', 'SRO', 'SIN'];
 
-        $pksList = Pks::get()->sortBy(function ($pks) use ($pksOrder) {
+        $pksQuery = Pks::query();
+        if ($user->isUnit()) {
+            $pksQuery->where('id_pks', $user->id_pks);
+        }
+        $pksList = $pksQuery->get()->sortBy(function ($pks) use ($pksOrder) {
             $idx = array_search(strtoupper($pks->akro ?? ''), $pksOrder);
             return $idx === false ? 999 : $idx;
         })->values();

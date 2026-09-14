@@ -13,7 +13,9 @@ class ReportAlatBeratController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        $pksList = Pks::orderBy('nama')->get();
+        $pksList = ($user && $user->isUnit()) 
+            ? Pks::where('id_pks', $user->id_pks)->get() 
+            : Pks::orderBy('nama')->get();
 
         $bulan = $request->input('bulan', date('m'));
         $tahun = $request->input('tahun', date('Y'));
