@@ -11,6 +11,10 @@
 @endsection
 
 @section('page-actions')
+    <a href="{{ route('report-alat-berat') }}" class="btn-ptpn btn-ptpn-outline me-2">
+        <i class="feather-printer" style="font-size:15px;"></i>
+        <span>Export / Cetak PDF</span>
+    </a>
     @if(Auth::user()->isUnit())
     <a href="{{ route('monitoring-alat-berat.create') }}" class="btn-ptpn btn-ptpn-primary">
         <i class="feather-plus" style="font-size:15px;"></i>

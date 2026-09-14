@@ -104,9 +104,17 @@ class RencanaController extends Controller
 
         $rencanaData = $query->orderBy('id_pks')->get();
 
-        $rencanaByPks = $rencanaData->groupBy(function ($item) {
-            return $item->pks ? $item->pks->AKRO : 'N/A';
-        });
+        if ($user->isUnit() || $request->filled('id_pks')) {
+            $firstPks = $rencanaData->first()?->pks;
+            $groupName = $firstPks ? ($firstPks->nama . ' (' . $firstPks->akro . ')') : 'Unit PKS';
+            $rencanaByPks = [
+                $groupName => $rencanaData
+            ];
+        } else {
+            $rencanaByPks = [
+                'Seluruh Unit PKS' => $rencanaData
+            ];
+        }
 
         $summary = [
             'count' => $rencanaData->count(),

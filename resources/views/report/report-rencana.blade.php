@@ -163,6 +163,18 @@
     .empty-report { padding: 60px 20px; text-align: center; }
     .empty-report i { font-size: 56px; color: #d1d5db; margin-bottom: 12px; }
 
+    .pks-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 3px 9px;
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 800;
+        background: linear-gradient(135deg, #052e16, #166534);
+        color: #86efac;
+        box-shadow: 0 1px 4px rgba(5,46,22,.15);
+    }
+
     /* Dark mode */
     html.app-skin-dark .filter-card,
     html.app-skin-dark .rrc-kpi,
@@ -223,12 +235,13 @@
     @if($rencanaData->count() > 0)
         @foreach($rencanaByPks as $pksName => $items)
         <div style="margin-top:14px;margin-bottom:16px;">
-            <div style="font-size:11px;font-weight:800;margin-bottom:4px;text-transform:uppercase;">PKS {{ $pksName }}</div>
+            <div style="font-size:11px;font-weight:800;margin-bottom:4px;text-transform:uppercase;">{{ str_starts_with($pksName, 'Seluruh') ? $pksName : 'PKS ' . $pksName }}</div>
             <table class="print-report-table">
                 <thead>
                     <tr>
                         <th style="width:30px;">No</th>
-                        <th>Tahun</th>
+                        <th style="width:55px;">Tahun</th>
+                        <th style="text-align:left;">Nama PKS</th>
                         <th style="text-align:right;">Flat Bed</th>
                         <th style="text-align:right;">Long Bed</th>
                         <th style="text-align:right;">Total Bed</th>
@@ -238,7 +251,8 @@
                     @foreach($items as $j => $item)
                     <tr>
                         <td style="text-align:center;">{{ $j + 1 }}</td>
-                        <td>{{ $item->tahun }}</td>
+                        <td style="text-align:center;">{{ $item->tahun }}</td>
+                        <td>{{ $item->pks ? $item->pks->nama . ' (' . $item->pks->akro . ')' : '-' }}</td>
                         <td style="text-align:right;">{{ number_format($item->flat_bed) }}</td>
                         <td style="text-align:right;">{{ number_format($item->long_bed) }}</td>
                         <td style="text-align:right;">{{ number_format($item->flat_bed + $item->long_bed) }}</td>
@@ -247,7 +261,7 @@
                 </tbody>
                 <tfoot>
                     <tr class="print-subtotal-row">
-                        <td colspan="2" style="text-align:right;">Subtotal {{ $pksName }}</td>
+                        <td colspan="3" style="text-align:right;">Total {{ $pksName }}</td>
                         <td style="text-align:right;">{{ number_format($items->sum('flat_bed')) }}</td>
                         <td style="text-align:right;">{{ number_format($items->sum('long_bed')) }}</td>
                         <td style="text-align:right;">{{ number_format($items->sum('flat_bed') + $items->sum('long_bed')) }}</td>
@@ -387,7 +401,7 @@
         @foreach($rencanaByPks as $pksName => $items)
         <div class="pks-group-header">
             <div>
-                <i class="feather-home me-1"></i> PKS {{ $pksName }}
+                <i class="feather-home me-1"></i> {{ str_starts_with($pksName, 'Seluruh') ? $pksName : 'PKS ' . $pksName }}
             </div>
             <span class="mod-pill mod-pill-info" style="font-size:11px;">{{ $items->count() }} data</span>
         </div>
@@ -396,7 +410,8 @@
                 <thead>
                     <tr>
                         <th style="width:50px;text-align:center;">No</th>
-                        <th style="min-width:120px;">Tahun</th>
+                        <th style="width:90px;text-align:center;">Tahun</th>
+                        <th style="min-width:180px;">Nama PKS</th>
                         <th style="text-align:right;min-width:140px;">Flat Bed</th>
                         <th style="text-align:right;min-width:140px;">Long Bed</th>
                         <th style="text-align:right;min-width:140px;">Total Bed</th>
@@ -406,7 +421,17 @@
                     @foreach($items as $j => $item)
                     <tr>
                         <td style="text-align:center;font-weight:700;color:#9ca3af;">{{ $j + 1 }}</td>
-                        <td><span class="mod-pill mod-pill-ok" style="font-size:11px;">{{ $item->tahun }}</span></td>
+                        <td style="text-align:center;"><span class="mod-pill mod-pill-ok" style="font-size:11px;">{{ $item->tahun }}</span></td>
+                        <td>
+                            @if($item->pks)
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="pks-badge">{{ $item->pks->akro }}</span>
+                                <span style="font-weight:700;color:#14532d;font-size:12.5px;">{{ $item->pks->nama }}</span>
+                            </div>
+                            @else
+                            <span style="color:#9ca3af;">-</span>
+                            @endif
+                        </td>
                         <td style="text-align:right;font-weight:700;color:#1d4ed8;">{{ number_format($item->flat_bed) }}</td>
                         <td style="text-align:right;font-weight:700;color:#b45309;">{{ number_format($item->long_bed) }}</td>
                         <td style="text-align:right;font-weight:800;color:#14532d;">{{ number_format($item->flat_bed + $item->long_bed) }}</td>
@@ -415,7 +440,7 @@
                 </tbody>
                 <tfoot>
                     <tr>
-                        <td colspan="2" style="text-align:right;">Subtotal PKS {{ $pksName }}</td>
+                        <td colspan="3" style="text-align:right;">Subtotal {{ $pksName }}</td>
                         <td style="text-align:right;color:#1d4ed8;">{{ number_format($items->sum('flat_bed')) }}</td>
                         <td style="text-align:right;color:#b45309;">{{ number_format($items->sum('long_bed')) }}</td>
                         <td style="text-align:right;color:#14532d;">{{ number_format($items->sum('flat_bed') + $items->sum('long_bed')) }}</td>

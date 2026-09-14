@@ -384,6 +384,39 @@
             color: var(--ptpn-600);
         }
 
+        .login-input-has-toggle {
+            padding-right: 46px;
+        }
+
+        .password-toggle-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            padding: 6px;
+            color: #9ca3af;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            font-size: 17px;
+            line-height: 1;
+        }
+
+        .password-toggle-btn:hover {
+            color: var(--ptpn-600);
+            background: rgba(22, 163, 74, 0.08);
+        }
+
+        .password-toggle-btn:focus {
+            outline: none;
+            color: var(--ptpn-700);
+        }
+
         .login-error-text {
             font-size: 11.5px;
             color: #ef4444;
@@ -561,12 +594,15 @@
                             type="password"
                             id="password"
                             name="password"
-                            class="login-input @error('password') is-invalid @enderror"
+                            class="login-input login-input-has-toggle @error('password') is-invalid @enderror"
                             placeholder="Masukkan password Anda"
                             autocomplete="current-password"
                             required
                         >
                         <i class="feather-lock login-input-icon"></i>
+                        <button type="button" class="password-toggle-btn" id="togglePasswordBtn" aria-label="Lihat Password" title="Lihat Password">
+                            <i class="feather-eye" id="togglePasswordIcon"></i>
+                        </button>
                     </div>
                     @error('password')
                     <p class="login-error-text">{{ $message }}</p>
@@ -587,8 +623,25 @@
     </aside>
 </div>
 
-<!-- PWA Service Worker Registration -->
+<!-- Password Toggle & PWA Service Worker Registration -->
 <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var toggleBtn = document.getElementById('togglePasswordBtn');
+        var passwordInput = document.getElementById('password');
+        var toggleIcon = document.getElementById('togglePasswordIcon');
+
+        if (toggleBtn && passwordInput && toggleIcon) {
+            toggleBtn.addEventListener('click', function() {
+                var isPassword = passwordInput.type === 'password';
+                passwordInput.type = isPassword ? 'text' : 'password';
+                toggleIcon.className = isPassword ? 'feather-eye-off' : 'feather-eye';
+                var titleText = isPassword ? 'Sembunyikan Password' : 'Lihat Password';
+                toggleBtn.setAttribute('title', titleText);
+                toggleBtn.setAttribute('aria-label', titleText);
+            });
+        }
+    });
+
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', function() {
             navigator.serviceWorker.register('/sw.js').catch(function() {});

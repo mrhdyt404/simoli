@@ -328,8 +328,8 @@ INSERT INTO `pks` (`id_pks`, `kode`, `nama`, `akro`, `manager`) VALUES
 (11, '05.PKS.SRO', 'SEI ROKAN', 'SRO', 'Eisyen Firdausman ST.'),
 (12, '05.PKS.SIN', 'SEI INTAN', 'SIN', 'Aswar Batubara'),
 (13, '05.TEKPOL', 'TEKNIK DAN PENGOLAHAN', 'TEP', '-'),
-(14, '05.DTM', 'DISTRICT TIMUR', 'DTM', '-'),
-(15, '05.DBR', 'DISTRICT BARAT', 'DBR', '-');
+(14, '05.DTM', 'DISTRIK TIMUR', 'DTM', '-'),
+(15, '05.DBR', 'DISTRIK BARAT', 'DBR', '-');
 
 -- --------------------------------------------------------
 

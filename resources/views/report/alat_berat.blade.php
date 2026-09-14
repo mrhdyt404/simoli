@@ -598,9 +598,11 @@
                     <i class="feather-home me-1" style="color:#16a34a;"></i> Unit PKS
                 </label>
                 <select name="id_pks" class="form-select" data-select2-selector="status">
-                    <option value="">Semua PKS Unit</option>
+                    @if(!auth()->user() || !auth()->user()->isUnit())
+                        <option value="">Semua PKS Unit</option>
+                    @endif
                     @foreach($pksList as $pks)
-                        <option value="{{ $pks->id_pks }}" {{ request('id_pks') == $pks->id_pks ? 'selected' : '' }}>
+                        <option value="{{ $pks->id_pks }}" {{ (request('id_pks') == $pks->id_pks || (auth()->user() && auth()->user()->isUnit() && auth()->user()->id_pks == $pks->id_pks)) ? 'selected' : '' }}>
                             {{ $pks->nama }} ({{ $pks->akro }})
                         </option>
                     @endforeach

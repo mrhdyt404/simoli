@@ -108,7 +108,7 @@ class ReportPengaliranController extends Controller
         }
 
         // PKS list for filter dropdown
-        $allPks = Pks::orderBy('id_pks')->get();
+        $allPks = $user->isUnit() ? Pks::where('id_pks', $user->id_pks)->get() : Pks::orderBy('id_pks')->get();
 
         // Standard official sequence matching the report layout
         $pksOrder = ['TPU', 'TME', 'SGO', 'SPA', 'SGH', 'SBT', 'LDA', 'TAN', 'TER', 'STA', 'SRO', 'SIN'];
