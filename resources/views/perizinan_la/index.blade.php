@@ -336,7 +336,6 @@
                     </button>
                     @endif
 
-                    {{-- Admin Only Actions: Lock/Unlock & Delete --}}
                     @if(Auth::user()->isAdmin())
                     <form action="{{ route('perizinan-la.toggle-lock', $item->id) }}" method="POST" class="d-inline m-0 p-0">
                         @csrf
@@ -344,6 +343,9 @@
                             <i class="{{ $item->is_locked ? 'feather-lock text-danger' : 'feather-unlock' }}" style="font-size:14.5px;"></i>
                         </button>
                     </form>
+                    @endif
+
+                    @if(Auth::user()->isAdmin() || (Auth::user()->id_pks == $item->id_pks && !$item->is_locked))
                     <form action="{{ route('perizinan-la.destroy', $item->id) }}" method="POST" class="d-inline m-0 p-0" onsubmit="return confirm('Apakah Anda yakin ingin menghapus arsip SK ini?');">
                         @csrf
                         @method('DELETE')

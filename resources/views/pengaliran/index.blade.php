@@ -490,14 +490,25 @@
                         </td>
 
                         <td style="text-align:center;" onclick="event.stopPropagation();">
-                            <a href="{{ route('pengaliran.show', $item->id_pengaliran) }}"
-                               class="tbl-action tbl-action-view" title="Lihat Detail">
-                                <i class="feather-eye"></i>
-                            </a>
-                            <a href="{{ route('pengaliran.edit', $item->id_pengaliran) }}"
-                               class="tbl-action tbl-action-edit" title="Edit Data" style="margin-left:4px;">
-                                <i class="feather-edit-2"></i>
-                            </a>
+                            <div class="d-flex gap-1 justify-content-center">
+                                <a href="{{ route('pengaliran.show', $item->id_pengaliran) }}"
+                                   class="tbl-action tbl-action-view" title="Lihat Detail">
+                                    <i class="feather-eye"></i>
+                                </a>
+                                @if(Auth::user()->isAdmin() || Auth::user()->id_pks == $item->id_pks)
+                                <a href="{{ route('pengaliran.edit', $item->id_pengaliran) }}"
+                                   class="tbl-action tbl-action-edit" title="Edit Data">
+                                    <i class="feather-edit-2"></i>
+                                </a>
+                                <form action="{{ route('pengaliran.destroy', $item->id_pengaliran) }}" method="POST" class="d-inline form-delete">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="tbl-action tbl-action-delete btn-delete" title="Hapus Data">
+                                        <i class="feather-trash-2"></i>
+                                    </button>
+                                </form>
+                                @endif
+                            </div>
                         </td>
                     </tr>
                     @endforeach

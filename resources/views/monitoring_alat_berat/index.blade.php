@@ -15,12 +15,10 @@
         <i class="feather-printer" style="font-size:15px;"></i>
         <span>Export / Cetak PDF</span>
     </a>
-    @if(Auth::user()->isUnit())
     <a href="{{ route('monitoring-alat-berat.create') }}" class="btn-ptpn btn-ptpn-primary">
         <i class="feather-plus" style="font-size:15px;"></i>
         <span>Tambah Log Monitoring</span>
     </a>
-    @endif
 @endsection
 
 @section('styles')
@@ -290,6 +288,16 @@
                     </select>
                 </div>
 
+                <div class="col-lg-3 col-md-6 col-6">
+                    <label><i class="feather-calendar me-1" style="color:#16a34a;"></i> Dari Tanggal</label>
+                    <input type="date" name="dari_tanggal" class="form-control" value="{{ request('dari_tanggal') }}">
+                </div>
+
+                <div class="col-lg-3 col-md-6 col-6">
+                    <label><i class="feather-calendar me-1" style="color:#16a34a;"></i> Sampai Tanggal</label>
+                    <input type="date" name="sampai_tanggal" class="form-control" value="{{ request('sampai_tanggal') }}">
+                </div>
+
                 <div class="col-lg-2 col-md-4 col-6">
                     <label><i class="feather-calendar me-1" style="color:#16a34a;"></i> Bulan</label>
                     <select name="bulan" class="form-select">
@@ -306,9 +314,9 @@
                     <label><i class="feather-hash me-1" style="color:#16a34a;"></i> Tahun</label>
                     <select name="tahun" class="form-select">
                         <option value="">Semua Tahun</option>
-                        @for($y=date('Y'); $y>=2024; $y--)
+                        @foreach($years ?? [] as $y)
                             <option value="{{ $y }}" {{ request('tahun') == $y ? 'selected' : '' }}>{{ $y }}</option>
-                        @endfor
+                        @endforeach
                     </select>
                 </div>
 
@@ -492,7 +500,7 @@
                                 <a href="{{ route('monitoring-alat-berat.show', $log->id) }}" class="tbl-action tbl-action-view" title="Detail">
                                     <i class="feather-eye"></i>
                                 </a>
-                                @if(Auth::user()->isUnit())
+                                @if(Auth::user()->isAdmin() || Auth::user()->id_pks == $log->id_pks)
                                     <a href="{{ route('monitoring-alat-berat.edit', $log->id) }}" class="tbl-action tbl-action-edit" title="Edit">
                                         <i class="feather-edit-2"></i>
                                     </a>
@@ -525,12 +533,10 @@
             <div class="empty-mab-icon"><i class="feather-inbox"></i></div>
             <h5 style="color:#374151;font-family:'Outfit',sans-serif;font-weight:800;margin-bottom:8px;">Belum Ada Log Monitoring</h5>
             <p style="color:#6b7280;font-size:13.5px;margin-bottom:20px;">Data log monitoring alat berat belum tersedia.</p>
-            @if(Auth::user()->isUnit())
             <a href="{{ route('monitoring-alat-berat.create') }}" class="btn-ptpn btn-ptpn-primary" style="display:inline-flex;">
                 <i class="feather-plus" style="font-size:15px;"></i>
                 Tambah Log Pertama
             </a>
-            @endif
         </div>
         @endif
     </div>

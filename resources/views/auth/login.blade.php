@@ -200,6 +200,59 @@
             flex-shrink: 0;
         }
 
+        /* Corporate Logos Top Bar on Left Panel */
+        .corporate-logos-strip {
+            display: inline-flex;
+            align-items: center;
+            gap: 16px;
+            padding: 10px 18px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            margin-bottom: 24px;
+            width: fit-content;
+        }
+
+        .corporate-logos-strip img {
+            height: 32px;
+            max-width: 110px;
+            width: auto;
+            object-fit: contain;
+            transition: transform 0.2s ease;
+        }
+
+        .corporate-logos-strip img:hover {
+            transform: scale(1.05);
+        }
+
+        .corporate-logo-divider {
+            width: 1px;
+            height: 22px;
+            background: #e2e8f0;
+        }
+
+        /* Card Header Corporate Logos (inside right form card) */
+        .card-corporate-logos {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 8px 14px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            margin-bottom: 20px;
+        }
+
+        .card-corporate-logos img {
+            height: 26px;
+            max-width: 90px;
+            width: auto;
+            object-fit: contain;
+        }
+
         /* PTPN Brand Footer on Left */
         .login-brand-footer {
             margin-top: 60px;
@@ -529,9 +582,18 @@
 <div class="login-wrapper">
     <!-- ======= LEFT PANEL: Branding ======= -->
     <section class="login-left" aria-label="SIMOLI Branding">
+        {{-- Official Corporate Logos (BUMN, Holding PTPN, PTPN IV) --}}
+        <div class="corporate-logos-strip">
+            <img src="{{ asset('img/png-transparent-bumn-untuk-indonesia-thumbnail.png') }}" alt="BUMN Untuk Indonesia" title="BUMN Untuk Indonesia">
+            <div class="corporate-logo-divider"></div>
+            <img src="{{ asset('img/logo-perkebunan-nusantara-ptpn-png-svg.webp') }}" alt="Holding Perkebunan Nusantara" title="Holding Perkebunan Nusantara">
+            <div class="corporate-logo-divider"></div>
+            <img src="{{ asset('img/Logo PTPN IV-CyWK9qsP.png') }}" alt="PTPN IV PalmCo" title="PTPN IV PalmCo">
+        </div>
+
         <div class="login-badge">
             <span class="login-badge-dot"></span>
-            Sistem Online & Real-Time
+            Sistem Online &amp; Real-Time
         </div>
 
         <h1 class="login-headline">
@@ -552,11 +614,11 @@
             </div>
             <div class="login-feature-item">
                 <div class="login-feature-icon"><i class="feather-tool"></i></div>
-                <span>Pemeliharaan Kolam IPAL & Bed secara Digital</span>
+                <span>Pemeliharaan Kolam IPAL &amp; Bed secara Digital</span>
             </div>
             <div class="login-feature-item">
                 <div class="login-feature-icon"><i class="feather-truck"></i></div>
-                <span>Log Operasional Alat Berat dengan GPS & Foto</span>
+                <span>Log Operasional Alat Berat dengan GPS &amp; Foto</span>
             </div>
             <div class="login-feature-item">
                 <div class="login-feature-icon"><i class="feather-bar-chart-2"></i></div>
@@ -573,9 +635,18 @@
     <aside class="login-right" aria-label="Form Login">
         <div class="login-card">
             <div class="login-card-header">
+                {{-- Corporate Logos inside Login Card (Visible on mobile & desktop) --}}
+                <div class="card-corporate-logos">
+                    <img src="{{ asset('img/png-transparent-bumn-untuk-indonesia-thumbnail.png') }}" alt="BUMN" title="BUMN Untuk Indonesia">
+                    <div class="corporate-logo-divider"></div>
+                    <img src="{{ asset('img/logo-perkebunan-nusantara-ptpn-png-svg.webp') }}" alt="PTPN" title="Holding Perkebunan Nusantara">
+                    <div class="corporate-logo-divider"></div>
+                    <img src="{{ asset('img/Logo PTPN IV-CyWK9qsP.png') }}" alt="PTPN IV" title="PTPN IV PalmCo">
+                </div>
+
                 <img src="{{ asset('logo/Icon%20SIMOLI.png') }}" alt="SIMOLI Icon">
                 <h2 class="login-card-title">Selamat Datang</h2>
-                <p class="login-card-sub">Masukkan kredensial Anda untuk melanjutkan</p>
+                <p class="login-card-sub">Masukkan kredensial Anda untuk melanjutkan ke SIMOLI</p>
             </div>
 
             {{-- Success Message --}}
@@ -628,6 +699,7 @@
                     <label class="login-label" for="password">Password</label>
 
                     <div class="login-input-wrap">
+                        <i class="feather-lock login-input-icon"></i>
                         <input
                             type="password"
                             id="password"

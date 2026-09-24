@@ -40,7 +40,7 @@ class DashboardController extends Controller
         }
 
         if ($user->isAdmin()) {
-            return $this->adminDashboard($tanggal);
+            return $this->adminDashboard($tanggal, $request);
         }
 
         return $this->unitDashboard($user, $tanggal);
@@ -49,7 +49,10 @@ class DashboardController extends Controller
     public function pilihanFilter(Request $request)
     {
         $user  = Auth::user();
-        $idPks = $request->input('id_pks', $user ? $user->id_pks : null);
+        $idPks = $request->input('id_pks', ($user && !$user->isAdmin()) ? $user->id_pks : null);
+        if ($idPks === '' || $idPks === 'Semua' || $idPks === 'null') {
+            $idPks = null;
+        }
         $jenis = $request->input('jenis', 'flat_bed');
 
         $query = Pengaliran::query();
@@ -61,24 +64,36 @@ class DashboardController extends Controller
             $pilihan = (clone $query)
                 ->whereNotNull('blok')
                 ->where('blok', '!=', '')
+                ->where('blok', '!=', '-')
+                ->where('blok', '!=', '0')
+                ->where('blok', '!=', 0)
                 ->distinct()
-                ->orderBy('blok')
-                ->pluck('blok');
+                ->pluck('blok')
+                ->toArray();
         } elseif ($jenis == 'no_bak') {
             $pilihan = (clone $query)
                 ->whereNotNull('no_bak')
                 ->where('no_bak', '!=', '')
+                ->where('no_bak', '!=', '-')
+                ->where('no_bak', '!=', '0')
+                ->where('no_bak', '!=', 0)
                 ->distinct()
-                ->orderBy('no_bak')
-                ->pluck('no_bak');
+                ->pluck('no_bak')
+                ->toArray();
         } else {
             $pilihan = (clone $query)
                 ->whereNotNull('flat_bed')
                 ->where('flat_bed', '!=', '')
+                ->where('flat_bed', '!=', '-')
+                ->where('flat_bed', '!=', '0')
+                ->where('flat_bed', '!=', 0)
                 ->distinct()
-                ->orderBy('flat_bed')
-                ->pluck('flat_bed');
+                ->pluck('flat_bed')
+                ->toArray();
         }
+
+        natsort($pilihan);
+        $pilihan = array_values($pilihan);
 
         return response()->json([
             'success'     => true,
@@ -91,8 +106,9 @@ class DashboardController extends Controller
     /**
      * Dashboard untuk Admin: monitoring semua PKS
      */
-    private function adminDashboard(string $tanggal)
+    private function adminDashboard(string $tanggal, ?Request $request = null)
     {
+        $user = Auth::user();
         $pksList = Pks::orderBy('nama')->get();
 
         $selectedDate = Carbon::parse($tanggal);
@@ -249,6 +265,36 @@ class DashboardController extends Controller
             'total_bbm' => MonitoringAlatBerat::whereBetween('tanggal', [$startOfMonth, $endOfMonth])->sum('bbm_liter'),
         ];
 
+        // Filter Grafik Data (Default: 'semua' / Keseluruhan data)
+        $periode = $request ? $request->input('periode', 'semua') : 'semua';
+        $tahun = $request ? $request->input('tahun', date('Y')) : date('Y');
+        $bulan = $request ? $request->input('bulan', date('m')) : date('m');
+        $jenis = $request ? $request->input('jenis', 'flat_bed') : 'flat_bed';
+        $nilai = $request ? $request->input('nilai') : null;
+        $idPksFilter = $request ? $request->input('id_pks') : null;
+        $tglMulai = $request ? $request->input('tgl_mulai', Carbon::now()->startOfMonth()->toDateString()) : Carbon::now()->startOfMonth()->toDateString();
+        $tglSelesai = $request ? $request->input('tgl_selesai', Carbon::now()->toDateString()) : Carbon::now()->toDateString();
+
+        $tahunDb = Pengaliran::selectRaw('YEAR(tanggal) as yr')
+            ->whereNotNull('tanggal')
+            ->distinct()
+            ->pluck('yr')
+            ->toArray();
+
+        $tahunList = array_unique(array_merge([date('Y'), (int)date('Y') - 1], array_map('intval', $tahunDb)));
+        rsort($tahunList);
+
+        $grafikRes = $this->getGrafikData($user, [
+            'id_pks'      => $idPksFilter,
+            'periode'     => $periode,
+            'tahun'       => $tahun,
+            'bulan'       => $bulan,
+            'jenis'       => $jenis,
+            'nilai'       => $nilai,
+            'tgl_mulai'   => $tglMulai,
+            'tgl_selesai' => $tglSelesai,
+        ]);
+
         return view('dashboard.admin', compact(
             'tanggal',
             'monitoringData',
@@ -269,7 +315,18 @@ class DashboardController extends Controller
             'recentPemeliharaan',
             'recentRencana',
             'rencanaByPks',
-            'trendData'
+            'trendData',
+            'pksList',
+            'tahunList',
+            'periode',
+            'tahun',
+            'bulan',
+            'jenis',
+            'nilai',
+            'idPksFilter',
+            'tglMulai',
+            'tglSelesai',
+            'grafikRes'
         ));
     }
 
@@ -399,20 +456,16 @@ class DashboardController extends Controller
         $rencanaBulanan = [];
 
         for ($i = 1; $i <= 12; $i++) {
-
             $pengaliranBulanan[] = $grafikPengaliran[$i] ?? 0;
-
             $pemeliharaanBulanan[] = $grafikPemeliharaan[$i] ?? 0;
-
             $rencanaBulanan[] = ($i == date('n'))
                 ? ($grafikRencana[1] ?? 0)
                 : 0;
-
         }
 
         $tahun     = request('tahun', date('Y'));
         $bulan     = request('bulan', date('m'));
-        $jenis     = request('jenis', 'flat_bed'); // flat_bed atau blok
+        $jenis     = request('jenis', 'flat_bed');
         $nilai     = request('nilai');
         $periode   = request('periode', 'harian');
         $tglMulai  = request('tgl_mulai', date('Y-m-01'));
@@ -428,6 +481,7 @@ class DashboardController extends Controller
         rsort($tahunList);
 
         $grafikRes = $this->getGrafikData($user, [
+            'id_pks'     => $user->id_pks,
             'periode'    => $periode,
             'tahun'      => $tahun,
             'bulan'      => $bulan,
@@ -490,10 +544,14 @@ class DashboardController extends Controller
 
     private function getGrafikData($user, array $params): array
     {
-        $idPks      = $params['id_pks'] ?? ($user ? $user->id_pks : null);
-        $periode    = $params['periode'] ?? 'harian';
-        $tahun      = $params['tahun'] ?? date('Y');
-        $bulan      = $params['bulan'] ?? date('m');
+        $idPks      = $params['id_pks'] ?? (($user && !$user->isAdmin()) ? $user->id_pks : null);
+        if ($idPks === '' || $idPks === 'Semua' || $idPks === 'null' || $idPks === null) {
+            $idPks = null;
+        }
+
+        $periode    = $params['periode'] ?? 'semua';
+        $tahun      = (int) ($params['tahun'] ?? date('Y'));
+        $bulan      = (int) ($params['bulan'] ?? date('m'));
         $jenis      = $params['jenis'] ?? 'flat_bed';
         $nilai      = $params['nilai'] ?? null;
         $tglMulai   = $params['tgl_mulai'] ?? null;
@@ -508,43 +566,90 @@ class DashboardController extends Controller
             $pilihan = (clone $pilihanQuery)
                 ->whereNotNull('blok')
                 ->where('blok', '!=', '')
+                ->where('blok', '!=', '-')
+                ->where('blok', '!=', '0')
+                ->where('blok', '!=', 0)
                 ->distinct()
-                ->orderBy('blok')
-                ->pluck('blok');
+                ->pluck('blok')
+                ->toArray();
         } elseif ($jenis == 'no_bak') {
             $pilihan = (clone $pilihanQuery)
                 ->whereNotNull('no_bak')
                 ->where('no_bak', '!=', '')
+                ->where('no_bak', '!=', '-')
+                ->where('no_bak', '!=', '0')
+                ->where('no_bak', '!=', 0)
                 ->distinct()
-                ->orderBy('no_bak')
-                ->pluck('no_bak');
+                ->pluck('no_bak')
+                ->toArray();
         } else {
             $pilihan = (clone $pilihanQuery)
                 ->whereNotNull('flat_bed')
                 ->where('flat_bed', '!=', '')
+                ->where('flat_bed', '!=', '-')
+                ->where('flat_bed', '!=', '0')
+                ->where('flat_bed', '!=', 0)
                 ->distinct()
-                ->orderBy('flat_bed')
-                ->pluck('flat_bed');
+                ->pluck('flat_bed')
+                ->toArray();
         }
+
+        natsort($pilihan);
+        $pilihan = array_values($pilihan);
 
         $baseQuery = Pengaliran::query();
+        $pemeliharaanBaseQuery = Pemeliharaan::query();
+
         if ($idPks) {
             $baseQuery->where('id_pks', $idPks);
+            $pemeliharaanBaseQuery->where('id_pks', $idPks);
         }
 
-        if ($nilai !== null && $nilai !== '' && $nilai !== 'Semua') {
+        if ($nilai !== null && $nilai !== '' && $nilai !== 'Semua' && $nilai !== '0' && $nilai !== 0 && $nilai !== '-') {
             if ($jenis == 'blok') {
                 $baseQuery->where('blok', $nilai);
+                $pemeliharaanBaseQuery->where('blok', $nilai);
             } elseif ($jenis == 'no_bak') {
                 $baseQuery->where('no_bak', $nilai);
+                $pemeliharaanBaseQuery->where('no_bak', $nilai);
             } else {
                 $baseQuery->where('flat_bed', $nilai);
+                $pemeliharaanBaseQuery->where('flat_bed', $nilai);
             }
         }
 
         $labels = [];
         $volumeDialirkan = [];
         $volumeDihasilkan = [];
+        $trendPengaliran = [];
+        $trendPemeliharaan = [];
+
+        // Setup query for PKS breakdown
+        $pksStatsPengaliran = Pengaliran::query();
+        $pksStatsPemeliharaan = Pemeliharaan::query();
+
+        if ($idPks) {
+            $pksStatsPengaliran->where('id_pks', $idPks);
+            $pksStatsPemeliharaan->where('id_pks', $idPks);
+        }
+
+        if ($nilai !== null && $nilai !== '' && $nilai !== 'Semua' && $nilai !== '0' && $nilai !== 0 && $nilai !== '-') {
+            if ($jenis == 'blok') {
+                $pksStatsPengaliran->where('blok', $nilai);
+                $pksStatsPemeliharaan->where('blok', $nilai);
+            } elseif ($jenis == 'no_bak') {
+                $pksStatsPengaliran->where('no_bak', $nilai);
+                $pksStatsPemeliharaan->where('no_bak', $nilai);
+            } else {
+                $pksStatsPengaliran->where('flat_bed', $nilai);
+                $pksStatsPemeliharaan->where('flat_bed', $nilai);
+            }
+        }
+
+        $namaBulanShort = [
+            1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'Mei', 6 => 'Jun',
+            7 => 'Jul', 8 => 'Agu', 9 => 'Sep', 10 => 'Okt', 11 => 'Nov', 12 => 'Des'
+        ];
 
         if ($periode === 'custom') {
             if (!$tglMulai) $tglMulai = Carbon::now()->startOfMonth()->toDateString();
@@ -553,46 +658,90 @@ class DashboardController extends Controller
             $start = Carbon::parse($tglMulai)->startOfDay();
             $end   = Carbon::parse($tglSelesai)->endOfDay();
 
+            $pksStatsPengaliran->whereBetween('tanggal', [$start, $end]);
+            $pksStatsPemeliharaan->whereBetween('tanggal', [$start, $end]);
+
+            $pMap = (clone $baseQuery)->whereBetween('tanggal', [$start, $end])
+                ->selectRaw('DATE(tanggal) as tgl, SUM(vol_limbah_dialirkan) as dialirkan, SUM(vol_limbah_dihasilkan) as dihasilkan, COUNT(*) as cnt')
+                ->groupBy(DB::raw('DATE(tanggal)'))
+                ->get()
+                ->keyBy('tgl');
+
+            $mMap = (clone $pemeliharaanBaseQuery)->whereBetween('tanggal', [$start, $end])
+                ->selectRaw('DATE(tanggal) as tgl, COUNT(*) as cnt')
+                ->groupBy(DB::raw('DATE(tanggal)'))
+                ->get()
+                ->keyBy('tgl');
+
             $curr = $start->copy();
             while ($curr->lte($end)) {
                 $dateStr = $curr->toDateString();
                 $labels[] = $curr->format('d/m/Y');
 
-                $q = (clone $baseQuery)->whereDate('tanggal', $dateStr);
-                $volumeDialirkan[]  = round((float)$this->numericSum($q->get(), 'vol_limbah_dialirkan'), 2);
-                $volumeDihasilkan[] = round((float)$this->numericSum($q->get(), 'vol_limbah_dihasilkan'), 2);
+                $rowP = $pMap->get($dateStr);
+                $volumeDialirkan[]  = $rowP ? round((float)$rowP->dialirkan, 2) : 0;
+                $volumeDihasilkan[] = $rowP ? round((float)$rowP->dihasilkan, 2) : 0;
+                $trendPengaliran[]  = $rowP ? (int)$rowP->cnt : 0;
+
+                $rowM = $mMap->get($dateStr);
+                $trendPemeliharaan[] = $rowM ? (int)$rowM->cnt : 0;
 
                 $curr->addDay();
             }
         } elseif ($periode === 'semua') {
             $records = (clone $baseQuery)
-                ->selectRaw('YEAR(tanggal) as yr, MONTH(tanggal) as mo')
+                ->selectRaw('YEAR(tanggal) as yr, MONTH(tanggal) as mo, SUM(vol_limbah_dialirkan) as dialirkan, SUM(vol_limbah_dihasilkan) as dihasilkan, COUNT(*) as cnt')
                 ->whereNotNull('tanggal')
                 ->groupBy(DB::raw('YEAR(tanggal)'), DB::raw('MONTH(tanggal)'))
                 ->orderBy(DB::raw('YEAR(tanggal)'))
                 ->orderBy(DB::raw('MONTH(tanggal)'))
                 ->get();
 
-            $namaBulanShort = [
-                1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'Mei', 6 => 'Jun',
-                7 => 'Jul', 8 => 'Agu', 9 => 'Sep', 10 => 'Okt', 11 => 'Nov', 12 => 'Des'
-            ];
+            $mMap = (clone $pemeliharaanBaseQuery)
+                ->selectRaw('YEAR(tanggal) as yr, MONTH(tanggal) as mo, COUNT(*) as cnt')
+                ->whereNotNull('tanggal')
+                ->groupBy(DB::raw('YEAR(tanggal)'), DB::raw('MONTH(tanggal)'))
+                ->get()
+                ->keyBy(fn($r) => $r->yr . '-' . $r->mo);
 
             if ($records->isEmpty()) {
-                $labels[] = date('M Y');
-                $volumeDialirkan[]  = 0;
-                $volumeDihasilkan[] = 0;
+                for ($m = 1; $m <= 12; $m++) {
+                    $labels[] = ($namaBulanShort[$m] ?? $m) . ' ' . date('Y');
+                    $volumeDialirkan[]  = 0;
+                    $volumeDihasilkan[] = 0;
+                    $trendPengaliran[]  = 0;
+                    $trendPemeliharaan[] = 0;
+                }
             } else {
                 foreach ($records as $rec) {
                     $yr = $rec->yr;
                     $mo = $rec->mo;
                     $labels[] = ($namaBulanShort[(int)$mo] ?? $mo) . ' ' . $yr;
-                    $q = (clone $baseQuery)->whereYear('tanggal', $yr)->whereMonth('tanggal', $mo);
-                    $volumeDialirkan[]  = round((float)$this->numericSum($q->get(), 'vol_limbah_dialirkan'), 2);
-                    $volumeDihasilkan[] = round((float)$this->numericSum($q->get(), 'vol_limbah_dihasilkan'), 2);
+                    $volumeDialirkan[]  = round((float)$rec->dialirkan, 2);
+                    $volumeDihasilkan[] = round((float)$rec->dihasilkan, 2);
+                    $trendPengaliran[]  = (int)$rec->cnt;
+
+                    $key = $yr . '-' . $mo;
+                    $rowM = $mMap->get($key);
+                    $trendPemeliharaan[] = $rowM ? (int)$rowM->cnt : 0;
                 }
             }
         } elseif ($periode === 'tahunan') {
+            $records = (clone $baseQuery)
+                ->selectRaw('YEAR(tanggal) as yr, SUM(vol_limbah_dialirkan) as dialirkan, SUM(vol_limbah_dihasilkan) as dihasilkan, COUNT(*) as cnt')
+                ->whereNotNull('tanggal')
+                ->groupBy(DB::raw('YEAR(tanggal)'))
+                ->orderBy(DB::raw('YEAR(tanggal)'))
+                ->get()
+                ->keyBy('yr');
+
+            $mMap = (clone $pemeliharaanBaseQuery)
+                ->selectRaw('YEAR(tanggal) as yr, COUNT(*) as cnt')
+                ->whereNotNull('tanggal')
+                ->groupBy(DB::raw('YEAR(tanggal)'))
+                ->get()
+                ->keyBy('yr');
+
             $yearQuery = Pengaliran::query();
             if ($idPks) {
                 $yearQuery->where('id_pks', $idPks);
@@ -620,22 +769,44 @@ class DashboardController extends Controller
 
             foreach ($allYears as $yr) {
                 $labels[] = (string)$yr;
-                $q = (clone $baseQuery)->whereYear('tanggal', $yr);
-                $volumeDialirkan[]  = round((float)$this->numericSum($q->get(), 'vol_limbah_dialirkan'), 2);
-                $volumeDihasilkan[] = round((float)$this->numericSum($q->get(), 'vol_limbah_dihasilkan'), 2);
+                $rowP = $records->get($yr);
+                $volumeDialirkan[]  = $rowP ? round((float)$rowP->dialirkan, 2) : 0;
+                $volumeDihasilkan[] = $rowP ? round((float)$rowP->dihasilkan, 2) : 0;
+                $trendPengaliran[]  = $rowP ? (int)$rowP->cnt : 0;
+
+                $rowM = $mMap->get($yr);
+                $trendPemeliharaan[] = $rowM ? (int)$rowM->cnt : 0;
             }
         } elseif ($periode === 'bulanan') {
-            $namaBulan = [
-                1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'Mei', 6 => 'Jun',
-                7 => 'Jul', 8 => 'Agu', 9 => 'Sep', 10 => 'Okt', 11 => 'Nov', 12 => 'Des'
-            ];
+            $pksStatsPengaliran->whereYear('tanggal', $tahun);
+            $pksStatsPemeliharaan->whereYear('tanggal', $tahun);
+
+            $pMap = (clone $baseQuery)->whereYear('tanggal', $tahun)
+                ->selectRaw('MONTH(tanggal) as mo, SUM(vol_limbah_dialirkan) as dialirkan, SUM(vol_limbah_dihasilkan) as dihasilkan, COUNT(*) as cnt')
+                ->groupBy(DB::raw('MONTH(tanggal)'))
+                ->get()
+                ->keyBy('mo');
+
+            $mMap = (clone $pemeliharaanBaseQuery)->whereYear('tanggal', $tahun)
+                ->selectRaw('MONTH(tanggal) as mo, COUNT(*) as cnt')
+                ->groupBy(DB::raw('MONTH(tanggal)'))
+                ->get()
+                ->keyBy('mo');
+
             for ($m = 1; $m <= 12; $m++) {
-                $labels[] = $namaBulan[$m];
-                $q = (clone $baseQuery)->whereYear('tanggal', $tahun)->whereMonth('tanggal', $m);
-                $volumeDialirkan[]  = round((float)$this->numericSum($q->get(), 'vol_limbah_dialirkan'), 2);
-                $volumeDihasilkan[] = round((float)$this->numericSum($q->get(), 'vol_limbah_dihasilkan'), 2);
+                $labels[] = $namaBulanShort[$m];
+                $rowP = $pMap->get($m);
+                $volumeDialirkan[]  = $rowP ? round((float)$rowP->dialirkan, 2) : 0;
+                $volumeDihasilkan[] = $rowP ? round((float)$rowP->dihasilkan, 2) : 0;
+                $trendPengaliran[]  = $rowP ? (int)$rowP->cnt : 0;
+
+                $rowM = $mMap->get($m);
+                $trendPemeliharaan[] = $rowM ? (int)$rowM->cnt : 0;
             }
         } elseif ($periode === 'mingguan') {
+            $pksStatsPengaliran->whereYear('tanggal', $tahun)->whereMonth('tanggal', $bulan);
+            $pksStatsPemeliharaan->whereYear('tanggal', $tahun)->whereMonth('tanggal', $bulan);
+
             $jumlahHari = Carbon::create($tahun, $bulan)->daysInMonth;
             $weeks = [
                 'Minggu 1 (1-7)'   => [1, 7],
@@ -647,34 +818,139 @@ class DashboardController extends Controller
                 $weeks['Minggu 5 (29-'.$jumlahHari.')'] = [29, $jumlahHari];
             }
 
+            $pMap = (clone $baseQuery)->whereYear('tanggal', $tahun)->whereMonth('tanggal', $bulan)
+                ->selectRaw('DAY(tanggal) as d, SUM(vol_limbah_dialirkan) as dialirkan, SUM(vol_limbah_dihasilkan) as dihasilkan, COUNT(*) as cnt')
+                ->groupBy(DB::raw('DAY(tanggal)'))
+                ->get()
+                ->keyBy('d');
+
+            $mMap = (clone $pemeliharaanBaseQuery)->whereYear('tanggal', $tahun)->whereMonth('tanggal', $bulan)
+                ->selectRaw('DAY(tanggal) as d, COUNT(*) as cnt')
+                ->groupBy(DB::raw('DAY(tanggal)'))
+                ->get()
+                ->keyBy('d');
+
             foreach ($weeks as $wName => [$dStart, $dEnd]) {
                 $labels[] = $wName;
-                $q = (clone $baseQuery)->whereYear('tanggal', $tahun)
-                    ->whereMonth('tanggal', $bulan)
-                    ->whereRaw('DAY(tanggal) BETWEEN ? AND ?', [$dStart, $dEnd]);
-                $volumeDialirkan[]  = round((float)$this->numericSum($q->get(), 'vol_limbah_dialirkan'), 2);
-                $volumeDihasilkan[] = round((float)$this->numericSum($q->get(), 'vol_limbah_dihasilkan'), 2);
+                $wDialirkan = 0;
+                $wDihasilkan = 0;
+                $wTrendP = 0;
+                $wTrendM = 0;
+
+                for ($d = $dStart; $d <= $dEnd; $d++) {
+                    if ($rowP = $pMap->get($d)) {
+                        $wDialirkan += (float)$rowP->dialirkan;
+                        $wDihasilkan += (float)$rowP->dihasilkan;
+                        $wTrendP += (int)$rowP->cnt;
+                    }
+                    if ($rowM = $mMap->get($d)) {
+                        $wTrendM += (int)$rowM->cnt;
+                    }
+                }
+
+                $volumeDialirkan[]  = round($wDialirkan, 2);
+                $volumeDihasilkan[] = round($wDihasilkan, 2);
+                $trendPengaliran[]  = $wTrendP;
+                $trendPemeliharaan[] = $wTrendM;
             }
         } else {
             // Harian
+            $pksStatsPengaliran->whereYear('tanggal', $tahun)->whereMonth('tanggal', $bulan);
+            $pksStatsPemeliharaan->whereYear('tanggal', $tahun)->whereMonth('tanggal', $bulan);
+
+            $pMap = (clone $baseQuery)->whereYear('tanggal', $tahun)->whereMonth('tanggal', $bulan)
+                ->selectRaw('DAY(tanggal) as d, SUM(vol_limbah_dialirkan) as dialirkan, SUM(vol_limbah_dihasilkan) as dihasilkan, COUNT(*) as cnt')
+                ->groupBy(DB::raw('DAY(tanggal)'))
+                ->get()
+                ->keyBy('d');
+
+            $mMap = (clone $pemeliharaanBaseQuery)->whereYear('tanggal', $tahun)->whereMonth('tanggal', $bulan)
+                ->selectRaw('DAY(tanggal) as d, COUNT(*) as cnt')
+                ->groupBy(DB::raw('DAY(tanggal)'))
+                ->get()
+                ->keyBy('d');
+
             $jumlahHari = Carbon::create($tahun, $bulan)->daysInMonth;
             for ($i = 1; $i <= $jumlahHari; $i++) {
                 $labels[] = (string)$i;
-                $q = (clone $baseQuery)->whereYear('tanggal', $tahun)
-                    ->whereMonth('tanggal', $bulan)
-                    ->whereDay('tanggal', $i);
-                $volumeDialirkan[]  = round((float)$this->numericSum($q->get(), 'vol_limbah_dialirkan'), 2);
-                $volumeDihasilkan[] = round((float)$this->numericSum($q->get(), 'vol_limbah_dihasilkan'), 2);
+                $rowP = $pMap->get($i);
+                $volumeDialirkan[]  = $rowP ? round((float)$rowP->dialirkan, 2) : 0;
+                $volumeDihasilkan[] = $rowP ? round((float)($rowP->dihasilkan ?? 0), 2) : 0;
+                $trendPengaliran[]  = $rowP ? (int)$rowP->cnt : 0;
+
+                $rowM = $mMap->get($i);
+                $trendPemeliharaan[] = $rowM ? (int)$rowM->cnt : 0;
             }
         }
 
+        // Perbandingan PKS (jika filter PKS dipilih, tampilkan PKS tsb; jika tidak dipilih/Semua, tampilkan semua PKS)
+        $pksQuery = Pks::query();
+        if ($idPks) {
+            $pksQuery->where('id_pks', $idPks);
+        }
+        $pksList = $pksQuery->orderBy('nama')->get();
+
+        $pksNames = [];
+        $pksVols = [];
+        $pksDihasilkan = [];
+        $pksFlatBed = [];
+        $pksLongBed = [];
+        $pksHk = [];
+
+        $pksPengaliranAgg = (clone $pksStatsPengaliran)
+            ->selectRaw('id_pks, SUM(vol_limbah_dialirkan) as dialirkan, SUM(vol_limbah_dihasilkan) as dihasilkan')
+            ->groupBy('id_pks')
+            ->get()
+            ->keyBy('id_pks');
+
+        $pksPemeliharaanAgg = (clone $pksStatsPemeliharaan)
+            ->selectRaw('id_pks, SUM(flat_bed) as fb, SUM(long_bed) as lb, SUM(jumlah_hk) as hk')
+            ->groupBy('id_pks')
+            ->get()
+            ->keyBy('id_pks');
+
+        foreach ($pksList as $p) {
+            $pAkro = $p->akro ?? $p->nama;
+            $pksNames[] = $pAkro;
+
+            $rowP = $pksPengaliranAgg->get($p->id_pks);
+            $pksVols[]        = $rowP ? round((float)$rowP->dialirkan, 2) : 0;
+            $pksDihasilkan[]   = $rowP ? round((float)$rowP->dihasilkan, 2) : 0;
+
+            $rowM = $pksPemeliharaanAgg->get($p->id_pks);
+            $pksFlatBed[]      = $rowM ? round((float)$rowM->fb, 2) : 0;
+            $pksLongBed[]      = $rowM ? round((float)$rowM->lb, 2) : 0;
+            $pksHk[]           = $rowM ? round((float)$rowM->hk, 2) : 0;
+        }
+
+        $totalDialirkan  = round(array_sum($volumeDialirkan), 2);
+        $totalDihasilkan = round(array_sum($volumeDihasilkan), 2);
+        $efficiency      = $totalDihasilkan > 0 ? round(($totalDialirkan / $totalDihasilkan) * 100, 1) : 0;
+        $totalFlatBed    = round(array_sum($pksFlatBed), 0);
+        $totalLongBed    = round(array_sum($pksLongBed), 0);
+        $totalHk         = round(array_sum($pksHk), 0);
+
         return [
-            'labels'           => $labels,
-            'labelHari'        => $labels,
-            'volumeDialirkan'  => $volumeDialirkan,
-            'volumeGrafik'     => $volumeDialirkan,
-            'volumeDihasilkan' => $volumeDihasilkan,
-            'pilihan'          => $pilihan,
+            'labels'             => $labels,
+            'labelHari'          => $labels,
+            'volumeDialirkan'    => $volumeDialirkan,
+            'volumeGrafik'       => $volumeDialirkan,
+            'volumeDihasilkan'   => $volumeDihasilkan,
+            'pilihan'            => $pilihan,
+            'totalDialirkan'     => $totalDialirkan,
+            'totalDihasilkan'    => $totalDihasilkan,
+            'efficiency'         => $efficiency,
+            'totalFlatBed'       => $totalFlatBed,
+            'totalLongBed'       => $totalLongBed,
+            'totalHk'            => $totalHk,
+            'pksNames'           => $pksNames,
+            'pksVols'            => $pksVols,
+            'pksDihasilkan'      => $pksDihasilkan,
+            'pksFlatBed'         => $pksFlatBed,
+            'pksLongBed'         => $pksLongBed,
+            'pksHk'              => $pksHk,
+            'trendPengaliran'    => $trendPengaliran,
+            'trendPemeliharaan'  => $trendPemeliharaan,
         ];
     }
 
@@ -682,11 +958,14 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
 
-        $idPks = $request->input('id_pks', $user ? $user->id_pks : null);
+        $idPks = $request->input('id_pks');
+        if ($user && !$user->isAdmin()) {
+            $idPks = $user->id_pks;
+        }
 
         $grafikRes = $this->getGrafikData($user, [
             'id_pks'      => $idPks,
-            'periode'     => $request->input('periode', 'harian'),
+            'periode'     => $request->input('periode', 'semua'),
             'tahun'       => $request->input('tahun', date('Y')),
             'bulan'       => $request->input('bulan', date('m')),
             'jenis'       => $request->input('jenis', 'flat_bed'),
@@ -696,10 +975,16 @@ class DashboardController extends Controller
         ]);
 
         return response()->json([
-            'success'     => true,
-            'message'     => 'Data grafik volume berhasil diambil',
-            'server_time' => Carbon::now('Asia/Jakarta')->toIso8601String(),
-            'data'        => $grafikRes,
+            'success'          => true,
+            'message'          => 'Data grafik volume berhasil diambil',
+            'server_time'      => Carbon::now('Asia/Jakarta')->toIso8601String(),
+            'categories'       => $grafikRes['labels'] ?? [],
+            'labels'           => $grafikRes['labels'] ?? [],
+            'dialirkan'        => $grafikRes['volumeDialirkan'] ?? [],
+            'dihasilkan'       => $grafikRes['volumeDihasilkan'] ?? [],
+            'volumeDialirkan'  => $grafikRes['volumeDialirkan'] ?? [],
+            'volumeDihasilkan' => $grafikRes['volumeDihasilkan'] ?? [],
+            'data'             => $grafikRes,
         ]);
     }
 }

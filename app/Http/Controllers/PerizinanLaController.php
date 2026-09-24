@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\PerizinanLa;
 use App\Models\Pks;
+use App\Services\FileCompressionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
@@ -126,8 +127,7 @@ class PerizinanLaController extends Controller
         if ($request->hasFile('file_sk')) {
             $file = $request->file('file_sk');
             $filename = 'SK_LA_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path('uploads/perizinan_la'), $filename);
-            $data['file_sk'] = $filename;
+            $data['file_sk'] = FileCompressionService::compressAndSave($file, public_path('uploads/perizinan_la'), $filename);
         }
 
         PerizinanLa::create($data);
@@ -234,8 +234,7 @@ class PerizinanLaController extends Controller
             }
             $file = $request->file('file_sk');
             $filename = 'SK_LA_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path('uploads/perizinan_la'), $filename);
-            $data['file_sk'] = $filename;
+            $data['file_sk'] = FileCompressionService::compressAndSave($file, public_path('uploads/perizinan_la'), $filename);
         }
 
         $perizinan->update($data);
@@ -250,12 +249,11 @@ class PerizinanLaController extends Controller
     public function destroy(string $id)
     {
         $user = Auth::user();
-
-        if (!$user->isAdmin()) {
-            abort(403, 'Akses ditolak. Unit PKS tidak diperbolehkan menghapus data arsip perizinan.');
-        }
-
         $perizinan = PerizinanLa::findOrFail($id);
+
+        if (!$user->isAdmin() && ($perizinan->id_pks != $user->id_pks || $perizinan->is_locked)) {
+            abort(403, 'Anda tidak memiliki hak untuk menghapus dokumen izin ini.');
+        }
 
         if ($perizinan->file_sk && file_exists(public_path('uploads/perizinan_la/' . $perizinan->file_sk))) {
             @unlink(public_path('uploads/perizinan_la/' . $perizinan->file_sk));

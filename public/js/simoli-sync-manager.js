@@ -136,6 +136,8 @@ const SimoliSync = (() => {
     // --- 4. Pull Master Data from Server (Delta Sync) ---
     async function pullMasterData() {
         if (!navigator.onLine) return;
+        // Hanya jalankan sync master data di halaman operator/PWA, bukan dashboard admin
+        if (!window.location.pathname.startsWith('/operator')) return;
 
         try {
             const lastSync = await SimoliDB.getConfig('last_sync_time');
@@ -332,6 +334,10 @@ const SimoliSync = (() => {
 
     // --- 7. Initialize Global Event Listeners ---
     function init() {
+        if (!window.location.pathname.startsWith('/operator')) {
+            return;
+        }
+
         SimoliDB.init().then(() => {
             updateNetworkStatusUI();
             if (navigator.onLine) {

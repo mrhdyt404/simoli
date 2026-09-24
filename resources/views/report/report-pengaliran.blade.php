@@ -438,8 +438,8 @@
     }
 
     .nav-tabs-custom .nav-link.active {
-        color: #0056cc;
-        background: #ffffff;
+        color: #ffffff;
+        background: linear-gradient(90deg, #052e16 0%, #166534 100%);
         border: 1px solid #e2e8f0;
         border-bottom: 2px solid #ffffff;
         margin-bottom: -2px;
@@ -701,9 +701,10 @@
                         <i class="feather-calendar me-1" style="color:#16a34a;"></i> Bulan
                     </label>
                     <select name="bulan" id="filter_bulan" class="form-select">
+                        <option value="all" {{ ($bulan === 'all' || empty($bulan)) ? 'selected' : '' }}>Semua Bulan (Jan - Des)</option>
                         @foreach($namaBulan as $i => $bln)
                             @if($i > 0)
-                            <option value="{{ $i }}" {{ $bulan == $i ? 'selected' : '' }}>{{ $bln }}</option>
+                            <option value="{{ $i }}" {{ ($bulan !== 'all' && (int)$bulan === $i) ? 'selected' : '' }}>{{ $bln }}</option>
                             @endif
                         @endforeach
                     </select>
@@ -722,16 +723,16 @@
 
                 <div class="col-lg-2 col-md-6">
                     <label class="form-label">
-                        <i class="feather-clock me-1" style="color:#16a34a;"></i> Mode Periode / Minggu
+                        <i class="feather-clock me-1" style="color:#16a34a;"></i> Mode Periode
                     </label>
                     <select name="minggu" id="select_minggu" class="form-select">
-                        <option value="all" {{ ($minggu == 'all' || empty($minggu)) ? 'selected' : '' }}>Minggu Aktif (Otomatis)</option>
+                        <option value="all" {{ ($minggu == 'all' || empty($minggu)) ? 'selected' : '' }}>Otomatis / Minggu Terkini</option>
+                        <option value="custom" {{ ($minggu == 'custom' || $activeWeek == 'custom') ? 'selected' : '' }}>🗓️ Rentang Waktu (Dari - Sampai Tgl)</option>
                         <option value="1" {{ $minggu == '1' ? 'selected' : '' }}>Minggu 1 (Tgl 01 - 07)</option>
                         <option value="2" {{ $minggu == '2' ? 'selected' : '' }}>Minggu 2 (Tgl 08 - 14)</option>
                         <option value="3" {{ $minggu == '3' ? 'selected' : '' }}>Minggu 3 (Tgl 15 - 21)</option>
                         <option value="4" {{ $minggu == '4' ? 'selected' : '' }}>Minggu 4 (Tgl 22 - 28)</option>
                         <option value="5" {{ $minggu == '5' ? 'selected' : '' }}>Minggu 5 (Tgl 29 - Akhir)</option>
-                        <option value="custom" {{ $minggu == 'custom' || $activeWeek == 'custom' ? 'selected' : '' }}>🗓️ Input Manual Rentang Hari</option>
                     </select>
                 </div>
 
@@ -851,7 +852,7 @@
 <ul class="nav nav-tabs nav-tabs-custom mb-3 no-print" role="tablist">
     <li class="nav-item">
         <button class="nav-link active fw-bold" data-bs-toggle="tab" data-bs-target="#tab-infografis" type="button" role="tab">
-            <i class="feather-layout me-1.5 text-primary"></i> Format Rekap SIMOLI (Sesuai Gambar)
+            <i class="feather-layout me-1.5 text-success"></i> Format Rekap SIMOLI (Sesuai Gambar)
         </button>
     </li>
     <li class="nav-item">
@@ -951,7 +952,7 @@
                                 <th rowspan="2" class="th-blue" style="width: 86px;">PKS</th>
                                 <th rowspan="2" class="th-blue" style="width: 86px;">Total Bed</th>
                                 <th colspan="3" class="th-green-main">{{ $activeWeek === 'custom' ? strtoupper($weekLabel) : 'Progress Minggu Ini' }}</th>
-                                <th colspan="3" class="th-orange-main">Progress S.d Bulan Ini</th>
+                                <th colspan="3" class="th-orange-main">{{ $bulan === 'all' ? 'Progress S.d Tahun Ini' : 'Progress S.d Bulan Ini' }}</th>
                                 <th rowspan="2" class="th-blue" style="width: 210px;">Keterangan</th>
                             </tr>
                             {{-- Header Tier 2 --}}
@@ -1191,7 +1192,7 @@
             <div class="card-header py-3 bg-white border-bottom">
                 <h6 class="mb-0 fw-bold">
                     <i class="feather-database me-2 text-primary"></i>
-                    Detail Log Transaksi Pengaliran — {{ $namaBulan[(int)$bulan] }} {{ $tahun }}
+                    Detail Log Transaksi Pengaliran — {{ $bulan === 'all' ? 'Tahun ' . $tahun : ($namaBulan[(int)$bulan] ?? '') . ' ' . $tahun }}
                 </h6>
             </div>
             <div class="card-body p-0">
@@ -1263,7 +1264,7 @@
             <div class="card-body text-center py-5">
                 <i class="feather-inbox fs-1 text-muted d-block mb-3"></i>
                 <h5 class="text-muted">Tidak ada data transaksi pengaliran</h5>
-                <p class="text-muted fs-13">Untuk periode bulan {{ $namaBulan[(int)$bulan] }} {{ $tahun }}</p>
+                <p class="text-muted fs-13">Untuk periode {{ $bulan === 'all' ? 'Tahun ' . $tahun : 'bulan ' . ($namaBulan[(int)$bulan] ?? '') . ' ' . $tahun }}</p>
             </div>
         </div>
         @endif
@@ -1290,7 +1291,8 @@
         function updateDateInputsForPresetWeek() {
             const selectedMinggu = $('#select_minggu').val();
             const year = parseInt($('#filter_tahun').val()) || new Date().getFullYear();
-            const month = parseInt($('#filter_bulan').val()) || (new Date().getMonth() + 1);
+            const rawMonth = $('#filter_bulan').val();
+            const month = (rawMonth === 'all' || !rawMonth) ? (new Date().getMonth() + 1) : parseInt(rawMonth);
             const lastDayOfMonth = new Date(year, month, 0).getDate();
 
             if (selectedMinggu === 'custom') {
@@ -1340,7 +1342,7 @@
                 logging: false
             }).then(canvas => {
                 const link = document.createElement('a');
-                link.download = 'Report_Pengaliran_SIMOLI_{{ $namaBulan[(int)$bulan] }}_{{ $tahun }}.png';
+                link.download = 'Report_Pengaliran_SIMOLI_{{ $bulan === 'all' ? 'Tahun_' . $tahun : ($namaBulan[(int)$bulan] ?? '') . '_' . $tahun }}.png';
                 link.href = canvas.toDataURL('image/png');
                 link.click();
 

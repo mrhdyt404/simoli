@@ -18,11 +18,11 @@
             <i class="feather-arrow-left" style="font-size:14px;"></i>
             Kembali
         </a>
+        @if(Auth::user()->isAdmin() || Auth::user()->id_pks == $data->id_pks)
         <a href="{{ route('pemeliharaan.edit', $data) }}" class="btn-ptpn btn-ptpn-primary" style="padding:8px 14px;font-size:13px;">
             <i class="feather-edit-2" style="font-size:14px;"></i>
             Edit Data
         </a>
-        @if(Auth::user()->isAdmin())
         <form action="{{ route('pemeliharaan.destroy', $data) }}" method="POST" class="d-inline form-delete">
             @csrf @method('DELETE')
             <button type="submit" class="btn-ptpn" style="padding:8px 14px;font-size:13px;background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;border:none;border-radius:12px;cursor:pointer;display:flex;align-items:center;gap:6px;font-weight:700;">

@@ -387,16 +387,11 @@ class RencanaController extends Controller
     public function destroy($id)
     {
         $user = Auth::user();
-
-        // Unit tidak boleh menghapus
-        if ($user->isUnit()) {
-            abort(
-                403,
-                'Unit tidak memiliki akses untuk menghapus data.'
-            );
-        }
-
         $rencana = Rencana::findOrFail($id);
+
+        if ($user->isUnit() && $rencana->id_pks != $user->id_pks) {
+            abort(403, 'Anda tidak memiliki akses untuk menghapus data unit lain.');
+        }
 
         $rencana->delete();
 

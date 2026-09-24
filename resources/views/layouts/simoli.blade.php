@@ -1829,112 +1829,15 @@
                     </a>
                 </li>
 
-                @if(Auth::user()->isAdmin())
-                {{-- Section: Monitoring (Admin) --}}
-                <li class="nav-section-label">Laporan & Monitoring</li>
-
-                <li class="nxl-hasmenu {{ request()->is('report-pengaliran*','report-pemeliharaan*','report-rencana*','report-alat-berat*','monitoring-alat-berat*','pemetaan-la*','perizinan-la*') ? 'active' : '' }}">
-                    <a href="javascript:void(0);" class="nav-link-simoli
-                        {{ request()->is('report-pengaliran*','report-pemeliharaan*','report-rencana*','report-alat-berat*','monitoring-alat-berat*','pemetaan-la*','perizinan-la*') ? 'active' : '' }}"
-                       data-bs-toggle="collapse" data-bs-target="#submenu-laporan">
-                        <span class="nav-icon-pill"><i class="feather-bar-chart-2"></i></span>
-                        <span class="nav-label-text">Laporan SIMOLI</span>
-                        <i class="feather-chevron-right nav-arrow"></i>
-                    </a>
-                    <ul class="nav-submenu collapse {{ request()->is('report-pengaliran*','report-pemeliharaan*','report-rencana*','report-alat-berat*','monitoring-alat-berat*','pemetaan-la*','perizinan-la*') ? 'show' : '' }}"
-                        id="submenu-laporan">
-                        <li>
-                            <a class="nav-link-simoli {{ request()->is('report-pengaliran*') ? 'active' : '' }}"
-                               href="{{ route('report-pengaliran') }}">
-                                <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-droplet"></i></span>
-                                <span class="nav-label-text">Pengaliran LA</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="nav-link-simoli {{ request()->is('report-pemeliharaan*') ? 'active' : '' }}"
-                               href="{{ route('report-pemeliharaan') }}">
-                                <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-tool"></i></span>
-                                <span class="nav-label-text">Pemeliharaan</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="nav-link-simoli {{ request()->is('report-rencana*') ? 'active' : '' }}"
-                               href="{{ route('report-rencana') }}">
-                                <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-clipboard"></i></span>
-                                <span class="nav-label-text">Rencana Tahunan</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="nav-link-simoli {{ request()->is('report-alat-berat*') ? 'active' : '' }}"
-                               href="{{ route('report-alat-berat') }}">
-                                <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-truck"></i></span>
-                                <span class="nav-label-text">Laporan Alat Berat</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="nav-link-simoli {{ request()->is('monitoring-alat-berat*') ? 'active' : '' }}"
-                               href="{{ route('monitoring-alat-berat.index') }}">
-                                <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-activity"></i></span>
-                                <span class="nav-label-text">Log Monitoring</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="nav-link-simoli {{ request()->is('pemetaan-la*') ? 'active' : '' }}"
-                               href="{{ route('pemetaan-la.index') }}">
-                                <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-map"></i></span>
-                                <span class="nav-label-text">Arsip Peta LA</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="nav-link-simoli {{ request()->is('perizinan-la*') ? 'active' : '' }}"
-                               href="{{ route('perizinan-la.index') }}">
-                                <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-file-text"></i></span>
-                                <span class="nav-label-text">Arsip SK Izin LA</span>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-
-                {{-- Section: Master Data --}}
-                <li class="nav-section-label">Kelola Data</li>
-
-                <li class="nxl-hasmenu {{ request()->is('pengguna*','alat-berat*') ? 'active' : '' }}">
-                    <a href="javascript:void(0);" class="nav-link-simoli
-                        {{ request()->is('pengguna*','alat-berat*') ? 'active' : '' }}"
-                       data-bs-toggle="collapse" data-bs-target="#submenu-master">
-                        <span class="nav-icon-pill"><i class="feather-database"></i></span>
-                        <span class="nav-label-text">Master Data</span>
-                        <i class="feather-chevron-right nav-arrow"></i>
-                    </a>
-                    <ul class="nav-submenu collapse {{ request()->is('pengguna*','alat-berat*') ? 'show' : '' }}"
-                        id="submenu-master">
-                        <li>
-                            <a class="nav-link-simoli {{ request()->is('alat-berat*') ? 'active' : '' }}"
-                               href="{{ route('alat-berat.index') }}">
-                                <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-truck"></i></span>
-                                <span class="nav-label-text">Master Alat Berat</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="nav-link-simoli {{ request()->is('pengguna*') ? 'active' : '' }}"
-                               href="{{ route('pengguna.index') }}">
-                                <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-users"></i></span>
-                                <span class="nav-label-text">Data Pengguna</span>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-
-                @else
-                {{-- Section: Unit Operasional --}}
-                <li class="nav-section-label">Operasional Unit</li>
+                {{-- Section: Operasional & Input Data (Admin & Unit) --}}
+                <li class="nav-section-label">Operasional &amp; Data</li>
 
                 <li class="nxl-hasmenu {{ request()->is('pengaliran*','pemeliharaan*','rencana*','alat-berat*','monitoring-alat-berat*','pemetaan-la*','perizinan-la*') ? 'active' : '' }}">
                     <a href="javascript:void(0);" class="nav-link-simoli
                         {{ request()->is('pengaliran*','pemeliharaan*','rencana*','alat-berat*','monitoring-alat-berat*','pemetaan-la*','perizinan-la*') ? 'active' : '' }}"
                        data-bs-toggle="collapse" data-bs-target="#submenu-input">
                         <span class="nav-icon-pill"><i class="feather-edit-3"></i></span>
-                        <span class="nav-label-text">Input & Monitoring</span>
+                        <span class="nav-label-text">Input &amp; Monitoring</span>
                         <i class="feather-chevron-right nav-arrow"></i>
                     </a>
                     <ul class="nav-submenu collapse {{ request()->is('pengaliran*','pemeliharaan*','rencana*','alat-berat*','monitoring-alat-berat*','pemetaan-la*','perizinan-la*') ? 'show' : '' }}"
@@ -1991,17 +1894,17 @@
                     </ul>
                 </li>
 
-                {{-- Section: Laporan & Export PDF Unit --}}
+                {{-- Section: Laporan & Export PDF --}}
                 <li class="nav-section-label">Laporan &amp; Cetak PDF</li>
 
                 <li class="nxl-hasmenu {{ request()->is('report-*') ? 'active' : '' }}">
                     <a href="javascript:void(0);" class="nav-link-simoli {{ request()->is('report-*') ? 'active' : '' }}"
-                       data-bs-toggle="collapse" data-bs-target="#submenu-laporan-unit">
+                       data-bs-toggle="collapse" data-bs-target="#submenu-laporan">
                         <span class="nav-icon-pill"><i class="feather-printer"></i></span>
-                        <span class="nav-label-text">Laporan &amp; PDF Unit</span>
+                        <span class="nav-label-text">Laporan SIMOLI</span>
                         <i class="feather-chevron-right nav-arrow"></i>
                     </a>
-                    <ul class="nav-submenu collapse {{ request()->is('report-*') ? 'show' : '' }}" id="submenu-laporan-unit">
+                    <ul class="nav-submenu collapse {{ request()->is('report-*') ? 'show' : '' }}" id="submenu-laporan">
                         <li>
                             <a class="nav-link-simoli {{ request()->is('report-pengaliran*') ? 'active' : '' }}"
                                href="{{ route('report-pengaliran') }}">
@@ -2028,6 +1931,30 @@
                                href="{{ route('report-alat-berat') }}">
                                 <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-truck"></i></span>
                                 <span class="nav-label-text">Laporan Alat Berat</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                @if(Auth::user()->isAdmin())
+                {{-- Section: Pengaturan Sistem (Admin Only) --}}
+                <li class="nav-section-label">Pengaturan Sistem</li>
+
+                <li class="nxl-hasmenu {{ request()->is('pengguna*') ? 'active' : '' }}">
+                    <a href="javascript:void(0);" class="nav-link-simoli
+                        {{ request()->is('pengguna*') ? 'active' : '' }}"
+                       data-bs-toggle="collapse" data-bs-target="#submenu-master">
+                        <span class="nav-icon-pill"><i class="feather-database"></i></span>
+                        <span class="nav-label-text">Master Pengguna</span>
+                        <i class="feather-chevron-right nav-arrow"></i>
+                    </a>
+                    <ul class="nav-submenu collapse {{ request()->is('pengguna*') ? 'show' : '' }}"
+                        id="submenu-master">
+                        <li>
+                            <a class="nav-link-simoli {{ request()->is('pengguna*') ? 'active' : '' }}"
+                               href="{{ route('pengguna.index') }}">
+                                <span class="nav-icon-pill" style="width:26px;height:26px;font-size:13px;"><i class="feather-users"></i></span>
+                                <span class="nav-label-text">Data Pengguna</span>
                             </a>
                         </li>
                     </ul>
@@ -2186,7 +2113,7 @@
                     <h1>@yield('page-title', 'Dashboard')</h1>
                     <p>@yield('page-description', 'Sistem Informasi Monitoring Limbah & Land Aplikasi — PTPN IV')</p>
                 </div>
-                <div class="d-flex align-items-center flex-wrap gap-2">
+                <div class="d-none align-items-center flex-wrap gap-2">
                     @yield('page-actions-hero')
                 </div>
             </section>
@@ -2446,17 +2373,8 @@
     })();
     </script>
 
-    <!-- PWA -->
-    <script src="{{ asset('js/simoli-offline-db.js') }}"></script>
-    <script src="{{ asset('js/simoli-sync-manager.js') }}"></script>
+    <!-- PWA Service Worker (if supported) -->
     <script>
-        @if(Auth::check())
-        SimoliDB.init().then(function() {
-            SimoliDB.setConfig('user_id', '{{ Auth::user()->id ?? Auth::user()->ID }}');
-            SimoliDB.setConfig('username', '{{ Auth::user()->username }}');
-            SimoliDB.setConfig('user_pks_id', '{{ Auth::user()->id_pks }}');
-        });
-        @endif
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
                 navigator.serviceWorker.register('/sw.js')

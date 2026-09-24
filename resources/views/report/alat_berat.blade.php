@@ -423,16 +423,28 @@
                 <div style="font-size:11px;font-weight:700;">PT. Perkebunan Nusantara IV Regional III</div>
                 <div style="font-size:10px;">Sistem Monitoring Limbah Land Aplikasi</div>
             </td>
-            <td style="width:110px;text-align:right;font-size:10px;">
+            <td style="width:140px;text-align:right;font-size:10px;">
                 <div><strong>Periode:</strong></div>
-                <div>{{ $namaBulan[(int)$bulan] }} {{ $tahun }}</div>
+                <div>
+                    @if(!empty($dariTanggal) || !empty($sampaiTanggal))
+                        {{ !empty($dariTanggal) ? \Carbon\Carbon::parse($dariTanggal)->format('d/m/Y') : '...' }} s/d {{ !empty($sampaiTanggal) ? \Carbon\Carbon::parse($sampaiTanggal)->format('d/m/Y') : '...' }}
+                    @else
+                        {{ $namaBulan[(int)$bulan] }} {{ $tahun }}
+                    @endif
+                </div>
             </td>
         </tr>
     </table>
 </div>
 
 <div class="print-only">
-    <p style="font-size:10px;margin-bottom:10px;">Berikut report monitoring operasional alat berat bulan {{ $namaBulan[(int)$bulan] }} {{ $tahun }} per PKS:</p>
+    <p style="font-size:10px;margin-bottom:10px;">
+        @if(!empty($dariTanggal) || !empty($sampaiTanggal))
+            Berikut report monitoring operasional alat berat periode {{ !empty($dariTanggal) ? \Carbon\Carbon::parse($dariTanggal)->format('d/m/Y') : '...' }} s/d {{ !empty($sampaiTanggal) ? \Carbon\Carbon::parse($sampaiTanggal)->format('d/m/Y') : '...' }} per PKS:
+        @else
+            Berikut report monitoring operasional alat berat bulan {{ $namaBulan[(int)$bulan] }} {{ $tahun }} per PKS:
+        @endif
+    </p>
 
     @if($data->count() > 0)
         @foreach($dataByPks as $pksName => $items)
@@ -521,7 +533,11 @@
                 Report Monitoring Alat Berat
             </h3>
             <p style="margin:0;color:rgba(209,250,229,.9);font-size:13px;font-weight:600;">
-                Laporan operasional periodik &amp; jam kerja (HM) alat berat bulan <strong>{{ $namaBulan[(int)$bulan] }} {{ $tahun }}</strong>
+                @if(!empty($dariTanggal) || !empty($sampaiTanggal))
+                    Laporan operasional periodik &amp; jam kerja (HM) alat berat periode <strong>{{ !empty($dariTanggal) ? \Carbon\Carbon::parse($dariTanggal)->translatedFormat('d F Y') : '...' }}</strong> s/d <strong>{{ !empty($sampaiTanggal) ? \Carbon\Carbon::parse($sampaiTanggal)->translatedFormat('d F Y') : '...' }}</strong>
+                @else
+                    Laporan operasional periodik &amp; jam kerja (HM) alat berat bulan <strong>{{ $namaBulan[(int)$bulan] }} {{ $tahun }}</strong>
+                @endif
             </p>
         </div>
         <div>
@@ -623,7 +639,21 @@
                 </select>
             </div>
 
-            <div class="col-lg-2 col-md-6">
+            <div class="col-lg-3 col-md-6 col-6">
+                <label class="form-label">
+                    <i class="feather-calendar me-1" style="color:#16a34a;"></i> Dari Tanggal
+                </label>
+                <input type="date" name="dari_tanggal" class="form-control" value="{{ request('dari_tanggal') }}">
+            </div>
+
+            <div class="col-lg-3 col-md-6 col-6">
+                <label class="form-label">
+                    <i class="feather-calendar me-1" style="color:#16a34a;"></i> Sampai Tanggal
+                </label>
+                <input type="date" name="sampai_tanggal" class="form-control" value="{{ request('sampai_tanggal') }}">
+            </div>
+
+            <div class="col-lg-3 col-md-6">
                 <label class="form-label">
                     <i class="feather-calendar me-1" style="color:#16a34a;"></i> Bulan
                 </label>
@@ -636,7 +666,7 @@
                 </select>
             </div>
 
-            <div class="col-lg-2 col-md-6">
+            <div class="col-lg-3 col-md-6">
                 <label class="form-label">
                     <i class="feather-calendar me-1" style="color:#16a34a;"></i> Tahun
                 </label>
@@ -647,7 +677,7 @@
                 </select>
             </div>
 
-            <div class="col-lg-2 col-md-12">
+            <div class="col-lg-6 col-md-12">
                 <label class="form-label">&nbsp;</label>
                 <div class="d-flex gap-2">
                     <button type="submit" class="btn-ptpn btn-ptpn-primary flex-grow-1" style="padding:10px 14px;font-size:13px;border-radius:12px;">
@@ -667,7 +697,11 @@
     <div class="section-card-header">
         <h4 class="section-card-title">
             <i class="feather-truck" style="color:#16a34a;font-size:18px;"></i>
-            Laporan Operasional Periodik — {{ $namaBulan[(int)$bulan] }} {{ $tahun }}
+            @if(!empty($dariTanggal) || !empty($sampaiTanggal))
+                Laporan Operasional Periodik — {{ !empty($dariTanggal) ? \Carbon\Carbon::parse($dariTanggal)->format('d/m/Y') : '...' }} s/d {{ !empty($sampaiTanggal) ? \Carbon\Carbon::parse($sampaiTanggal)->format('d/m/Y') : '...' }}
+            @else
+                Laporan Operasional Periodik — {{ $namaBulan[(int)$bulan] }} {{ $tahun }}
+            @endif
         </h4>
         <span class="mod-pill mod-pill-ok" style="font-size:10.5px;">
             <i class="feather-database" style="font-size:11px;"></i>

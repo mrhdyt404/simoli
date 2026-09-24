@@ -28,6 +28,14 @@ class AlatBeratController extends Controller
             $query->where('status', $request->status);
         }
 
+        if ($request->filled('dari_tanggal')) {
+            $query->whereDate('created_at', '>=', $request->dari_tanggal);
+        }
+
+        if ($request->filled('sampai_tanggal')) {
+            $query->whereDate('created_at', '<=', $request->sampai_tanggal);
+        }
+
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {

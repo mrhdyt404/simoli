@@ -88,14 +88,24 @@ class ReportPengaliranController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        $bulan = (int) $request->input('bulan', date('n'));
         $tahun = (int) $request->input('tahun', date('Y'));
+
+        // Default bulan: 'all' (Semua Bulan) kecuali jika dipilih bulan spesifik (1..12)
+        $bulanInput = $request->input('bulan');
+        if ($request->has('bulan') && $bulanInput !== 'all' && $bulanInput !== '' && is_numeric($bulanInput)) {
+            $bulan = (int) $bulanInput;
+        } else {
+            $bulan = 'all';
+        }
+
         $minggu = $request->input('minggu', 'all');
 
         $namaBulan = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
 
         // Available years
         $years = Pengaliran::selectRaw('YEAR(tanggal) as tahun')
+            ->whereNotNull('tanggal')
+            ->whereRaw('YEAR(tanggal) >= 2000')
             ->distinct()
             ->orderBy('tahun', 'desc')
             ->pluck('tahun');
@@ -107,37 +117,49 @@ class ReportPengaliranController extends Controller
             $years->prepend(date('Y'));
         }
 
-        // PKS list for filter dropdown
-        $allPks = $user->isUnit() ? Pks::where('id_pks', $user->id_pks)->get() : Pks::orderBy('id_pks')->get();
-
         // Standard official sequence matching the report layout
         $pksOrder = ['TPU', 'TME', 'SGO', 'SPA', 'SGH', 'SBT', 'LDA', 'TAN', 'TER', 'STA', 'SRO', 'SIN'];
 
-        // Target PKS list for table
-        $pksQuery = Pks::query();
-        if ($user->isUnit()) {
-            $pksQuery->where('id_pks', $user->id_pks);
+        // All operational PKS list
+        $allOperationalPks = Pks::whereNotIn('akro', ['TEP', 'DTM', 'DBR'])
+            ->get()
+            ->sortBy(function ($pks) use ($pksOrder) {
+                $idx = array_search(strtoupper($pks->akro ?? ''), $pksOrder);
+                return $idx === false ? 999 : $idx;
+            })->values();
+
+        // PKS list for dropdown filter in view
+        $allPks = ($user && $user->isUnit()) 
+            ? Pks::where('id_pks', $user->id_pks)->get() 
+            : $allOperationalPks;
+
+        // Target PKS list to display in Report based on role & filter
+        if ($user && $user->isUnit()) {
+            // Unit user: HANYA tampilkan data sesuai unitnya sendiri
+            $targetPksList = $allOperationalPks->where('id_pks', $user->id_pks)->values();
+            if ($targetPksList->isEmpty()) {
+                $targetPksList = Pks::where('id_pks', $user->id_pks)->get();
+            }
         } elseif ($request->filled('id_pks')) {
-            $pksQuery->where('id_pks', $request->id_pks);
+            // Admin memilih PKS tertentu: tampilkan hanya PKS yang dipilih
+            $targetPksList = $allOperationalPks->where('id_pks', (int) $request->id_pks)->values();
+            if ($targetPksList->isEmpty()) {
+                $targetPksList = Pks::where('id_pks', (int) $request->id_pks)->get();
+            }
+        } else {
+            // Admin memilih "Semua PKS": tampilkan seluruh 12 PKS
+            $targetPksList = $allOperationalPks;
         }
-        $pksList = $pksQuery->get()->sortBy(function ($pks) use ($pksOrder) {
-            $idx = array_search(strtoupper($pks->akro ?? ''), $pksOrder);
-            return $idx === false ? 999 : $idx;
-        })->values();
 
-        // Month start & end dates
-        $dateStartMonth = Carbon::createFromDate($tahun, $bulan, 1)->startOfMonth();
-        $dateEndMonth = Carbon::createFromDate($tahun, $bulan, 1)->endOfMonth();
-        $totalDaysInMonth = $dateEndMonth->day;
+        $pksList = $targetPksList;
+        $targetPksIds = $targetPksList->pluck('id_pks')->toArray();
 
-        $isCurrentMonth = ($tahun == (int) date('Y') && $bulan == (int) date('n'));
-        $todayDay = (int) date('j');
+        // Custom date range params (support both tgl_awal/tgl_akhir and dari_tanggal/sampai_tanggal)
+        $tglAwalParam = $request->input('tgl_awal', $request->input('dari_tanggal'));
+        $tglAkhirParam = $request->input('tgl_akhir', $request->input('sampai_tanggal'));
 
-        $tglAwalParam = $request->input('tgl_awal');
-        $tglAkhirParam = $request->input('tgl_akhir');
-
-        // Resolve active week if $minggu is 'custom' or date range is provided
-        if ($minggu === 'custom' || ($request->filled('tgl_awal') && $request->filled('tgl_akhir'))) {
+        // Handle Date Range & Periods
+        if ($minggu === 'custom' || (!empty($tglAwalParam) && !empty($tglAkhirParam))) {
             $activeWeek = 'custom';
             $weekStart = Carbon::parse($tglAwalParam)->startOfDay();
             $weekEnd = Carbon::parse($tglAkhirParam)->endOfDay();
@@ -145,105 +167,141 @@ class ReportPengaliranController extends Controller
             $tglAwal = $weekStart->format('Y-m-d');
             $tglAkhir = $weekEnd->format('Y-m-d');
             
-            $weekLabel = "Periode (" . $weekStart->format('d') . " " . $namaBulan[(int)$weekStart->format('n')] . " - " . $weekEnd->format('d') . " " . $namaBulan[(int)$weekEnd->format('n')] . " " . $weekEnd->format('Y') . ")";
-        } elseif ($minggu === 'all' || empty($minggu)) {
-            if ($isCurrentMonth) {
-                // Determine current week by today's date
-                if ($todayDay <= 7) $activeWeek = '1';
-                elseif ($todayDay <= 14) $activeWeek = '2';
-                elseif ($todayDay <= 21) $activeWeek = '3';
-                elseif ($todayDay <= 28) $activeWeek = '4';
-                else $activeWeek = '5';
-            } else {
-                // For past months, find the week containing the latest transaction in that month
-                $latestPengaliran = Pengaliran::whereYear('tanggal', $tahun)->whereMonth('tanggal', $bulan)->orderBy('tanggal', 'desc')->first();
-                $latestMonitoring = \App\Models\MonitoringAlatBerat::whereYear('tanggal', $tahun)->whereMonth('tanggal', $bulan)->orderBy('tanggal', 'desc')->first();
-                
-                $latestTgl = null;
-                if ($latestPengaliran && $latestPengaliran->tanggal) {
-                    $latestTgl = Carbon::parse($latestPengaliran->tanggal);
-                }
-                if ($latestMonitoring && $latestMonitoring->tanggal) {
-                    $cMon = Carbon::parse($latestMonitoring->tanggal);
-                    if (!$latestTgl || $cMon->greaterThan($latestTgl)) {
-                        $latestTgl = $cMon;
-                    }
-                }
+            $weekLabel = "Periode (" . $weekStart->format('d/m/Y') . " - " . $weekEnd->format('d/m/Y') . ")";
+            $periodeLabel = sprintf(
+                "%02d %s %d – %02d %s %d",
+                $weekStart->day,
+                strtoupper($namaBulan[(int)$weekStart->month]),
+                $weekStart->year,
+                $weekEnd->day,
+                strtoupper($namaBulan[(int)$weekEnd->month]),
+                $weekEnd->year
+            );
+        } elseif ($bulan === 'all') {
+            // Mode Semua Bulan (Default)
+            $activeWeek = (string) ($minggu ?: 'all');
+            $isCurrentYear = ($tahun == (int) date('Y'));
+            $currentMonth = (int) date('n');
+            $todayDay = (int) date('j');
+            
+            // Reference month for week calculations
+            $refMonth = $isCurrentYear ? $currentMonth : 12;
+            $refTotalDays = Carbon::createFromDate($tahun, $refMonth, 1)->endOfMonth()->day;
 
-                if ($latestTgl) {
-                    $day = $latestTgl->day;
-                    if ($day <= 7) $activeWeek = '1';
-                    elseif ($day <= 14) $activeWeek = '2';
-                    elseif ($day <= 21) $activeWeek = '3';
-                    elseif ($day <= 28) $activeWeek = '4';
+            if ($activeWeek === '1') {
+                $weekStart = Carbon::createFromDate($tahun, $refMonth, 1)->startOfDay();
+                $weekEnd = Carbon::createFromDate($tahun, $refMonth, min(7, $refTotalDays))->endOfDay();
+                $weekLabel = "Minggu 1 (" . sprintf("%02d", 1) . "-" . sprintf("%02d", min(7, $refTotalDays)) . " " . $namaBulan[$refMonth] . " " . $tahun . ")";
+            } elseif ($activeWeek === '2') {
+                $weekStart = Carbon::createFromDate($tahun, $refMonth, 8)->startOfDay();
+                $weekEnd = Carbon::createFromDate($tahun, $refMonth, min(14, $refTotalDays))->endOfDay();
+                $weekLabel = "Minggu 2 (08-" . sprintf("%02d", min(14, $refTotalDays)) . " " . $namaBulan[$refMonth] . " " . $tahun . ")";
+            } elseif ($activeWeek === '3') {
+                $weekStart = Carbon::createFromDate($tahun, $refMonth, 15)->startOfDay();
+                $weekEnd = Carbon::createFromDate($tahun, $refMonth, min(21, $refTotalDays))->endOfDay();
+                $weekLabel = "Minggu 3 (15-" . sprintf("%02d", min(21, $refTotalDays)) . " " . $namaBulan[$refMonth] . " " . $tahun . ")";
+            } elseif ($activeWeek === '4') {
+                $weekStart = Carbon::createFromDate($tahun, $refMonth, 22)->startOfDay();
+                $weekEnd = Carbon::createFromDate($tahun, $refMonth, min(28, $refTotalDays))->endOfDay();
+                $weekLabel = "Minggu 4 (22-" . sprintf("%02d", min(28, $refTotalDays)) . " " . $namaBulan[$refMonth] . " " . $tahun . ")";
+            } elseif ($activeWeek === '5') {
+                $weekStart = Carbon::createFromDate($tahun, $refMonth, 29)->startOfDay();
+                $weekEnd = Carbon::createFromDate($tahun, $refMonth, $refTotalDays)->endOfDay();
+                $weekLabel = "Minggu 5 (29-" . sprintf("%02d", $refTotalDays) . " " . $namaBulan[$refMonth] . " " . $tahun . ")";
+            } else {
+                // Minggu Aktif (Otomatis)
+                if ($isCurrentYear) {
+                    $wDay = $todayDay;
+                    if ($wDay <= 7) $wNum = 1;
+                    elseif ($wDay <= 14) $wNum = 2;
+                    elseif ($wDay <= 21) $wNum = 3;
+                    elseif ($wDay <= 28) $wNum = 4;
+                    else $wNum = 5;
+                    
+                    $wStartDay = ($wNum - 1) * 7 + 1;
+                    $wEndDay = ($wNum === 5) ? $refTotalDays : min($wNum * 7, $refTotalDays);
+                    $weekStart = Carbon::createFromDate($tahun, $refMonth, $wStartDay)->startOfDay();
+                    $weekEnd = Carbon::createFromDate($tahun, $refMonth, $wEndDay)->endOfDay();
+                    $weekLabel = "Minggu $wNum (" . sprintf("%02d", $wStartDay) . "-" . sprintf("%02d", $wEndDay) . " " . $namaBulan[$refMonth] . " " . $tahun . ")";
+                } else {
+                    $weekStart = Carbon::createFromDate($tahun, 1, 1)->startOfDay();
+                    $weekEnd = Carbon::createFromDate($tahun, 12, 31)->endOfDay();
+                    $weekLabel = "Akumulasi Tahun $tahun";
+                }
+            }
+
+            $tglAwal = $weekStart->format('Y-m-d');
+            $tglAkhir = $weekEnd->format('Y-m-d');
+            $periodeLabel = "01 JANUARI $tahun – 31 DESEMBER $tahun";
+
+        } else {
+            // Mode Bulan Spesifik (1..12)
+            $dateStartMonth = Carbon::createFromDate($tahun, (int)$bulan, 1)->startOfMonth();
+            $dateEndMonth = Carbon::createFromDate($tahun, (int)$bulan, 1)->endOfMonth();
+            $totalDaysInMonth = $dateEndMonth->day;
+            $isCurrentMonth = ($tahun == (int) date('Y') && (int)$bulan == (int) date('n'));
+            $todayDay = (int) date('j');
+
+            $activeWeek = (string) $minggu;
+            if ($activeWeek === 'all' || empty($activeWeek)) {
+                if ($isCurrentMonth) {
+                    if ($todayDay <= 7) $activeWeek = '1';
+                    elseif ($todayDay <= 14) $activeWeek = '2';
+                    elseif ($todayDay <= 21) $activeWeek = '3';
+                    elseif ($todayDay <= 28) $activeWeek = '4';
                     else $activeWeek = '5';
                 } else {
                     $activeWeek = '4';
                 }
             }
-        } else {
-            $activeWeek = (string) $minggu;
+
+            if ($activeWeek === '1') {
+                $weekStart = Carbon::createFromDate($tahun, (int)$bulan, 1)->startOfDay();
+                $weekEnd = Carbon::createFromDate($tahun, (int)$bulan, min(7, $totalDaysInMonth))->endOfDay();
+                $weekLabel = "Minggu 1 (01 - " . sprintf("%02d", min(7, $totalDaysInMonth)) . " " . $namaBulan[(int)$bulan] . " " . $tahun . ")";
+            } elseif ($activeWeek === '2') {
+                $weekStart = Carbon::createFromDate($tahun, (int)$bulan, 8)->startOfDay();
+                $weekEnd = Carbon::createFromDate($tahun, (int)$bulan, min(14, $totalDaysInMonth))->endOfDay();
+                $weekLabel = "Minggu 2 (08 - " . sprintf("%02d", min(14, $totalDaysInMonth)) . " " . $namaBulan[(int)$bulan] . " " . $tahun . ")";
+            } elseif ($activeWeek === '3') {
+                $weekStart = Carbon::createFromDate($tahun, (int)$bulan, 15)->startOfDay();
+                $weekEnd = Carbon::createFromDate($tahun, (int)$bulan, min(21, $totalDaysInMonth))->endOfDay();
+                $weekLabel = "Minggu 3 (15 - " . sprintf("%02d", min(21, $totalDaysInMonth)) . " " . $namaBulan[(int)$bulan] . " " . $tahun . ")";
+            } elseif ($activeWeek === '4') {
+                $weekStart = Carbon::createFromDate($tahun, (int)$bulan, 22)->startOfDay();
+                $weekEnd = Carbon::createFromDate($tahun, (int)$bulan, min(28, $totalDaysInMonth))->endOfDay();
+                $weekLabel = "Minggu 4 (22 - " . sprintf("%02d", min(28, $totalDaysInMonth)) . " " . $namaBulan[(int)$bulan] . " " . $tahun . ")";
+            } elseif ($activeWeek === '5') {
+                $weekStart = Carbon::createFromDate($tahun, (int)$bulan, 29)->startOfDay();
+                $weekEnd = Carbon::createFromDate($tahun, (int)$bulan, $totalDaysInMonth)->endOfDay();
+                $weekLabel = "Minggu 5 (29 - " . sprintf("%02d", $totalDaysInMonth) . " " . $namaBulan[(int)$bulan] . " " . $tahun . ")";
+            }
+
+            $tglAwal = $weekStart->format('Y-m-d');
+            $tglAkhir = $weekEnd->format('Y-m-d');
+            $periodeLabel = sprintf(
+                "%02d %s %d – %02d %s %d",
+                1,
+                strtoupper($namaBulan[(int)$bulan]),
+                $tahun,
+                $totalDaysInMonth,
+                strtoupper($namaBulan[(int)$bulan]),
+                $tahun
+            );
         }
 
-        // Calculate week range for presets 1..5
-        if ($activeWeek === '1') {
-            $weekStart = Carbon::createFromDate($tahun, $bulan, 1)->startOfDay();
-            $weekEnd = Carbon::createFromDate($tahun, $bulan, min(7, $totalDaysInMonth))->endOfDay();
-            $weekLabel = "Minggu 1 (01 - " . sprintf("%02d", min(7, $totalDaysInMonth)) . " " . $namaBulan[$bulan] . " " . $tahun . ")";
-            $tglAwal = $weekStart->format('Y-m-d');
-            $tglAkhir = $weekEnd->format('Y-m-d');
-        } elseif ($activeWeek === '2') {
-            $weekStart = Carbon::createFromDate($tahun, $bulan, 8)->startOfDay();
-            $weekEnd = Carbon::createFromDate($tahun, $bulan, min(14, $totalDaysInMonth))->endOfDay();
-            $weekLabel = "Minggu 2 (08 - " . sprintf("%02d", min(14, $totalDaysInMonth)) . " " . $namaBulan[$bulan] . " " . $tahun . ")";
-            $tglAwal = $weekStart->format('Y-m-d');
-            $tglAkhir = $weekEnd->format('Y-m-d');
-        } elseif ($activeWeek === '3') {
-            $weekStart = Carbon::createFromDate($tahun, $bulan, 15)->startOfDay();
-            $weekEnd = Carbon::createFromDate($tahun, $bulan, min(21, $totalDaysInMonth))->endOfDay();
-            $weekLabel = "Minggu 3 (15 - " . sprintf("%02d", min(21, $totalDaysInMonth)) . " " . $namaBulan[$bulan] . " " . $tahun . ")";
-            $tglAwal = $weekStart->format('Y-m-d');
-            $tglAkhir = $weekEnd->format('Y-m-d');
-        } elseif ($activeWeek === '4') {
-            $weekStart = Carbon::createFromDate($tahun, $bulan, 22)->startOfDay();
-            $weekEnd = Carbon::createFromDate($tahun, $bulan, min(28, $totalDaysInMonth))->endOfDay();
-            $weekLabel = "Minggu 4 (22 - " . sprintf("%02d", min(28, $totalDaysInMonth)) . " " . $namaBulan[$bulan] . " " . $tahun . ")";
-            $tglAwal = $weekStart->format('Y-m-d');
-            $tglAkhir = $weekEnd->format('Y-m-d');
-        } elseif ($activeWeek === '5') {
-            $weekStart = Carbon::createFromDate($tahun, $bulan, 29)->startOfDay();
-            $weekEnd = Carbon::createFromDate($tahun, $bulan, $totalDaysInMonth)->endOfDay();
-            $weekLabel = "Minggu 5 (29 - " . sprintf("%02d", $totalDaysInMonth) . " " . $namaBulan[$bulan] . " " . $tahun . ")";
-            $tglAwal = $weekStart->format('Y-m-d');
-            $tglAkhir = $weekEnd->format('Y-m-d');
-        }
-
-        // Header Periode label (matching the blue pill in the image, e.g. "01 JULI 2026 – 30 JULI 2026")
-        $periodeLabel = sprintf(
-            "%02d %s %d – %02d %s %d",
-            1,
-            strtoupper($namaBulan[$bulan]),
-            $tahun,
-            $totalDaysInMonth,
-            strtoupper($namaBulan[$bulan]),
-            $tahun
-        );
-
-        // Fetch all month records from Pengaliran
+        // Fetch records from Pengaliran for the target PKS
         $pengaliranQuery = Pengaliran::with('pks')
             ->whereYear('tanggal', $tahun)
-            ->whereMonth('tanggal', $bulan);
+            ->whereIn('id_pks', $targetPksIds);
 
-        // Fetch all month records from MonitoringAlatBerat
+        // Fetch records from MonitoringAlatBerat for the target PKS
         $monitoringQuery = \App\Models\MonitoringAlatBerat::whereYear('tanggal', $tahun)
-            ->whereMonth('tanggal', $bulan);
+            ->whereIn('id_pks', $targetPksIds);
 
-        if ($user->isUnit()) {
-            $pengaliranQuery->where('id_pks', $user->id_pks);
-            $monitoringQuery->where('id_pks', $user->id_pks);
-        } elseif ($request->filled('id_pks')) {
-            $pengaliranQuery->where('id_pks', $request->id_pks);
-            $monitoringQuery->where('id_pks', $request->id_pks);
+        if ($bulan !== 'all' && is_numeric($bulan)) {
+            $pengaliranQuery->whereMonth('tanggal', (int) $bulan);
+            $monitoringQuery->whereMonth('tanggal', (int) $bulan);
         }
 
         $allPengaliranRecords = $pengaliranQuery->orderBy('tanggal', 'asc')->get();
@@ -282,10 +340,10 @@ class ReportPengaliranController extends Controller
         $rekapPengaliran = [];
         $no = 1;
 
-        foreach ($pksList as $pks) {
+        foreach ($targetPksList as $pks) {
             $akro = strtoupper($pks->akro ?? '');
-            // Skip district or office if not specifically filtering for it
-            if (in_array($akro, ['TEP', 'DTM', 'DBR']) && !$request->filled('id_pks')) {
+            // Skip district or office if showing all PKS
+            if (in_array($akro, ['TEP', 'DTM', 'DBR']) && count($targetPksList) > 1) {
                 continue;
             }
 
@@ -379,13 +437,18 @@ class ReportPengaliranController extends Controller
             'bed_sd_bulan_all' => collect($rekapPengaliran)->sum('sd_bulan_ini.bed_dialirkan'),
         ];
 
-        // Detailed logs grouped by PKS
-        $dataByPks = $allPengaliranRecords->groupBy(function ($item) {
+        // Detailed logs grouped by PKS (filterable by id_pks in tab detail)
+        $detailRecords = $allPengaliranRecords;
+        if ($request->filled('id_pks')) {
+            $detailRecords = $allPengaliranRecords->where('id_pks', (int) $request->id_pks);
+        }
+
+        $dataByPks = $detailRecords->groupBy(function ($item) {
             return $item->pks ? $item->pks->nama : 'N/A';
         });
 
-        $data = $allPengaliranRecords;
-        $allMonthRecords = $allPengaliranRecords;
+        $data = $detailRecords;
+        $allMonthRecords = $detailRecords;
 
         return view('report.report-pengaliran', compact(
             'allPks',

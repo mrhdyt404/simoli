@@ -11,7 +11,7 @@
     <link rel="manifest" href="/manifest.webmanifest">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('logo/Icon%20SIMOLI.png') }}">
     <link rel="apple-touch-icon" href="{{ asset('logo/Icon%20SIMOLI.png') }}">
-    <title>@yield('title', 'Operator Lapangan - SIMOLII')</title>
+    <title>@yield('title', 'Operator Lapangan - SIMOLI')</title>
     
     <!-- Google Fonts & Icon Fonts (Verified Active 200 OK) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -470,9 +470,9 @@
                 <i class="feather-truck me-1"></i>
                 <span>
                     @if(Auth::check() && method_exists(Auth::user(), 'isMandor') && Auth::user()->isMandor())
-                        SIMOLII MANDOR
+                        SIMOLI MANDOR
                     @else
-                        SIMOLII OPERATOR
+                        SIMOLI OPERATOR
                     @endif
                 </span>
             </a>

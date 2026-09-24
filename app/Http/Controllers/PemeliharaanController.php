@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Pemeliharaan;
 use App\Models\Pks;
+use App\Services\FileCompressionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -150,16 +151,14 @@ class PemeliharaanController extends Controller
         if ($request->hasFile('sebelum')) {
             $file = $request->file('sebelum');
             $filename = md5(time() . $file->getClientOriginalName()) . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path('gallery'), $filename);
-            $validated['sebelum'] = $filename;
+            $validated['sebelum'] = FileCompressionService::compressAndSave($file, public_path('gallery'), $filename);
         }
 
         // Handle sesudah photo
         if ($request->hasFile('sesudah')) {
             $file = $request->file('sesudah');
             $filename = md5(time() . $file->getClientOriginalName()) . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path('gallery'), $filename);
-            $validated['sesudah'] = $filename;
+            $validated['sesudah'] = FileCompressionService::compressAndSave($file, public_path('gallery'), $filename);
         }
 
         // Unit user: otomatis set id_pks ke ID user sendiri
@@ -236,16 +235,14 @@ class PemeliharaanController extends Controller
         if ($request->hasFile('sebelum')) {
             $file = $request->file('sebelum');
             $filename = md5(time() . $file->getClientOriginalName()) . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path('gallery'), $filename);
-            $validated['sebelum'] = $filename;
+            $validated['sebelum'] = FileCompressionService::compressAndSave($file, public_path('gallery'), $filename);
         }
 
         // Handle sesudah photo
         if ($request->hasFile('sesudah')) {
             $file = $request->file('sesudah');
             $filename = md5(time() . $file->getClientOriginalName()) . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path('gallery'), $filename);
-            $validated['sesudah'] = $filename;
+            $validated['sesudah'] = FileCompressionService::compressAndSave($file, public_path('gallery'), $filename);
         }
 
         // Unit user: otomatis set id_pks
@@ -262,13 +259,19 @@ class PemeliharaanController extends Controller
     public function destroy($id)
     {
         $user = Auth::user();
+        $pemeliharaan = Pemeliharaan::findOrFail($id);
 
-        // Hanya admin yang boleh menghapus data
-        if ($user->isUnit()) {
-            abort(403, 'Unit tidak memiliki akses untuk menghapus data.');
+        if ($user->isUnit() && $pemeliharaan->id_pks != $user->id_pks) {
+            abort(403, 'Anda tidak memiliki akses untuk menghapus data unit lain.');
         }
 
-        $pemeliharaan = Pemeliharaan::findOrFail($id);
+        if ($pemeliharaan->sebelum && file_exists(public_path('gallery/' . $pemeliharaan->sebelum))) {
+            @unlink(public_path('gallery/' . $pemeliharaan->sebelum));
+        }
+        if ($pemeliharaan->sesudah && file_exists(public_path('gallery/' . $pemeliharaan->sesudah))) {
+            @unlink(public_path('gallery/' . $pemeliharaan->sesudah));
+        }
+
         $pemeliharaan->delete();
 
         return redirect()->route('pemeliharaan.index')

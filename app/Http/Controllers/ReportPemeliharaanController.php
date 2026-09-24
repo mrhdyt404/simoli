@@ -107,6 +107,8 @@ class ReportPemeliharaanController extends Controller
 
         // Available years
         $years = Pemeliharaan::selectRaw('YEAR(tanggal) as tahun')
+            ->whereNotNull('tanggal')
+            ->whereRaw('YEAR(tanggal) >= 2000')
             ->distinct()
             ->orderBy('tahun', 'desc')
             ->pluck('tahun');

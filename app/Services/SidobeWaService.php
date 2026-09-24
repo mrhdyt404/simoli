@@ -16,7 +16,7 @@ class SidobeWaService
     public function __construct()
     {
         $this->baseUrl = rtrim(config('services.sidobe.url', 'https://api.sidobe.com/wa/v1'), '/');
-        $this->secretKey = config('services.sidobe.secret_key', 'lWRBndGzxoDBZDilgoKTsLvePaYEaspKZCyFbirxRTyaxzrOEO');
+        $this->secretKey = config('services.sidobe.secret_key', 'secret_key');
     }
 
     /**

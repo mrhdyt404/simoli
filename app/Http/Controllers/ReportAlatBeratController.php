@@ -19,10 +19,22 @@ class ReportAlatBeratController extends Controller
 
         $bulan = $request->input('bulan', date('m'));
         $tahun = $request->input('tahun', date('Y'));
+        $dariTanggal = $request->input('dari_tanggal');
+        $sampaiTanggal = $request->input('sampai_tanggal');
 
-        $query = MonitoringAlatBerat::with(['pks', 'alatBerat'])
-            ->whereMonth('tanggal', $bulan)
-            ->whereYear('tanggal', $tahun);
+        $query = MonitoringAlatBerat::with(['pks', 'alatBerat']);
+
+        if ($request->filled('dari_tanggal') || $request->filled('sampai_tanggal')) {
+            if ($request->filled('dari_tanggal')) {
+                $query->whereDate('tanggal', '>=', $dariTanggal);
+            }
+            if ($request->filled('sampai_tanggal')) {
+                $query->whereDate('tanggal', '<=', $sampaiTanggal);
+            }
+        } else {
+            $query->whereMonth('tanggal', $bulan)
+                ->whereYear('tanggal', $tahun);
+        }
 
         if ($user->isUnit()) {
             $query->where('id_pks', $user->id_pks);
@@ -60,6 +72,8 @@ class ReportAlatBeratController extends Controller
 
         // Available years
         $years = MonitoringAlatBerat::selectRaw('YEAR(tanggal) as tahun')
+            ->whereNotNull('tanggal')
+            ->whereRaw('YEAR(tanggal) >= 2000')
             ->distinct()
             ->orderBy('tahun', 'desc')
             ->pluck('tahun');
@@ -75,6 +89,8 @@ class ReportAlatBeratController extends Controller
             'alatBeratList',
             'bulan',
             'tahun',
+            'dariTanggal',
+            'sampaiTanggal',
             'data',
             'dataByPks',
             'summary',

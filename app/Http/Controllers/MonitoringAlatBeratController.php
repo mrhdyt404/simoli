@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AlatBerat;
 use App\Models\MonitoringAlatBerat;
 use App\Models\Pks;
+use App\Services\FileCompressionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
@@ -54,11 +55,23 @@ class MonitoringAlatBeratController extends Controller
         } elseif ($request->filled('id_pks')) {
             $statsQuery->where('id_pks', $request->id_pks);
         }
+        if ($request->filled('alat_berat_id')) {
+            $statsQuery->where('alat_berat_id', $request->alat_berat_id);
+        }
+        if ($request->filled('dari_tanggal')) {
+            $statsQuery->whereDate('tanggal', '>=', $request->dari_tanggal);
+        }
+        if ($request->filled('sampai_tanggal')) {
+            $statsQuery->whereDate('tanggal', '<=', $request->sampai_tanggal);
+        }
         if ($request->filled('bulan')) {
             $statsQuery->whereMonth('tanggal', $request->bulan);
         }
         if ($request->filled('tahun')) {
             $statsQuery->whereYear('tanggal', $request->tahun);
+        }
+        if ($request->filled('kondisi_alat')) {
+            $statsQuery->where('kondisi_alat', $request->kondisi_alat);
         }
 
         $totalHm = $statsQuery->sum('total_hm');
@@ -81,17 +94,29 @@ class MonitoringAlatBeratController extends Controller
         }
         $alatBeratList = $alatBeratQuery->orderBy('kode_alat')->get();
 
+        // Available years
+        $years = MonitoringAlatBerat::selectRaw('YEAR(tanggal) as tahun')
+            ->whereNotNull('tanggal')
+            ->whereRaw('YEAR(tanggal) >= 2000')
+            ->distinct()
+            ->orderBy('tahun', 'desc')
+            ->pluck('tahun');
+
+        if ($years->isEmpty()) {
+            $years = collect([date('Y')]);
+        }
+        if (!$years->contains(date('Y'))) {
+            $years->prepend(date('Y'));
+        }
+
         return view('monitoring_alat_berat.index', compact(
-            'logs', 'pksList', 'alatBeratList', 'totalHm', 'totalBbm', 'totalFlatBed', 'totalLongBed', 'totalBed', 'totalKegiatan'
+            'logs', 'pksList', 'alatBeratList', 'totalHm', 'totalBbm', 'totalFlatBed', 'totalLongBed', 'totalBed', 'totalKegiatan', 'years'
         ));
     }
 
     public function create()
     {
         $user = Auth::user();
-        if ($user->isAdmin()) {
-            abort(403, 'Admin hanya memiliki akses untuk melihat data monitoring alat berat.');
-        }
 
         $pksList = Pks::orderBy('nama')->get();
 
@@ -108,9 +133,6 @@ class MonitoringAlatBeratController extends Controller
     public function store(Request $request)
     {
         $user = Auth::user();
-        if ($user->isAdmin()) {
-            abort(403, 'Admin hanya memiliki akses untuk melihat data monitoring alat berat.');
-        }
 
         // Prioritaskan input manual hm_awal (jika diisi), baru foto_sebelum
         if ($request->filled('hm_awal')) {
@@ -183,21 +205,21 @@ class MonitoringAlatBeratController extends Controller
         if ($request->hasFile('foto')) {
             $file = $request->file('foto');
             $filename = time() . '_' . $file->getClientOriginalName();
-            $file->move(public_path('gallery'), $filename);
+            $filename = FileCompressionService::compressAndSave($file, public_path('gallery'), $filename);
         }
 
         $filenameSebelum = null;
         if ($request->hasFile('foto_sebelum')) {
             $file = $request->file('foto_sebelum');
             $filenameSebelum = time() . '_sebelum_' . $file->getClientOriginalName();
-            $file->move(public_path('gallery'), $filenameSebelum);
+            $filenameSebelum = FileCompressionService::compressAndSave($file, public_path('gallery'), $filenameSebelum);
         }
 
         $filenameSesudah = null;
         if ($request->hasFile('foto_sesudah')) {
             $file = $request->file('foto_sesudah');
             $filenameSesudah = time() . '_sesudah_' . $file->getClientOriginalName();
-            $file->move(public_path('gallery'), $filenameSesudah);
+            $filenameSesudah = FileCompressionService::compressAndSave($file, public_path('gallery'), $filenameSesudah);
         }
 
         $flatBed = $request->flat_bed ?? 0;
@@ -264,9 +286,6 @@ class MonitoringAlatBeratController extends Controller
     public function edit($id)
     {
         $user = Auth::user();
-        if ($user->isAdmin()) {
-            abort(403, 'Admin hanya memiliki akses untuk melihat data monitoring alat berat.');
-        }
 
         $log = MonitoringAlatBerat::with(['pks', 'alatBerat'])->findOrFail($id);
 
@@ -287,16 +306,14 @@ class MonitoringAlatBeratController extends Controller
             }
         });
         $alatBeratList = $alatBeratQuery->orderBy('kode_alat')->get();
+        $monitoring = $log;
 
-        return view('monitoring_alat_berat.edit', compact('log', 'pksList', 'alatBeratList', 'user'));
+        return view('monitoring_alat_berat.edit', compact('log', 'monitoring', 'pksList', 'alatBeratList', 'user'));
     }
 
     public function update(Request $request, $id)
     {
         $user = Auth::user();
-        if ($user->isAdmin()) {
-            abort(403, 'Admin hanya memiliki akses untuk melihat data monitoring alat berat.');
-        }
 
         $log = MonitoringAlatBerat::findOrFail($id);
 
@@ -385,7 +402,7 @@ class MonitoringAlatBeratController extends Controller
             }
             $file = $request->file('foto');
             $filename = time() . '_' . $file->getClientOriginalName();
-            $file->move(public_path('gallery'), $filename);
+            $filename = FileCompressionService::compressAndSave($file, public_path('gallery'), $filename);
         }
 
         $filenameSebelum = $log->foto_sebelum;
@@ -398,7 +415,7 @@ class MonitoringAlatBeratController extends Controller
             }
             $file = $request->file('foto_sebelum');
             $filenameSebelum = time() . '_sebelum_' . $file->getClientOriginalName();
-            $file->move(public_path('gallery'), $filenameSebelum);
+            $filenameSebelum = FileCompressionService::compressAndSave($file, public_path('gallery'), $filenameSebelum);
         }
 
         $filenameSesudah = $log->foto_sesudah;
@@ -408,7 +425,7 @@ class MonitoringAlatBeratController extends Controller
             }
             $file = $request->file('foto_sesudah');
             $filenameSesudah = time() . '_sesudah_' . $file->getClientOriginalName();
-            $file->move(public_path('gallery'), $filenameSesudah);
+            $filenameSesudah = FileCompressionService::compressAndSave($file, public_path('gallery'), $filenameSesudah);
         }
 
         $flatBed = $request->flat_bed ?? 0;
@@ -453,9 +470,6 @@ class MonitoringAlatBeratController extends Controller
     public function destroy($id)
     {
         $user = Auth::user();
-        if ($user->isAdmin()) {
-            abort(403, 'Admin hanya memiliki akses untuk melihat data monitoring alat berat.');
-        }
 
         $log = MonitoringAlatBerat::findOrFail($id);
 

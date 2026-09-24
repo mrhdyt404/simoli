@@ -914,6 +914,9 @@
                                         <i class="{{ $peta->is_locked ? 'feather-lock text-danger' : 'feather-unlock' }}"></i>
                                     </button>
                                 </form>
+                                @endif
+
+                                @if(Auth::user()->isAdmin() || (Auth::user()->id_pks == $peta->id_pks && !$peta->is_locked))
                                 <form action="{{ route('pemetaan-la.destroy', $peta->id) }}" method="POST" class="d-inline m-0 p-0" onsubmit="return confirm('Apakah Anda yakin ingin menghapus arsip peta ini?');">
                                     @csrf
                                     @method('DELETE')

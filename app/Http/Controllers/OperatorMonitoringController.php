@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AlatBerat;
 use App\Models\MonitoringAlatBerat;
 use App\Models\Pks;
+use App\Services\FileCompressionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
@@ -294,7 +295,7 @@ class OperatorMonitoringController extends Controller
         if ($request->hasFile('foto_sebelum')) {
             $file = $request->file('foto_sebelum');
             $fotoSebelumName = 'sebelum_' . time() . '_' . rand(1000, 9999) . '.' . $file->getClientOriginalExtension();
-            $file->move($uploadDir, $fotoSebelumName);
+            $fotoSebelumName = FileCompressionService::compressAndSave($file, $uploadDir, $fotoSebelumName);
             $fotoSebelumTs = Carbon::now('Asia/Jakarta')->format('Y-m-d H:i:s');
         }
 
@@ -303,7 +304,7 @@ class OperatorMonitoringController extends Controller
         if ($request->hasFile('foto_sesudah')) {
             $file = $request->file('foto_sesudah');
             $fotoSesudahName = 'sesudah_' . time() . '_' . rand(1000, 9999) . '.' . $file->getClientOriginalExtension();
-            $file->move($uploadDir, $fotoSesudahName);
+            $fotoSesudahName = FileCompressionService::compressAndSave($file, $uploadDir, $fotoSesudahName);
             $fotoSesudahTs = Carbon::now('Asia/Jakarta')->format('Y-m-d H:i:s');
         }
 
@@ -544,7 +545,7 @@ class OperatorMonitoringController extends Controller
         } elseif ($request->hasFile('foto_sebelum')) {
             $file = $request->file('foto_sebelum');
             $fotoSebelumName = 'sebelum_' . time() . '_' . rand(1000, 9999) . '.' . $file->getClientOriginalExtension();
-            $file->move($uploadDir, $fotoSebelumName);
+            $fotoSebelumName = FileCompressionService::compressAndSave($file, $uploadDir, $fotoSebelumName);
             $fotoSebelumTs = Carbon::now('Asia/Jakarta')->format('Y-m-d H:i:s');
         }
 
@@ -556,7 +557,7 @@ class OperatorMonitoringController extends Controller
             }
             $file = $request->file('foto_sesudah');
             $fotoSesudahName = 'sesudah_' . time() . '_' . rand(1000, 9999) . '.' . $file->getClientOriginalExtension();
-            $file->move($uploadDir, $fotoSesudahName);
+            $fotoSesudahName = FileCompressionService::compressAndSave($file, $uploadDir, $fotoSesudahName);
             $fotoSesudahTs = Carbon::now('Asia/Jakarta')->format('Y-m-d H:i:s');
         }
 

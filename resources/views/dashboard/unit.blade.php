@@ -726,7 +726,7 @@
                         <select name="nilai" id="nilai" class="form-select form-select-sm" style="border-radius:10px;border-color:rgba(22,163,74,.3);font-size:12px;font-weight:700;">
                             <option value="">Semua Lokasi</option>
                             @foreach($pilihan as $item)
-                                <option value="{{ $item }}" {{ ($nilai ?? '') == $item ? 'selected' : '' }}>{{ $item }}</option>
+                                <option value="{{ $item }}" {{ ($nilai !== null && $nilai !== '' && (string)$nilai === (string)$item) ? 'selected' : '' }}>{{ $item }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -1099,10 +1099,10 @@ document.addEventListener('DOMContentLoaded', function() {
             tgl_selesai: document.getElementById('tgl_selesai') ? document.getElementById('tgl_selesai').value : ''
         });
 
-        fetch("{{ url('/api/sync/pull') }}?" + params.toString(), {
+        fetch("{{ route('dashboard.grafik-volume') }}?" + params.toString(), {
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         }).then(function(r) { return r.json(); }).then(function(res) {
-            var payload = (res && res.data) ? (res.data.grafik_volume || res.data) : res;
+            var payload = (res && res.data) ? res.data : res;
             if (!payload) return;
 
             var categories = payload.labelHari || payload.labels || [];
@@ -1110,18 +1110,18 @@ document.addEventListener('DOMContentLoaded', function() {
             var seriesDihasilkan = payload.volumeDihasilkan || [];
 
             volumeChart.updateOptions({
-                xaxis: { categories: categories }
-            });
-            volumeChart.updateSeries([
-                {
-                    name: 'Volume Limbah Dialirkan (m³)',
-                    data: seriesDialirkan
-                },
-                {
-                    name: 'Volume Limbah Dihasilkan (m³)',
-                    data: seriesDihasilkan
-                }
-            ]);
+                xaxis: { categories: categories },
+                series: [
+                    {
+                        name: 'Volume Limbah Dialirkan (m³)',
+                        data: seriesDialirkan
+                    },
+                    {
+                        name: 'Volume Limbah Dihasilkan (m³)',
+                        data: seriesDihasilkan
+                    }
+                ]
+            }, true, true);
 
             /* Update filter badges using HTML DOM */
             var lblPeriode = document.getElementById('filterLabelPeriode');
@@ -1156,7 +1156,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 var curVal = params.get('nilai');
                 var html = '<option value="">Semua Lokasi</option>';
                 (payload.pilihan || []).forEach(function(item) {
-                    var sel = item == curVal ? 'selected' : '';
+                    var sel = (curVal !== null && curVal !== '' && String(item) === String(curVal)) ? 'selected' : '';
                     html += '<option value="' + item + '" ' + sel + '>' + item + '</option>';
                 });
                 nilaiSel.innerHTML = html;
@@ -1217,9 +1217,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                     nilaiSel.innerHTML = html;
                 }
+                window.applyFilterGrafik();
             });
         });
     }
+
+    /* Auto Apply On Input Change */
+    ['tahun', 'bulan', 'nilai', 'tgl_mulai', 'tgl_selesai'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('change', function() {
+                window.applyFilterGrafik();
+            });
+        }
+    });
 
     /* Prevent form submission GET redirect */
     var form = document.getElementById('filterGrafik');

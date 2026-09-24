@@ -9,6 +9,7 @@ use App\Models\Pemeliharaan;
 use App\Models\Pengaliran;
 use App\Models\Pks;
 use App\Models\User;
+use App\Services\FileCompressionService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -327,7 +328,7 @@ class MonitoringApiController extends Controller
         if ($request->hasFile('foto_sebelum')) {
             $file = $request->file('foto_sebelum');
             $filename = 'sebelum_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path($uploadDir), $filename);
+            $filename = FileCompressionService::compressAndSave($file, public_path($uploadDir), $filename);
             $log->foto_sebelum = $uploadDir . '/' . $filename;
             $log->foto = $log->foto_sebelum;
         }
@@ -335,7 +336,7 @@ class MonitoringApiController extends Controller
         if ($request->hasFile('foto_sesudah')) {
             $file = $request->file('foto_sesudah');
             $filename = 'sesudah_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path($uploadDir), $filename);
+            $filename = FileCompressionService::compressAndSave($file, public_path($uploadDir), $filename);
             $log->foto_sesudah = $uploadDir . '/' . $filename;
         }
 

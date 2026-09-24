@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ArsipPetaLa;
 use App\Models\Pks;
+use App\Services\FileCompressionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -193,12 +194,8 @@ class PemetaanLaController extends Controller
         $filename = 'PETA_LA_' . time() . '_' . uniqid() . '.' . $ext;
         
         $destinationPath = public_path('uploads/peta_la');
-        if (!file_exists($destinationPath)) {
-            mkdir($destinationPath, 0777, true);
-        }
-        
-        $fileSize = $file->getSize();
-        $file->move($destinationPath, $filename);
+        $filename = FileCompressionService::compressAndSave($file, $destinationPath, $filename);
+        $fileSize = file_exists($destinationPath . '/' . $filename) ? filesize($destinationPath . '/' . $filename) : $file->getSize();
 
         ArsipPetaLa::create([
             'id_pks' => $idPks,
@@ -310,11 +307,8 @@ class PemetaanLaController extends Controller
             $filename = 'PETA_LA_' . time() . '_' . uniqid() . '.' . $ext;
             
             $destinationPath = public_path('uploads/peta_la');
-            if (!file_exists($destinationPath)) {
-                mkdir($destinationPath, 0777, true);
-            }
-            $fileSize = $file->getSize();
-            $file->move($destinationPath, $filename);
+            $filename = FileCompressionService::compressAndSave($file, $destinationPath, $filename);
+            $fileSize = file_exists($destinationPath . '/' . $filename) ? filesize($destinationPath . '/' . $filename) : $file->getSize();
 
             $data['file_peta'] = $filename;
             $data['tipe_file'] = strtolower($ext);
@@ -333,12 +327,11 @@ class PemetaanLaController extends Controller
     public function destroy(string $id)
     {
         $user = Auth::user();
-
-        if (!$user->isAdmin()) {
-            abort(403, 'Akses ditolak. Unit PKS tidak diperbolehkan menghapus data arsip peta.');
-        }
-
         $peta = ArsipPetaLa::findOrFail($id);
+
+        if (!$user->isAdmin() && ($peta->id_pks != $user->id_pks || $peta->is_locked)) {
+            abort(403, 'Anda tidak memiliki hak untuk menghapus dokumen peta ini.');
+        }
 
         if ($peta->file_peta && file_exists(public_path('uploads/peta_la/' . $peta->file_peta))) {
             @unlink(public_path('uploads/peta_la/' . $peta->file_peta));

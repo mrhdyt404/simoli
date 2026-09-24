@@ -8,6 +8,7 @@ use App\Models\MonitoringAlatBerat;
 use App\Models\Pengaliran;
 use App\Models\Pks;
 use App\Models\User;
+use App\Services\FileCompressionService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -71,6 +72,8 @@ class SyncApiController extends Controller
             $pilihan = (clone $pilihanQuery)
                 ->whereNotNull('blok')
                 ->where('blok', '!=', '')
+                ->where('blok', '!=', '0')
+                ->where('blok', '!=', 0)
                 ->distinct()
                 ->orderBy('blok')
                 ->pluck('blok');
@@ -78,6 +81,8 @@ class SyncApiController extends Controller
             $pilihan = (clone $pilihanQuery)
                 ->whereNotNull('no_bak')
                 ->where('no_bak', '!=', '')
+                ->where('no_bak', '!=', '0')
+                ->where('no_bak', '!=', 0)
                 ->distinct()
                 ->orderBy('no_bak')
                 ->pluck('no_bak');
@@ -85,6 +90,8 @@ class SyncApiController extends Controller
             $pilihan = (clone $pilihanQuery)
                 ->whereNotNull('flat_bed')
                 ->where('flat_bed', '!=', '')
+                ->where('flat_bed', '!=', '0')
+                ->where('flat_bed', '!=', 0)
                 ->distinct()
                 ->orderBy('flat_bed')
                 ->pluck('flat_bed');
@@ -95,7 +102,7 @@ class SyncApiController extends Controller
             $baseQuery->where('id_pks', $idPks);
         }
 
-        if ($nilai !== null && $nilai !== '' && $nilai !== 'Semua') {
+        if ($nilai !== null && $nilai !== '' && $nilai !== 'Semua' && $nilai !== '0' && $nilai !== 0) {
             if ($jenis == 'blok') {
                 $baseQuery->where('blok', $nilai);
             } elseif ($jenis == 'no_bak') {
@@ -116,20 +123,26 @@ class SyncApiController extends Controller
             $start = Carbon::parse($tglMulai)->startOfDay();
             $end   = Carbon::parse($tglSelesai)->endOfDay();
 
+            $pMap = (clone $baseQuery)->whereBetween('tanggal', [$start, $end])
+                ->selectRaw('DATE(tanggal) as tgl, SUM(vol_limbah_dialirkan) as dialirkan, SUM(vol_limbah_dihasilkan) as dihasilkan')
+                ->groupBy(DB::raw('DATE(tanggal)'))
+                ->get()
+                ->keyBy('tgl');
+
             $curr = $start->copy();
             while ($curr->lte($end)) {
                 $dateStr = $curr->toDateString();
                 $labels[] = $curr->format('d/m/Y');
 
-                $q = (clone $baseQuery)->whereDate('tanggal', $dateStr);
-                $volumeDialirkan[]  = round((float)$this->numericSum($q->get(), 'vol_limbah_dialirkan'), 2);
-                $volumeDihasilkan[] = round((float)$this->numericSum($q->get(), 'vol_limbah_dihasilkan'), 2);
+                $row = $pMap->get($dateStr);
+                $volumeDialirkan[]  = $row ? round((float)$row->dialirkan, 2) : 0;
+                $volumeDihasilkan[] = $row ? round((float)$row->dihasilkan, 2) : 0;
 
                 $curr->addDay();
             }
         } elseif ($periode === 'semua') {
             $records = (clone $baseQuery)
-                ->selectRaw('YEAR(tanggal) as yr, MONTH(tanggal) as mo')
+                ->selectRaw('YEAR(tanggal) as yr, MONTH(tanggal) as mo, SUM(vol_limbah_dialirkan) as dialirkan, SUM(vol_limbah_dihasilkan) as dihasilkan')
                 ->whereNotNull('tanggal')
                 ->groupBy(DB::raw('YEAR(tanggal)'), DB::raw('MONTH(tanggal)'))
                 ->orderBy(DB::raw('YEAR(tanggal)'))
@@ -150,12 +163,19 @@ class SyncApiController extends Controller
                     $yr = $rec->yr;
                     $mo = $rec->mo;
                     $labels[] = ($namaBulanShort[(int)$mo] ?? $mo) . ' ' . $yr;
-                    $q = (clone $baseQuery)->whereYear('tanggal', $yr)->whereMonth('tanggal', $mo);
-                    $volumeDialirkan[]  = round((float)$this->numericSum($q->get(), 'vol_limbah_dialirkan'), 2);
-                    $volumeDihasilkan[] = round((float)$this->numericSum($q->get(), 'vol_limbah_dihasilkan'), 2);
+                    $volumeDialirkan[]  = round((float)$rec->dialirkan, 2);
+                    $volumeDihasilkan[] = round((float)$rec->dihasilkan, 2);
                 }
             }
         } elseif ($periode === 'tahunan') {
+            $records = (clone $baseQuery)
+                ->selectRaw('YEAR(tanggal) as yr, SUM(vol_limbah_dialirkan) as dialirkan, SUM(vol_limbah_dihasilkan) as dihasilkan')
+                ->whereNotNull('tanggal')
+                ->groupBy(DB::raw('YEAR(tanggal)'))
+                ->orderBy(DB::raw('YEAR(tanggal)'))
+                ->get()
+                ->keyBy('yr');
+
             $yearQuery = Pengaliran::query();
             if ($idPks) {
                 $yearQuery->where('id_pks', $idPks);
@@ -183,20 +203,27 @@ class SyncApiController extends Controller
 
             foreach ($allYears as $yr) {
                 $labels[] = (string)$yr;
-                $q = (clone $baseQuery)->whereYear('tanggal', $yr);
-                $volumeDialirkan[]  = round((float)$this->numericSum($q->get(), 'vol_limbah_dialirkan'), 2);
-                $volumeDihasilkan[] = round((float)$this->numericSum($q->get(), 'vol_limbah_dihasilkan'), 2);
+                $row = $records->get($yr);
+                $volumeDialirkan[]  = $row ? round((float)$row->dialirkan, 2) : 0;
+                $volumeDihasilkan[] = $row ? round((float)$row->dihasilkan, 2) : 0;
             }
         } elseif ($periode === 'bulanan') {
             $namaBulan = [
                 1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'Mei', 6 => 'Jun',
                 7 => 'Jul', 8 => 'Agu', 9 => 'Sep', 10 => 'Okt', 11 => 'Nov', 12 => 'Des'
             ];
+
+            $pMap = (clone $baseQuery)->whereYear('tanggal', $tahun)
+                ->selectRaw('MONTH(tanggal) as mo, SUM(vol_limbah_dialirkan) as dialirkan, SUM(vol_limbah_dihasilkan) as dihasilkan')
+                ->groupBy(DB::raw('MONTH(tanggal)'))
+                ->get()
+                ->keyBy('mo');
+
             for ($m = 1; $m <= 12; $m++) {
                 $labels[] = $namaBulan[$m];
-                $q = (clone $baseQuery)->whereYear('tanggal', $tahun)->whereMonth('tanggal', $m);
-                $volumeDialirkan[]  = round((float)$this->numericSum($q->get(), 'vol_limbah_dialirkan'), 2);
-                $volumeDihasilkan[] = round((float)$this->numericSum($q->get(), 'vol_limbah_dihasilkan'), 2);
+                $row = $pMap->get($m);
+                $volumeDialirkan[]  = $row ? round((float)$row->dialirkan, 2) : 0;
+                $volumeDihasilkan[] = $row ? round((float)$row->dihasilkan, 2) : 0;
             }
         } elseif ($periode === 'mingguan') {
             $jumlahHari = Carbon::create($tahun, $bulan)->daysInMonth;
@@ -210,24 +237,41 @@ class SyncApiController extends Controller
                 $weeks['Minggu 5 (29-'.$jumlahHari.')'] = [29, $jumlahHari];
             }
 
+            $pMap = (clone $baseQuery)->whereYear('tanggal', $tahun)->whereMonth('tanggal', $bulan)
+                ->selectRaw('DAY(tanggal) as d, SUM(vol_limbah_dialirkan) as dialirkan, SUM(vol_limbah_dihasilkan) as dihasilkan')
+                ->groupBy(DB::raw('DAY(tanggal)'))
+                ->get()
+                ->keyBy('d');
+
             foreach ($weeks as $wName => [$dStart, $dEnd]) {
                 $labels[] = $wName;
-                $q = (clone $baseQuery)->whereYear('tanggal', $tahun)
-                    ->whereMonth('tanggal', $bulan)
-                    ->whereRaw('DAY(tanggal) BETWEEN ? AND ?', [$dStart, $dEnd]);
-                $volumeDialirkan[]  = round((float)$this->numericSum($q->get(), 'vol_limbah_dialirkan'), 2);
-                $volumeDihasilkan[] = round((float)$this->numericSum($q->get(), 'vol_limbah_dihasilkan'), 2);
+                $wDialirkan = 0;
+                $wDihasilkan = 0;
+
+                for ($d = $dStart; $d <= $dEnd; $d++) {
+                    if ($row = $pMap->get($d)) {
+                        $wDialirkan += (float)$row->dialirkan;
+                        $wDihasilkan += (float)$row->dihasilkan;
+                    }
+                }
+
+                $volumeDialirkan[]  = round($wDialirkan, 2);
+                $volumeDihasilkan[] = round($wDihasilkan, 2);
             }
         } else {
             // Harian
+            $pMap = (clone $baseQuery)->whereYear('tanggal', $tahun)->whereMonth('tanggal', $bulan)
+                ->selectRaw('DAY(tanggal) as d, SUM(vol_limbah_dialirkan) as dialirkan, SUM(vol_limbah_dihasilkan) as dihasilkan')
+                ->groupBy(DB::raw('DAY(tanggal)'))
+                ->get()
+                ->keyBy('d');
+
             $jumlahHari = Carbon::create($tahun, $bulan)->daysInMonth;
             for ($i = 1; $i <= $jumlahHari; $i++) {
                 $labels[] = (string)$i;
-                $q = (clone $baseQuery)->whereYear('tanggal', $tahun)
-                    ->whereMonth('tanggal', $bulan)
-                    ->whereDay('tanggal', $i);
-                $volumeDialirkan[]  = round((float)$this->numericSum($q->get(), 'vol_limbah_dialirkan'), 2);
-                $volumeDihasilkan[] = round((float)$this->numericSum($q->get(), 'vol_limbah_dihasilkan'), 2);
+                $row = $pMap->get($i);
+                $volumeDialirkan[]  = $row ? round((float)$row->dialirkan, 2) : 0;
+                $volumeDihasilkan[] = $row ? round((float)$row->dihasilkan, 2) : 0;
             }
         }
 
@@ -477,22 +521,11 @@ class SyncApiController extends Controller
     }
 
     /**
-     * Save base64 image to disk and return file name
+     * Save and compress base64 image to disk and return file name
      */
     private function saveBase64Image(string $base64String, string $prefix, string $destinationDir): string
     {
-        $imageParts = explode(';base64,', $base64String);
-        $imageTypeAux = explode('image/', $imageParts[0]);
-        $imageType = count($imageTypeAux) > 1 ? $imageTypeAux[1] : 'jpeg';
-        if ($imageType === 'jpg') $imageType = 'jpeg';
-
-        $imageBase64 = base64_decode($imageParts[1]);
-        $fileName = $prefix . '_' . time() . '_' . rand(1000, 9999) . '.' . ($imageType === 'jpeg' ? 'jpg' : $imageType);
-        $filePath = $destinationDir . '/' . $fileName;
-
-        File::put($filePath, $imageBase64);
-
-        return $fileName;
+        return FileCompressionService::compressBase64Image($base64String, $destinationDir, $prefix);
     }
 
     /**

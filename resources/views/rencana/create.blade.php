@@ -179,12 +179,12 @@
                 </select>
                 @error('id_pks') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 @else
-                <input type="hidden" name="id_pks" value="{{ $user->ID }}">
+                <input type="hidden" name="id_pks" value="{{ $user->id_pks }}">
                 <div class="pks-display">
                     <i class="feather-map-pin" style="color:#16a34a;font-size:18px;"></i>
                     <div>
-                        <div style="font-size:14px;font-weight:800;">{{ $user->NAMA }}</div>
-                        <div style="font-size:11px;color:#6b7280;">{{ $user->AKRO }}</div>
+                        <div style="font-size:14px;font-weight:800;">{{ $user->pks ? $user->pks->nama : 'PKS' }}</div>
+                        <div style="font-size:11px;color:#6b7280;">{{ $user->pks ? $user->pks->akro : '' }}</div>
                     </div>
                 </div>
                 @endif

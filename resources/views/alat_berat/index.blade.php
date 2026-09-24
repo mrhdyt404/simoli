@@ -209,12 +209,28 @@
                 </div>
 
                 <div class="col-12 col-sm-6 col-md-3">
-                    <label>Pencarian</label>
-                    <div class="input-group">
-                        <input type="text" name="search" class="form-control" placeholder="Kode / Nama / Merk..." value="{{ request('search') }}">
-                        <button type="submit" class="btn-ptpn btn-ptpn-primary" style="padding:9px 14px;">
-                            <i class="feather-search" style="font-size:14px;"></i>
+                    <label><i class="feather-calendar me-1" style="color:#16a34a;"></i> Dari Tanggal</label>
+                    <input type="date" name="dari_tanggal" class="form-control" value="{{ request('dari_tanggal') }}">
+                </div>
+
+                <div class="col-12 col-sm-6 col-md-3">
+                    <label><i class="feather-calendar me-1" style="color:#16a34a;"></i> Sampai Tanggal</label>
+                    <input type="date" name="sampai_tanggal" class="form-control" value="{{ request('sampai_tanggal') }}">
+                </div>
+
+                <div class="col-12 col-sm-6 col-md-3">
+                    <label><i class="feather-search me-1" style="color:#16a34a;"></i> Pencarian</label>
+                    <input type="text" name="search" class="form-control" placeholder="Kode / Nama / Merk..." value="{{ request('search') }}">
+                </div>
+
+                <div class="col-12 col-sm-6 col-md-3">
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn-ptpn btn-ptpn-primary flex-grow-1" style="padding:9px 14px;">
+                            <i class="feather-filter" style="font-size:14px;"></i> Filter
                         </button>
+                        <a href="{{ route('alat-berat.index') }}" class="btn-ptpn btn-ptpn-outline" style="padding:9px 14px;" title="Reset Filter">
+                            <i class="feather-refresh-cw" style="font-size:14px;"></i>
+                        </a>
                     </div>
                 </div>
             </div>

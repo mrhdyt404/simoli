@@ -86,7 +86,7 @@
         bottom: -80px; left: 20%;
         width: 300px; height: 300px;
         border-radius: 50%;
-        background: radial-gradient(circle, var(--theme-glow, rgba(212, 160, 23, 0.12)) 0%, transparent 70%);
+        /* background: radial-gradient(circle, var(--theme-glow, rgba(212, 160, 23, 0.12)) 0%, transparent 70%); */
         pointer-events: none;
     }
 
@@ -494,13 +494,126 @@
     .kpi-card:nth-child(3) { animation-delay: 0.15s; }
     .kpi-card:nth-child(4) { animation-delay: 0.20s; }
 
+    /* === FILTER TABS & METRICS === */
+    .filter-card-admin {
+        background: #ffffff;
+        border-radius: 18px;
+        border: 1.5px solid rgba(22, 163, 74, 0.15);
+        box-shadow: 0 4px 20px rgba(22, 163, 74, 0.06);
+        padding: 18px 20px;
+        margin-bottom: 22px;
+        transition: all 0.25s ease;
+    }
+
+    .filter-tabs-wrapper {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        background: rgba(22, 163, 74, 0.06);
+        padding: 5px;
+        border-radius: 12px;
+        border: 1px solid rgba(22, 163, 74, 0.12);
+    }
+
+    .btn-periode-tab {
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #374151;
+        border: none;
+        padding: 6px 14px;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        background: transparent;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+    }
+
+    .btn-periode-tab:hover {
+        background: rgba(22, 163, 74, 0.12);
+        color: #14532d;
+    }
+
+    .btn-periode-tab.active {
+        background: var(--theme-primary, #16a34a) !important;
+        color: #ffffff !important;
+        box-shadow: 0 3px 10px var(--theme-glow, rgba(22, 163, 74, 0.3));
+    }
+
+    .metric-mini-badge {
+        background: #f8fafc;
+        border: 1px solid rgba(22, 163, 74, 0.1);
+        border-radius: 14px;
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        transition: all 0.2s ease;
+        height: 100%;
+    }
+
+    .metric-mini-badge:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(22, 163, 74, 0.08);
+        border-color: rgba(22, 163, 74, 0.25);
+    }
+
+    .metric-mini-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        flex-shrink: 0;
+    }
+
+    .chart-param-guide {
+        border-radius: 16px;
+        background: #f0fdf4;
+        border: 1px solid rgba(22, 163, 74, 0.15);
+        padding: 18px 22px;
+    }
+
     /* === DARK MODE === */
     html.app-skin-dark .kpi-card,
     html.app-skin-dark .chart-card,
+    html.app-skin-dark .filter-card-admin,
     html.app-skin-dark .compliance-table-wrap,
     html.app-skin-dark .report-tile {
         background: #0a2317 !important;
         border-color: rgba(34, 197, 94, 0.15) !important;
+    }
+
+    html.app-skin-dark .filter-tabs-wrapper {
+        background: rgba(34, 197, 94, 0.08) !important;
+        border-color: rgba(34, 197, 94, 0.18) !important;
+    }
+
+    html.app-skin-dark .btn-periode-tab {
+        color: #9ca3af;
+    }
+
+    html.app-skin-dark .btn-periode-tab:hover {
+        background: rgba(34, 197, 94, 0.15);
+        color: #86efac;
+    }
+
+    html.app-skin-dark .btn-periode-tab.active {
+        background: var(--theme-primary, #16a34a) !important;
+        color: #ffffff !important;
+    }
+
+    html.app-skin-dark .metric-mini-badge {
+        background: rgba(255, 255, 255, 0.04) !important;
+        border-color: rgba(34, 197, 94, 0.15) !important;
+    }
+
+    html.app-skin-dark .chart-param-guide {
+        background: #0e3b26 !important;
+        border-color: rgba(34, 197, 94, 0.2) !important;
     }
 
     html.app-skin-dark .kpi-value,
@@ -531,6 +644,7 @@
         .hero-stat-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
         .admin-hero-inner { padding: 20px; }
         .hero-stat-val { font-size: 22px; }
+        .filter-tabs-wrapper { overflow-x: auto; flex-wrap: nowrap; padding: 4px; }
     }
 </style>
 @endsection
@@ -719,38 +833,253 @@
     </section>
 
     {{-- ================================================================
-         3. ANALYTICS CHARTS
+         3. ANALYTICS & INTERACTIVE MULTI-PERIOD CHARTS
          ================================================================ --}}
-    <section aria-label="Analytics Charts" class="mb-4">
+    <section aria-label="Analitik & Visualisasi Data SIMOLI" class="mb-4">
+@php
+    $curBulanName = \Carbon\Carbon::create()->month((int)($bulan ?? date('m')))->translatedFormat('F');
+    $initialPeriodeLabels = [
+        'semua'    => 'Semua Periode Data',
+        'harian'   => 'Harian: ' . $curBulanName . ' ' . ($tahun ?? date('Y')),
+        'mingguan' => 'Mingguan: ' . $curBulanName . ' ' . ($tahun ?? date('Y')),
+        'bulanan'  => 'Bulanan: Tahun ' . ($tahun ?? date('Y')),
+        'tahunan'  => 'Grafik Per Tahun',
+        'custom'   => 'Rentang: ' . ($tglMulai ?? '') . ' s.d ' . ($tglSelesai ?? ''),
+    ];
+    $initialPeriodeText = $initialPeriodeLabels[$periode ?? 'semua'] ?? 'Semua Periode Data';
+    $selectedPksModel = !empty($idPksFilter) ? $pksList->firstWhere('id_pks', $idPksFilter) : null;
+    $initialPksText = $selectedPksModel ? ($selectedPksModel->akro ?? $selectedPksModel->nama) . ' — ' . $selectedPksModel->nama : 'Semua PKS (12 Unit)';
+@endphp
         <div class="section-header">
             <h3 class="section-title">
                 <span class="section-title-dot"></span>
-                Analitik & Visualisasi Data
+                Analitik &amp; Visualisasi Data Eksekutif
             </h3>
-            <span class="mod-pill mod-pill-ok" style="font-size:11px;">Harian & Bulanan</span>
+            <div class="d-flex align-items-center gap-2">
+                <span class="mod-pill mod-pill-ok" id="adminActiveFilterBadge" style="font-size:11px;">
+                    <i class="feather-check-circle me-1"></i> {{ $initialPeriodeText }}{{ !empty($idPksFilter) ? ' • ' . $initialPksText : '' }}
+                </span>
+            </div>
         </div>
 
+        {{-- Filter Control Panel --}}
+        <div class="filter-card-admin">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-3">
+                {{-- Periode Switcher Tab Buttons --}}
+                <div class="filter-tabs-wrapper" id="adminPeriodeFilterContainer">
+                    <button type="button" class="btn-periode-tab {{ ($periode ?? 'semua') == 'semua' ? 'active' : '' }}"
+                        data-periode="semua" onclick="window.setAdminPeriodeFilter('semua')">
+                        <i class="feather-layers" style="font-size:13px;"></i> Semua Data (Default)
+                    </button>
+                    <button type="button" class="btn-periode-tab {{ ($periode ?? '') == 'harian' ? 'active' : '' }}"
+                        data-periode="harian" onclick="window.setAdminPeriodeFilter('harian')">
+                        <i class="feather-sun" style="font-size:13px;"></i> Harian
+                    </button>
+                    <button type="button" class="btn-periode-tab {{ ($periode ?? '') == 'mingguan' ? 'active' : '' }}"
+                        data-periode="mingguan" onclick="window.setAdminPeriodeFilter('mingguan')">
+                        <i class="feather-calendar" style="font-size:13px;"></i> Mingguan
+                    </button>
+                    <button type="button" class="btn-periode-tab {{ ($periode ?? '') == 'bulanan' ? 'active' : '' }}"
+                        data-periode="bulanan" onclick="window.setAdminPeriodeFilter('bulanan')">
+                        <i class="feather-grid" style="font-size:13px;"></i> Bulanan
+                    </button>
+                    <button type="button" class="btn-periode-tab {{ ($periode ?? '') == 'tahunan' ? 'active' : '' }}"
+                        data-periode="tahunan" onclick="window.setAdminPeriodeFilter('tahunan')">
+                        <i class="feather-bar-chart-2" style="font-size:13px;"></i> Tahunan
+                    </button>
+                    <button type="button" class="btn-periode-tab {{ ($periode ?? '') == 'custom' ? 'active' : '' }}"
+                        data-periode="custom" onclick="window.setAdminPeriodeFilter('custom')">
+                        <i class="feather-sliders" style="font-size:13px;"></i> Custom Tanggal
+                    </button>
+                </div>
+
+                {{-- Status Pills / Indicators --}}
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span class="badge rounded-pill px-3 py-2 fw-semibold" id="adminFilterLabelPeriode"
+                          style="background:rgba(22,163,74,0.1);color:#15803d;border:1px solid rgba(22,163,74,0.25);font-size:11.5px;">
+                        {{ $initialPeriodeText }}
+                    </span>
+                    <span class="badge rounded-pill px-3 py-2 fw-semibold" id="adminFilterLabelPks"
+                          style="background:rgba(2,132,199,0.1);color:#0369a1;border:1px solid rgba(2,132,199,0.25);font-size:11.5px;">
+                        {{ $initialPksText }}
+                    </span>
+                </div>
+            </div>
+
+            {{-- Filter Parameter Form --}}
+            <form id="filterGrafikAdmin" class="row g-3 align-items-end pt-2" style="border-top:1px solid rgba(22,163,74,0.08);">
+                <input type="hidden" name="periode" id="adminPeriodeVal" value="{{ $periode ?? 'semua' }}">
+
+                {{-- Filter PKS --}}
+                <div class="col-md-3 col-sm-6">
+                    <label class="form-label mb-1 fw-bold text-muted" style="font-size:11px;">Pilih Unit PKS</label>
+                    <select name="id_pks" id="adminIdPks" class="form-select form-select-sm fw-semibold" style="border-radius:10px;border-color:rgba(22,163,74,0.3);font-size:12px;">
+                        <option value="" {{ empty($idPksFilter) ? 'selected' : '' }}>Semua PKS (12 Unit Regional)</option>
+                        @foreach($pksList as $p)
+                            <option value="{{ $p->id_pks }}" {{ ($idPksFilter ?? '') == $p->id_pks ? 'selected' : '' }}>
+                                {{ $p->akro ?? $p->nama }} — {{ $p->nama }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                {{-- Filter Tahun --}}
+                <div class="col-md-2 col-sm-6 filter-admin-year-group {{ in_array($periode ?? 'semua', ['semua', 'tahunan', 'custom']) ? 'd-none' : '' }}" id="adminTahunGroup">
+                    <label class="form-label mb-1 fw-bold text-muted" style="font-size:11px;">Tahun</label>
+                    <select name="tahun" id="adminTahun" class="form-select form-select-sm fw-semibold" style="border-radius:10px;border-color:rgba(22,163,74,0.3);font-size:12px;">
+                        @foreach($tahunList as $y)
+                            <option value="{{ $y }}" {{ ($tahun ?? date('Y')) == $y ? 'selected' : '' }}>{{ $y }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                {{-- Filter Bulan --}}
+                <div class="col-md-2 col-sm-6 filter-admin-month-group {{ in_array($periode ?? 'semua', ['harian', 'mingguan']) ? '' : 'd-none' }}" id="adminBulanGroup">
+                    <label class="form-label mb-1 fw-bold text-muted" style="font-size:11px;">Bulan</label>
+                    <select name="bulan" id="adminBulan" class="form-select form-select-sm fw-semibold" style="border-radius:10px;border-color:rgba(22,163,74,0.3);font-size:12px;">
+                        @for($i = 1; $i <= 12; $i++)
+                            <option value="{{ $i }}" {{ ($bulan ?? date('m')) == $i ? 'selected' : '' }}>
+                                {{ \Carbon\Carbon::create()->month($i)->translatedFormat('F') }}
+                            </option>
+                        @endfor
+                    </select>
+                </div>
+
+                {{-- Custom Date Range --}}
+                <div class="col-md-2 col-sm-6 filter-admin-custom-group {{ ($periode ?? '') == 'custom' ? '' : 'd-none' }}" id="adminCustomStartGroup">
+                    <label class="form-label mb-1 fw-bold text-success" style="font-size:11px;">Dari Tanggal</label>
+                    <input type="date" name="tgl_mulai" id="adminTglMulai" class="form-control form-control-sm fw-semibold"
+                           value="{{ $tglMulai ?? date('Y-m-01') }}" style="border-radius:10px;border-color:rgba(22,163,74,0.4);font-size:12px;">
+                </div>
+                <div class="col-md-2 col-sm-6 filter-admin-custom-group {{ ($periode ?? '') == 'custom' ? '' : 'd-none' }}" id="adminCustomEndGroup">
+                    <label class="form-label mb-1 fw-bold text-success" style="font-size:11px;">Sampai Tanggal</label>
+                    <input type="date" name="tgl_selesai" id="adminTglSelesai" class="form-control form-control-sm fw-semibold"
+                           value="{{ $tglSelesai ?? date('Y-m-d') }}" style="border-radius:10px;border-color:rgba(22,163,74,0.4);font-size:12px;">
+                </div>
+
+                {{-- Location Type Filter --}}
+                <div class="col-md-2 col-sm-6">
+                    <label class="form-label mb-1 fw-bold text-muted" style="font-size:11px;">Jenis Lokasi</label>
+                    <select name="jenis" id="adminJenis" class="form-select form-select-sm fw-semibold" style="border-radius:10px;border-color:rgba(22,163,74,0.3);font-size:12px;">
+                        <option value="flat_bed" {{ ($jenis ?? 'flat_bed') == 'flat_bed' ? 'selected' : '' }}>Flat Bed</option>
+                        <option value="no_bak" {{ ($jenis ?? '') == 'no_bak' ? 'selected' : '' }}>Nomor Bak</option>
+                        <option value="blok" {{ ($jenis ?? '') == 'blok' ? 'selected' : '' }}>Blok Lahan</option>
+                    </select>
+                </div>
+
+                {{-- Specific Filter --}}
+                <div class="col-md-2 col-sm-6">
+                    <label class="form-label mb-1 fw-bold text-muted" style="font-size:11px;">Filter Spesifik</label>
+                    <select name="nilai" id="adminNilai" class="form-select form-select-sm fw-semibold" style="border-radius:10px;border-color:rgba(22,163,74,0.3);font-size:12px;">
+                        <option value="">Semua Lokasi</option>
+                        @foreach($grafikRes['pilihan'] ?? [] as $item)
+                            <option value="{{ $item }}" {{ ($nilai !== null && $nilai !== '' && (string)$nilai === (string)$item) ? 'selected' : '' }}>{{ $item }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                {{-- Apply Button --}}
+                <div class="col-auto filter-tabs-wrapper">
+                    <button type="button" id="btnTerapkanFilterAdmin" class="btn-ptpn btn-ptpn-primary" onclick="window.applyAdminFilterGrafik()"
+                            style="padding:7px 18px;font-size:12px;font-weight:800;border-radius:10px;">
+                        <i class="feather-filter" style="font-size:13px;"></i> Terapkan
+                    </button><br>
+                    <button type="button" class="btn btn-sm btn-light border ms-1 fw-bold" onclick="window.resetAdminFilterGrafik()"
+                            style="border-radius:10px;padding:7px 12px;font-size:12px;" title="Reset Filter">
+                        <i class="feather-refresh-cw" style="font-size:12px;"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        {{-- Live Metric KPI Strip (Filtered Data Summary) --}}
+        <div class="row g-3 mb-4">
+            <div class="col-xl-3 col-md-6">
+                <div class="metric-mini-badge">
+                    <div class="metric-mini-icon" style="background:#dcfce7;color:#16a34a;border:1px solid #bbf7d0;">
+                        <i class="feather-droplet"></i>
+                    </div>
+                    <div>
+                        <div style="font-size:10.5px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;">Total Vol. Dialirkan</div>
+                        <div class="fw-black" style="font-family:'Outfit',sans-serif;font-size:20px;color:#16a34a;line-height:1.2;">
+                            <span id="metricTotalDialirkan">{{ number_format($grafikRes['totalDialirkan'] ?? 0, 0, ',', '.') }}</span>
+                            <small style="font-size:12px;font-weight:600;color:#6b7280;">m³</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6">
+                <div class="metric-mini-badge">
+                    <div class="metric-mini-icon" style="background:#e0f2fe;color:#0284c7;border:1px solid #bae6fd;">
+                        <i class="feather-layers"></i>
+                    </div>
+                    <div>
+                        <div style="font-size:10.5px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;">Total Vol. Dihasilkan</div>
+                        <div class="fw-black" style="font-family:'Outfit',sans-serif;font-size:20px;color:#0284c7;line-height:1.2;">
+                            <span id="metricTotalDihasilkan">{{ number_format($grafikRes['totalDihasilkan'] ?? 0, 0, ',', '.') }}</span>
+                            <small style="font-size:12px;font-weight:600;color:#6b7280;">m³</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6">
+                <div class="metric-mini-badge">
+                    <div class="metric-mini-icon" style="background:#fef3c7;color:#d97706;border:1px solid #fde68a;">
+                        <i class="feather-percent"></i>
+                    </div>
+                    <div>
+                        <div style="font-size:10.5px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;">Rasio Efisiensi LA</div>
+                        <div class="fw-black" style="font-family:'Outfit',sans-serif;font-size:20px;color:#d97706;line-height:1.2;">
+                            <span id="metricEfficiency">{{ $grafikRes['efficiency'] ?? 0 }}</span>%
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6">
+                <div class="metric-mini-badge">
+                    <div class="metric-mini-icon" style="background:#f3e8ff;color:#7c3aed;border:1px solid #e9d5ff;">
+                        <i class="feather-tool"></i>
+                    </div>
+                    <div>
+                        <div style="font-size:10.5px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;">Total Pemeliharaan Bed</div>
+                        <div class="fw-black" style="font-family:'Outfit',sans-serif;font-size:20px;color:#7c3aed;line-height:1.2;">
+                            <span id="metricTotalBed">{{ number_format(($grafikRes['totalFlatBed'] ?? 0) + ($grafikRes['totalLongBed'] ?? 0), 0, ',', '.') }}</span>
+                            <small style="font-size:12px;font-weight:600;color:#6b7280;">Bed</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Visual Charts Grid --}}
         <div class="row g-4 mb-4">
-            {{-- Trend Chart --}}
+            {{-- Main Volume Trend Chart --}}
             <div class="col-lg-8">
                 <div class="chart-card">
                     <div class="chart-card-header">
                         <div>
                             <div class="chart-title">
                                 <i class="feather-trending-up" style="color:#16a34a;margin-right:6px;"></i>
-                                Trend Monitoring 7 Hari Terakhir
+                                Trend Volume Limbah (Dialirkan vs Dihasilkan)
                             </div>
-                            <div class="chart-sub">Jumlah PKS yang menginput laporan harian</div>
+                            <div class="chart-sub" id="mainChartSub">Visualisasi data debit limbah cair IPAL &amp; Land Application (m³)</div>
                         </div>
-                        <span class="mod-pill mod-pill-ok" style="font-size:10px;">Harian</span>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-success-subtle text-success border border-success-subtle fw-bold" id="mainChartBadgePeriode">
+                                {{ strtoupper($periode ?? 'semua') }}
+                            </span>
+                        </div>
                     </div>
-                    <div style="padding:16px;">
-                        <div id="trendChart" style="min-height:280px;"></div>
+                    <div style="padding:20px;">
+                        <div id="volumeChart" style="min-height:320px;"></div>
                     </div>
                 </div>
             </div>
 
-            {{-- Donut Chart --}}
+            {{-- Donut Status Kepatuhan Hari Ini --}}
             <div class="col-lg-4">
                 <div class="chart-card">
                     <div class="chart-card-header">
@@ -762,20 +1091,20 @@
                             <div class="chart-sub">Kepatuhan input 12 PKS</div>
                         </div>
                     </div>
-                    <div style="padding:16px;">
+                    <div style="padding:18px;">
                         <div id="statusDonutChart" style="min-height:230px;"></div>
-                        <div class="row g-2 text-center pt-2" style="border-top:1px solid rgba(22,163,74,0.1);">
+                        <div class="row g-2 text-center pt-2 mt-2" style="border-top:1px solid rgba(22,163,74,0.1);">
                             <div class="col-4">
                                 <div style="font-size:18px;font-weight:900;color:#16a34a;">{{ $sudahLengkap }}</div>
-                                <small style="font-size:10px;color:#6b7280;font-weight:700;">Lengkap</small>
+                                <small style="font-size:10.5px;color:#6b7280;font-weight:700;">Lengkap</small>
                             </div>
                             <div class="col-4">
                                 <div style="font-size:18px;font-weight:900;color:#d97706;">{{ $sebagian }}</div>
-                                <small style="font-size:10px;color:#6b7280;font-weight:700;">Sebagian</small>
+                                <small style="font-size:10.5px;color:#6b7280;font-weight:700;">Sebagian</small>
                             </div>
                             <div class="col-4">
                                 <div style="font-size:18px;font-weight:900;color:#ef4444;">{{ $belumAda }}</div>
-                                <small style="font-size:10px;color:#6b7280;font-weight:700;">Belum Ada</small>
+                                <small style="font-size:10.5px;color:#6b7280;font-weight:700;">Belum Ada</small>
                             </div>
                         </div>
                     </div>
@@ -784,7 +1113,7 @@
         </div>
 
         {{-- Volume Per PKS + Pemeliharaan Per PKS --}}
-        <div class="row g-4">
+        <div class="row g-4 mb-4">
             <div class="col-lg-6">
                 <div class="chart-card">
                     <div class="chart-card-header">
@@ -793,14 +1122,16 @@
                                 <i class="feather-bar-chart-2" style="color:#16a34a;margin-right:6px;"></i>
                                 Volume Limbah Dialirkan per PKS
                             </div>
-                            <div class="chart-sub">Akumulasi bulan {{ $bulanLabel }} (m³)</div>
+                            <div class="chart-sub" id="pksVolChartSub">Perbandingan akumulasi volume per unit PKS (m³)</div>
                         </div>
+                        <span class="mod-pill mod-pill-ok" id="badgeVolPerPks" style="font-size:10px;">{{ !empty($idPksFilter) ? $initialPksText : '12 PKS Regional' }}</span>
                     </div>
-                    <div style="padding:16px;">
-                        <div id="volPerPksChart" style="min-height:280px;"></div>
+                    <div style="padding:18px;">
+                        <div id="volPerPksChart" style="min-height:290px;"></div>
                     </div>
                 </div>
             </div>
+
             <div class="col-lg-6">
                 <div class="chart-card">
                     <div class="chart-card-header">
@@ -809,11 +1140,86 @@
                                 <i class="feather-sliders" style="color:#d97706;margin-right:6px;"></i>
                                 Hasil Pemeliharaan Bed per PKS
                             </div>
-                            <div class="chart-sub">Flat Bed &amp; Long Bed dikerjakan</div>
+                            <div class="chart-sub" id="pksMaintChartSub">Normalisasi Flat Bed &amp; Long Bed dikerjakan</div>
+                        </div>
+                        <span class="mod-pill mod-pill-ok" id="badgeMaintPerPks" style="font-size:10px;">{{ !empty($idPksFilter) ? $initialPksText : 'Flat & Long Bed' }}</span>
+                    </div>
+                    <div style="padding:18px;">
+                        <div id="maintPerPksChart" style="min-height:290px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Trend Monitoring Chart --}}
+        <div class="row g-4 mb-4">
+            <div class="col-12">
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <div>
+                            <div class="chart-title">
+                                <i class="feather-activity" style="color:#16a34a;margin-right:6px;"></i>
+                                Trend Frekuensi &amp; Aktivitas Pelaporan Monitoring
+                            </div>
+                            <div class="chart-sub">Pergerakan intensitas pelaporan Pengaliran LA vs Pemeliharaan Bed</div>
                         </div>
                     </div>
-                    <div style="padding:16px;">
-                        <div id="maintPerPksChart" style="min-height:280px;"></div>
+                    <div style="padding:18px;">
+                        <div id="trendChart" style="min-height:260px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Panduan & Penjelasan Parameter Grafik --}}
+        <div class="chart-param-guide">
+            <div class="d-flex align-items-center gap-2 mb-3" style="font-size:13px;font-weight:800;color:#14532d;">
+                <i class="feather-info" style="color:#16a34a;font-size:17px;"></i>
+                Panduan &amp; Standar Parameter Analitik Grafik SIMOLI PTPN IV
+            </div>
+            <div class="row g-3">
+                <div class="col-md-3 col-sm-6">
+                    <div class="d-flex align-items-start gap-2">
+                        <div style="width:10px;height:10px;border-radius:50%;background:#16a34a;margin-top:4px;flex-shrink:0;"></div>
+                        <div>
+                            <strong style="font-size:11.5px;color:#15803d;display:block;">Vol. Dialirkan (m³)</strong>
+                            <span style="font-size:11px;color:#4b5563;line-height:1.4;display:block;">
+                                Debit limbah cair matang yang dialirkan dari kolam IPAL ke flat bed / blok Land Application.
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="d-flex align-items-start gap-2">
+                        <div style="width:10px;height:10px;border-radius:50%;background:#0284c7;margin-top:4px;flex-shrink:0;"></div>
+                        <div>
+                            <strong style="font-size:11.5px;color:#0369a1;display:block;">Vol. Dihasilkan (m³)</strong>
+                            <span style="font-size:11px;color:#4b5563;line-height:1.4;display:block;">
+                                Estimasi volume limbah cair hasil olahan Pabrik Kelapa Sawit (TBS).
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="d-flex align-items-start gap-2">
+                        <div style="width:10px;height:10px;border-radius:50%;background:#d97706;margin-top:4px;flex-shrink:0;"></div>
+                        <div>
+                            <strong style="font-size:11.5px;color:#b45309;display:block;">Rasio Efisiensi LA (%)</strong>
+                            <span style="font-size:11px;color:#4b5563;line-height:1.4;display:block;">
+                                Persentase pemanfaatan limbah dialirkan terhadap total limbah dihasilkan.
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="d-flex align-items-start gap-2">
+                        <div style="width:10px;height:10px;border-radius:50%;background:#7c3aed;margin-top:4px;flex-shrink:0;"></div>
+                        <div>
+                            <strong style="font-size:11.5px;color:#6d28d9;display:block;">Mode Filter Multi-Periode</strong>
+                            <span style="font-size:11px;color:#4b5563;line-height:1.4;display:block;">
+                                Akses visualisasi <strong>Semua Data, Harian, Mingguan, Bulanan, Tahunan</strong>, atau <strong>Rentang Kustom</strong>.
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -990,7 +1396,8 @@ document.addEventListener('DOMContentLoaded', function() {
     var curTheme  = window.SimoliTheme && window.SimoliTheme.currentConfig ? window.SimoliTheme.currentConfig : null;
     var primary   = (curTheme && curTheme.themeData) ? curTheme.themeData.primary : '#16a34a';
     var accent    = (curTheme && curTheme.themeData) ? curTheme.themeData.accent : '#4ade80';
-    var secondary = (curTheme && curTheme.themeData) ? curTheme.themeData.secondary : '#d97706';
+    var secondary = (curTheme && curTheme.themeData) ? curTheme.themeData.secondary : '#0284c7';
+    var amber     = '#d97706';
 
     var gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
     var labelClr  = isDark ? '#9ca3af' : '#6b7280';
@@ -1004,130 +1411,534 @@ document.addEventListener('DOMContentLoaded', function() {
         animations: { enabled: true, easing: 'easeinout', speed: 700 }
     };
 
-    /* ── 1. DONUT: Kelengkapan Hari Ini ── */
-    var chartStatusDonut = new ApexCharts(document.querySelector('#statusDonutChart'), {
-        series: [{{ $sudahLengkap }}, {{ $sebagian }}, {{ $belumAda }}],
-        chart: { ...chartDefaults, type: 'donut', height: 230 },
-        labels: ['Lengkap', 'Sebagian', 'Belum Input'],
-        colors: [primary, '#d97706', '#ef4444'],
-        plotOptions: {
-            pie: {
-                donut: {
-                    size: '72%',
-                    labels: {
-                        show: true,
-                        name: { show: true, fontSize: '12px', color: labelClr },
-                        value: { show: true, fontSize: '20px', fontWeight: 900, color: isDark ? '#d1fae5' : '#14532d' },
-                        total: {
-                            show: true, label: 'Total PKS',
-                            fontSize: '10px', fontWeight: 600, color: labelClr,
-                            formatter: function() { return {{ $totalPks }}; }
+    var initialGrafik = @json($grafikRes ?? []);
+
+    /* ── 1. MAIN AREA CHART: Trend Volume Limbah (Dialirkan vs Dihasilkan) ── */
+    var chartElVolume = document.querySelector('#volumeChart');
+    var chartVolume = null;
+    if (chartElVolume) {
+        chartVolume = new ApexCharts(chartElVolume, {
+            series: [
+                {
+                    name: 'Volume Limbah Dialirkan (m³)',
+                    data: initialGrafik.volumeDialirkan || []
+                },
+                {
+                    name: 'Volume Limbah Dihasilkan (m³)',
+                    data: initialGrafik.volumeDihasilkan || []
+                }
+            ],
+            chart: {
+                ...chartDefaults,
+                type: 'area',
+                height: 320,
+                toolbar: { show: true, tools: { download: true, selection: true, zoom: true, zoomin: true, zoomout: true, pan: true, reset: true } }
+            },
+            colors: [primary, secondary],
+            fill: {
+                type: 'gradient',
+                gradient: {
+                    shadeIntensity: 1, opacityFrom: 0.38, opacityTo: 0.05, stops: [0, 100]
+                }
+            },
+            stroke: { curve: 'smooth', width: 2.8 },
+            xaxis: {
+                categories: initialGrafik.labels || [],
+                labels: { style: { colors: labelClr, fontSize: '11px', fontFamily: fontFam } },
+                axisBorder: { show: false }, axisTicks: { show: false }
+            },
+            yaxis: {
+                min: 0,
+                labels: {
+                    style: { colors: labelClr, fontSize: '11px', fontFamily: fontFam },
+                    formatter: function(val) { return Math.round(val).toLocaleString('id-ID'); }
+                }
+            },
+            grid: { borderColor: gridColor, strokeDashArray: 4 },
+            markers: { size: 4, strokeWidth: 0, hover: { size: 6 } },
+            legend: { position: 'top', horizontalAlign: 'right', fontSize: '11.5px', fontFamily: fontFam, labels: { colors: labelClr } },
+            tooltip: {
+                theme: isDark ? 'dark' : 'light',
+                style: { fontSize: '12px', fontFamily: fontFam },
+                y: { formatter: function(val) { return (val || 0).toLocaleString('id-ID') + ' m³'; } }
+            }
+        });
+        chartVolume.render();
+    }
+
+    /* ── 2. DONUT: Kelengkapan Hari Ini ── */
+    var chartElDonut = document.querySelector('#statusDonutChart');
+    var chartStatusDonut = null;
+    if (chartElDonut) {
+        chartStatusDonut = new ApexCharts(chartElDonut, {
+            series: [{{ $sudahLengkap }}, {{ $sebagian }}, {{ $belumAda }}],
+            chart: { ...chartDefaults, type: 'donut', height: 230 },
+            labels: ['Lengkap', 'Sebagian', 'Belum Input'],
+            colors: [primary, amber, '#ef4444'],
+            plotOptions: {
+                pie: {
+                    donut: {
+                        size: '72%',
+                        labels: {
+                            show: true,
+                            name: { show: true, fontSize: '12px', color: labelClr },
+                            value: { show: true, fontSize: '20px', fontWeight: 900, color: isDark ? '#d1fae5' : '#14532d' },
+                            total: {
+                                show: true, label: 'Total PKS',
+                                fontSize: '10px', fontWeight: 600, color: labelClr,
+                                formatter: function() { return {{ $totalPks }}; }
+                            }
                         }
                     }
                 }
-            }
-        },
-        legend: { position: 'bottom', fontSize: '11px', fontFamily: fontFam, labels: { colors: labelClr } },
-        stroke: { width: 2, colors: [bgCard] },
-        dataLabels: { enabled: false }
-    });
-    chartStatusDonut.render();
-
-    /* ── 2. AREA: Trend 7 Hari ── */
-    var trendDays   = {!! json_encode(array_column((array)($trendData ?? []), 'label')) !!};
-    var trendPengal = {!! json_encode(array_column((array)($trendData ?? []), 'pengaliran')) !!};
-    var trendPemeli = {!! json_encode(array_column((array)($trendData ?? []), 'pemeliharaan')) !!};
-
-    var chartTrend = new ApexCharts(document.querySelector('#trendChart'), {
-        series: [
-            { name: 'Pengaliran LA', data: trendPengal },
-            { name: 'Pemeliharaan',  data: trendPemeli }
-        ],
-        chart: { ...chartDefaults, type: 'area', height: 280 },
-        colors: [primary, secondary],
-        fill: {
-            type: 'gradient',
-            gradient: {
-                shadeIntensity: 1, opacityFrom: 0.35, opacityTo: 0.05, stops: [0, 100]
-            }
-        },
-        stroke: { curve: 'smooth', width: 2.5 },
-        xaxis: {
-            categories: trendDays,
-            labels: { style: { colors: labelClr, fontSize: '11px', fontFamily: fontFam } },
-            axisBorder: { show: false }, axisTicks: { show: false }
-        },
-        yaxis: {
-            min: 0, max: {{ $totalPks > 0 ? $totalPks : 5 }},
-            tickAmount: {{ $totalPks > 0 ? $totalPks : 5 }},
-            labels: { style: { colors: labelClr, fontSize: '11px', fontFamily: fontFam } }
-        },
-        grid: { borderColor: gridColor, strokeDashArray: 4 },
-        legend: { position: 'top', horizontalAlign: 'right', fontSize: '11px', fontFamily: fontFam, labels: { colors: labelClr } },
-        markers: { size: 4, strokeWidth: 0, hover: { size: 6 } },
-        tooltip: {
-            theme: isDark ? 'dark' : 'light',
-            style: { fontSize: '12px', fontFamily: fontFam }
-        }
-    });
-    chartTrend.render();
+            },
+            legend: { position: 'bottom', fontSize: '11px', fontFamily: fontFam, labels: { colors: labelClr } },
+            stroke: { width: 2, colors: [bgCard] },
+            dataLabels: { enabled: false }
+        });
+        chartStatusDonut.render();
+    }
 
     /* ── 3. COLUMN: Volume per PKS ── */
-    var pksNames = {!! json_encode(array_column((array)($statsPerPks ?? []), 'akro')) !!};
-    var pksVols  = {!! json_encode(array_column((array)($statsPerPks ?? []), 'vol_dialirkan')) !!};
+    var chartElVolPks = document.querySelector('#volPerPksChart');
+    var chartVolPerPks = null;
+    if (chartElVolPks) {
+        chartVolPerPks = new ApexCharts(chartElVolPks, {
+            series: [{ name: 'Vol. Dialirkan (m³)', data: initialGrafik.pksVols || [] }],
+            chart: { ...chartDefaults, type: 'bar', height: 290 },
+            colors: [primary],
+            fill: {
+                type: 'gradient',
+                gradient: { shade: 'light', type: 'vertical', shadeIntensity: 0.3, gradientToColors: [accent], stops: [0, 100] }
+            },
+            plotOptions: { bar: { borderRadius: 6, columnWidth: '50%' } },
+            xaxis: {
+                categories: initialGrafik.pksNames || [],
+                labels: { style: { colors: labelClr, fontSize: '10.5px', fontFamily: fontFam } },
+                axisBorder: { show: false }
+            },
+            yaxis: {
+                labels: {
+                    style: { colors: labelClr, fontSize: '11px', fontFamily: fontFam },
+                    formatter: function(val) { return Math.round(val).toLocaleString('id-ID'); }
+                }
+            },
+            grid: { borderColor: gridColor, strokeDashArray: 4 },
+            dataLabels: { enabled: false },
+            tooltip: {
+                theme: isDark ? 'dark' : 'light',
+                style: { fontSize: '11px', fontFamily: fontFam },
+                y: { formatter: function(val) { return (val || 0).toLocaleString('id-ID') + ' m³'; } }
+            }
+        });
+        chartVolPerPks.render();
+    }
 
-    var chartVolPerPks = new ApexCharts(document.querySelector('#volPerPksChart'), {
-        series: [{ name: 'Vol. Dialirkan (m³)', data: pksVols }],
-        chart: { ...chartDefaults, type: 'bar', height: 280 },
-        colors: [primary],
-        fill: {
-            type: 'gradient',
-            gradient: { shade: 'light', type: 'vertical', shadeIntensity: 0.3, gradientToColors: [accent], stops: [0, 100] }
-        },
-        plotOptions: { bar: { borderRadius: 6, columnWidth: '55%' } },
-        xaxis: {
-            categories: pksNames,
-            labels: { style: { colors: labelClr, fontSize: '10px', fontFamily: fontFam } },
-            axisBorder: { show: false }
-        },
-        yaxis: { labels: { style: { colors: labelClr, fontSize: '11px', fontFamily: fontFam } } },
-        grid: { borderColor: gridColor, strokeDashArray: 4 },
-        dataLabels: { enabled: false },
-        tooltip: { theme: isDark ? 'dark' : 'light', style: { fontSize: '11px', fontFamily: fontFam } }
+    /* ── 4. STACKED COLUMN: Pemeliharaan per PKS ── */
+    var chartElMaintPks = document.querySelector('#maintPerPksChart');
+    var chartMaintPerPks = null;
+    if (chartElMaintPks) {
+        chartMaintPerPks = new ApexCharts(chartElMaintPks, {
+            series: [
+                { name: 'Flat Bed', data: initialGrafik.pksFlatBed || [] },
+                { name: 'Long Bed', data: initialGrafik.pksLongBed || [] }
+            ],
+            chart: { ...chartDefaults, type: 'bar', height: 290, stacked: true },
+            colors: [amber, primary],
+            plotOptions: { bar: { borderRadius: 4, columnWidth: '50%' } },
+            xaxis: {
+                categories: initialGrafik.pksNames || [],
+                labels: { style: { colors: labelClr, fontSize: '10.5px', fontFamily: fontFam } },
+                axisBorder: { show: false }
+            },
+            yaxis: {
+                labels: {
+                    style: { colors: labelClr, fontSize: '11px', fontFamily: fontFam },
+                    formatter: function(val) { return Math.round(val).toLocaleString('id-ID'); }
+                }
+            },
+            grid: { borderColor: gridColor, strokeDashArray: 4 },
+            dataLabels: { enabled: false },
+            legend: { position: 'top', horizontalAlign: 'right', fontSize: '11px', fontFamily: fontFam, labels: { colors: labelClr } },
+            tooltip: {
+                theme: isDark ? 'dark' : 'light',
+                style: { fontSize: '11px', fontFamily: fontFam },
+                y: { formatter: function(val) { return (val || 0).toLocaleString('id-ID') + ' Bed'; } }
+            }
+        });
+        chartMaintPerPks.render();
+    }
+
+    /* ── 5. AREA: Trend Pelaporan Monitoring ── */
+    var chartElTrend = document.querySelector('#trendChart');
+    var chartTrend = null;
+    if (chartElTrend) {
+        chartTrend = new ApexCharts(chartElTrend, {
+            series: [
+                { name: 'Pengaliran LA', data: initialGrafik.trendPengaliran || [] },
+                { name: 'Pemeliharaan Bed', data: initialGrafik.trendPemeliharaan || [] }
+            ],
+            chart: { ...chartDefaults, type: 'area', height: 260 },
+            colors: [primary, amber],
+            fill: {
+                type: 'gradient',
+                gradient: {
+                    shadeIntensity: 1, opacityFrom: 0.35, opacityTo: 0.05, stops: [0, 100]
+                }
+            },
+            stroke: { curve: 'smooth', width: 2.5 },
+            xaxis: {
+                categories: initialGrafik.labels || [],
+                labels: { style: { colors: labelClr, fontSize: '11px', fontFamily: fontFam } },
+                axisBorder: { show: false }, axisTicks: { show: false }
+            },
+            yaxis: {
+                min: 0,
+                labels: { style: { colors: labelClr, fontSize: '11px', fontFamily: fontFam } }
+            },
+            grid: { borderColor: gridColor, strokeDashArray: 4 },
+            legend: { position: 'top', horizontalAlign: 'right', fontSize: '11px', fontFamily: fontFam, labels: { colors: labelClr } },
+            markers: { size: 3.5, strokeWidth: 0, hover: { size: 5.5 } },
+            tooltip: {
+                theme: isDark ? 'dark' : 'light',
+                style: { fontSize: '12px', fontFamily: fontFam }
+            }
+        });
+        chartTrend.render();
+    }
+
+    /* ── AJAX FILTER APPLICATION FUNCTION ── */
+    window.applyAdminFilterGrafik = function() {
+        var periode = document.getElementById('adminPeriodeVal') ? document.getElementById('adminPeriodeVal').value : 'semua';
+        var idPksVal = document.getElementById('adminIdPks') ? document.getElementById('adminIdPks').value : '';
+        var tahunVal = document.getElementById('adminTahun') ? document.getElementById('adminTahun').value : '{{ $tahun ?? date('Y') }}';
+        var bulanVal = document.getElementById('adminBulan') ? document.getElementById('adminBulan').value : '{{ $bulan ?? date('m') }}';
+        var jenisVal = document.getElementById('adminJenis') ? document.getElementById('adminJenis').value : 'flat_bed';
+        var nilaiVal = document.getElementById('adminNilai') ? document.getElementById('adminNilai').value : '';
+        var tglMulaiVal = document.getElementById('adminTglMulai') ? document.getElementById('adminTglMulai').value : '';
+        var tglSelesaiVal = document.getElementById('adminTglSelesai') ? document.getElementById('adminTglSelesai').value : '';
+
+        var params = new URLSearchParams();
+        params.append('periode', periode);
+        if (idPksVal) params.append('id_pks', idPksVal);
+        params.append('jenis', jenisVal);
+        if (nilaiVal) params.append('nilai', nilaiVal);
+
+        if (periode === 'custom') {
+            if (tglMulaiVal) params.append('tgl_mulai', tglMulaiVal);
+            if (tglSelesaiVal) params.append('tgl_selesai', tglSelesaiVal);
+        } else if (periode === 'bulanan') {
+            params.append('tahun', tahunVal);
+        } else if (periode === 'harian' || periode === 'mingguan') {
+            params.append('tahun', tahunVal);
+            params.append('bulan', bulanVal);
+        }
+
+        // Show subtle loading indication
+        var btnApply = document.getElementById('btnTerapkanFilterAdmin');
+        if (btnApply) {
+            btnApply.disabled = true;
+            btnApply.innerHTML = '<i class="feather-loader me-1 spin-fast"></i> Memuat...';
+        }
+
+        fetch("{{ route('dashboard.grafik-volume') }}?" + params.toString(), {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            var payload = (res && res.data) ? res.data : res;
+            if (!payload) return;
+
+            var categories = payload.labels || payload.labelHari || [];
+            var seriesDialirkan = payload.volumeDialirkan || payload.volumeGrafik || [];
+            var seriesDihasilkan = payload.volumeDihasilkan || [];
+
+            // 1. Update Volume Chart
+            if (chartVolume) {
+                chartVolume.updateOptions({
+                    xaxis: { categories: categories },
+                    series: [
+                        { name: 'Volume Limbah Dialirkan (m³)', data: seriesDialirkan },
+                        { name: 'Volume Limbah Dihasilkan (m³)', data: seriesDihasilkan }
+                    ]
+                }, true, true);
+            }
+
+            // 2. Update Vol per PKS Chart
+            if (chartVolPerPks && payload.pksNames) {
+                chartVolPerPks.updateOptions({
+                    xaxis: { categories: payload.pksNames },
+                    series: [{ name: 'Vol. Dialirkan (m³)', data: payload.pksVols || [] }]
+                }, true, true);
+            }
+
+            // 3. Update Maint per PKS Chart
+            if (chartMaintPerPks && payload.pksNames) {
+                chartMaintPerPks.updateOptions({
+                    xaxis: { categories: payload.pksNames },
+                    series: [
+                        { name: 'Flat Bed', data: payload.pksFlatBed || [] },
+                        { name: 'Long Bed', data: payload.pksLongBed || [] }
+                    ]
+                }, true, true);
+            }
+
+            // 4. Update Trend Activity Chart
+            if (chartTrend) {
+                chartTrend.updateOptions({
+                    xaxis: { categories: categories },
+                    series: [
+                        { name: 'Pengaliran LA', data: payload.trendPengaliran || [] },
+                        { name: 'Pemeliharaan Bed', data: payload.trendPemeliharaan || [] }
+                    ]
+                }, true, true);
+            }
+
+            // 5. Update KPI Summary Badges
+            var elTotDialirkan = document.getElementById('metricTotalDialirkan');
+            var elTotDihasilkan = document.getElementById('metricTotalDihasilkan');
+            var elEfficiency = document.getElementById('metricEfficiency');
+            var elTotBed = document.getElementById('metricTotalBed');
+
+            if (elTotDialirkan) elTotDialirkan.textContent = Math.round(payload.totalDialirkan || 0).toLocaleString('id-ID');
+            if (elTotDihasilkan) elTotDihasilkan.textContent = Math.round(payload.totalDihasilkan || 0).toLocaleString('id-ID');
+            if (elEfficiency) elEfficiency.textContent = payload.efficiency || 0;
+            if (elTotBed) {
+                var sumBed = (payload.totalFlatBed || 0) + (payload.totalLongBed || 0);
+                elTotBed.textContent = Math.round(sumBed).toLocaleString('id-ID');
+            }
+
+            // 6. Update Status Badges & Subtitles
+            var badgePeriode = document.getElementById('adminFilterLabelPeriode');
+            var badgePks = document.getElementById('adminFilterLabelPks');
+            var pksSelect = document.getElementById('adminIdPks');
+            var isAllPks = !idPksVal || !pksSelect || pksSelect.selectedIndex <= 0;
+            var pksText = isAllPks ? 'Semua PKS (12 Unit)' : (pksSelect.options[pksSelect.selectedIndex] ? pksSelect.options[pksSelect.selectedIndex].text : '');
+
+            var bulanOpt = document.getElementById('adminBulan');
+            var bulanText = (bulanOpt && bulanOpt.options[bulanOpt.selectedIndex]) ? bulanOpt.options[bulanOpt.selectedIndex].text : '';
+
+            var pLabels = {
+                'semua': 'Semua Periode Data',
+                'harian': 'Harian: ' + bulanText + ' ' + tahunVal,
+                'mingguan': 'Mingguan: ' + bulanText + ' ' + tahunVal,
+                'bulanan': 'Bulanan: Tahun ' + tahunVal,
+                'tahunan': 'Grafik Per Tahun',
+                'custom': 'Rentang: ' + (tglMulaiVal || '') + ' s.d ' + (tglSelesaiVal || '')
+            };
+
+            var curPLabel = pLabels[periode] || 'Semua Periode';
+            if (badgePeriode) badgePeriode.textContent = curPLabel;
+            if (badgePks) badgePks.textContent = pksText;
+
+            var activeBadge = document.getElementById('adminActiveFilterBadge');
+            if (activeBadge) {
+                activeBadge.innerHTML = '<i class="feather-check-circle me-1"></i> ' + curPLabel + (isAllPks ? '' : ' • ' + pksText);
+            }
+
+            var badgePeriodeChart = document.getElementById('mainChartBadgePeriode');
+            if (badgePeriodeChart) {
+                badgePeriodeChart.textContent = periode.toUpperCase();
+            }
+
+            var badgeVolPks = document.getElementById('badgeVolPerPks');
+            if (badgeVolPks) {
+                badgeVolPks.textContent = isAllPks ? '12 PKS Regional' : pksText;
+            }
+
+            var badgeMaintPks = document.getElementById('badgeMaintPerPks');
+            if (badgeMaintPks) {
+                badgeMaintPks.textContent = isAllPks ? 'Flat & Long Bed' : pksText;
+            }
+
+            var elMainSub = document.getElementById('mainChartSub');
+            if (elMainSub) {
+                elMainSub.textContent = 'Visualisasi debit limbah ' + curPLabel + ' (' + pksText + ')';
+            }
+
+            var elPksVolSub = document.getElementById('pksVolChartSub');
+            if (elPksVolSub) {
+                elPksVolSub.textContent = 'Perbandingan volume dialirkan ' + curPLabel;
+            }
+
+            var elPksMaintSub = document.getElementById('pksMaintChartSub');
+            if (elPksMaintSub) {
+                elPksMaintSub.textContent = 'Pemeliharaan bed periode ' + curPLabel;
+            }
+
+            // 7. Repopulate location filter options if matching
+            var nilaiSel = document.getElementById('adminNilai');
+            if (nilaiSel && payload.pilihan) {
+                var curVal = nilaiVal;
+                var html = '<option value="">Semua Lokasi</option>';
+                (payload.pilihan || []).forEach(function(item) {
+                    var sel = (curVal !== null && curVal !== '' && String(item) === String(curVal)) ? 'selected' : '';
+                    html += '<option value="' + item + '" ' + sel + '>' + item + '</option>';
+                });
+                nilaiSel.innerHTML = html;
+            }
+        })
+        .catch(function(err) {
+            console.error('Error fetching admin grafik data:', err);
+        })
+        .finally(function() {
+            if (btnApply) {
+                btnApply.disabled = false;
+                btnApply.innerHTML = '<i class="feather-filter" style="font-size:13px;"></i> Terapkan';
+            }
+        });
+    };
+
+    /* ── PERIODE TAB SWITCHER ── */
+    window.setAdminPeriodeFilter = function(periode) {
+        var pInput = document.getElementById('adminPeriodeVal');
+        if (pInput) pInput.value = periode;
+
+        document.querySelectorAll('#adminPeriodeFilterContainer .btn-periode-tab').forEach(function(btn) {
+            if (btn.getAttribute('data-periode') === periode) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+
+        var yearGroup = document.getElementById('adminTahunGroup');
+        var monthGroup = document.getElementById('adminBulanGroup');
+        var customStartGroup = document.getElementById('adminCustomStartGroup');
+        var customEndGroup = document.getElementById('adminCustomEndGroup');
+
+        if (periode === 'custom') {
+            if (yearGroup) yearGroup.classList.add('d-none');
+            if (monthGroup) monthGroup.classList.add('d-none');
+            if (customStartGroup) customStartGroup.classList.remove('d-none');
+            if (customEndGroup) customEndGroup.classList.remove('d-none');
+        } else if (periode === 'semua' || periode === 'tahunan') {
+            if (yearGroup) yearGroup.classList.add('d-none');
+            if (monthGroup) monthGroup.classList.add('d-none');
+            if (customStartGroup) customStartGroup.classList.add('d-none');
+            if (customEndGroup) customEndGroup.classList.add('d-none');
+        } else if (periode === 'bulanan') {
+            if (yearGroup) yearGroup.classList.remove('d-none');
+            if (monthGroup) monthGroup.classList.add('d-none');
+            if (customStartGroup) customStartGroup.classList.add('d-none');
+            if (customEndGroup) customEndGroup.classList.add('d-none');
+        } else { // harian & mingguan
+            if (yearGroup) yearGroup.classList.remove('d-none');
+            if (monthGroup) monthGroup.classList.remove('d-none');
+            if (customStartGroup) customStartGroup.classList.add('d-none');
+            if (customEndGroup) customEndGroup.classList.add('d-none');
+        }
+
+        window.applyAdminFilterGrafik();
+    };
+
+    /* ── RESET FILTER ── */
+    window.resetAdminFilterGrafik = function() {
+        var pksSel = document.getElementById('adminIdPks');
+        var jenisSel = document.getElementById('adminJenis');
+        var nilaiSel = document.getElementById('adminNilai');
+        var tahunSel = document.getElementById('adminTahun');
+        var bulanSel = document.getElementById('adminBulan');
+        var tglMulaiInp = document.getElementById('adminTglMulai');
+        var tglSelesaiInp = document.getElementById('adminTglSelesai');
+
+        if (pksSel) pksSel.value = '';
+        if (jenisSel) jenisSel.value = 'flat_bed';
+        if (nilaiSel) nilaiSel.value = '';
+        if (tahunSel) tahunSel.value = '{{ date('Y') }}';
+        if (bulanSel) bulanSel.value = '{{ date('m') }}';
+        if (tglMulaiInp) tglMulaiInp.value = '{{ date('Y-m-01') }}';
+        if (tglSelesaiInp) tglSelesaiInp.value = '{{ date('Y-m-d') }}';
+
+        fetch("{{ route('dashboard.pilihan-filter') }}?jenis=flat_bed&id_pks=", {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        }).then(r => r.json()).then(res => {
+            var list = (res && res.data) ? res.data : res;
+            if (nilaiSel) {
+                var html = '<option value="">Semua Lokasi</option>';
+                (list || []).forEach(function(item) {
+                    html += '<option value="' + item + '">' + item + '</option>';
+                });
+                nilaiSel.innerHTML = html;
+            }
+        });
+
+        window.setAdminPeriodeFilter('semua');
+    };
+
+    /* ── LOCATION TYPE CHANGE LISTENER ── */
+    var jenisSel = document.getElementById('adminJenis');
+    if (jenisSel) {
+        jenisSel.addEventListener('change', function() {
+            var jenisVal = this.value;
+            var idPksVal = document.getElementById('adminIdPks') ? document.getElementById('adminIdPks').value : '';
+            var nilaiSel = document.getElementById('adminNilai');
+            if (nilaiSel) nilaiSel.value = '';
+            fetch("{{ route('dashboard.pilihan-filter') }}?jenis=" + jenisVal + "&id_pks=" + idPksVal, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            }).then(r => r.json()).then(res => {
+                var list = (res && res.data) ? res.data : res;
+                if (nilaiSel) {
+                    var html = '<option value="">Semua Lokasi</option>';
+                    (list || []).forEach(function(item) {
+                        html += '<option value="' + item + '">' + item + '</option>';
+                    });
+                    nilaiSel.innerHTML = html;
+                }
+                window.applyAdminFilterGrafik();
+            });
+        });
+    }
+
+    /* ── PKS SELECT CHANGE LISTENER ── */
+    var pksSel = document.getElementById('adminIdPks');
+    if (pksSel) {
+        pksSel.addEventListener('change', function() {
+            var idPksVal = this.value;
+            var jenisVal = document.getElementById('adminJenis') ? document.getElementById('adminJenis').value : 'flat_bed';
+            var nilaiSel = document.getElementById('adminNilai');
+            if (nilaiSel) nilaiSel.value = '';
+            fetch("{{ route('dashboard.pilihan-filter') }}?jenis=" + jenisVal + "&id_pks=" + idPksVal, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            }).then(r => r.json()).then(res => {
+                var list = (res && res.data) ? res.data : res;
+                if (nilaiSel) {
+                    var html = '<option value="">Semua Lokasi</option>';
+                    (list || []).forEach(function(item) {
+                        html += '<option value="' + item + '">' + item + '</option>';
+                    });
+                    nilaiSel.innerHTML = html;
+                }
+                window.applyAdminFilterGrafik();
+            });
+        });
+    }
+
+    /* ── AUTO-APPLY ON FILTER INPUTS CHANGE ── */
+    ['adminTahun', 'adminBulan', 'adminNilai', 'adminTglMulai', 'adminTglSelesai'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('change', function() {
+                window.applyAdminFilterGrafik();
+            });
+        }
     });
-    chartVolPerPks.render();
 
-    /* ── 4. STACKED: Pemeliharaan per PKS ── */
-    var maintFlat = {!! json_encode(array_column((array)($statsPerPks ?? []), 'flat_bed_m')) !!};
-    var maintLong = {!! json_encode(array_column((array)($statsPerPks ?? []), 'long_bed')) !!};
-    var maintPks  = {!! json_encode(array_column((array)($statsPerPks ?? []), 'akro')) !!};
-
-    var chartMaintPerPks = new ApexCharts(document.querySelector('#maintPerPksChart'), {
-        series: [
-            { name: 'Flat Bed', data: maintFlat },
-            { name: 'Long Bed', data: maintLong }
-        ],
-        chart: { ...chartDefaults, type: 'bar', height: 280, stacked: true },
-        colors: [secondary, primary],
-        plotOptions: { bar: { borderRadius: 4, columnWidth: '55%' } },
-        xaxis: {
-            categories: maintPks,
-            labels: { style: { colors: labelClr, fontSize: '10px', fontFamily: fontFam } },
-            axisBorder: { show: false }
-        },
-        yaxis: { labels: { style: { colors: labelClr, fontSize: '11px', fontFamily: fontFam } } },
-        grid: { borderColor: gridColor, strokeDashArray: 4 },
-        dataLabels: { enabled: false },
-        legend: { position: 'top', horizontalAlign: 'right', fontSize: '11px', fontFamily: fontFam, labels: { colors: labelClr } },
-        tooltip: { theme: isDark ? 'dark' : 'light', style: { fontSize: '11px', fontFamily: fontFam } }
-    });
-    chartMaintPerPks.render();
+    /* Prevent Default Form Submission */
+    var formAdmin = document.getElementById('filterGrafikAdmin');
+    if (formAdmin) {
+        formAdmin.addEventListener('submit', function(e) {
+            e.preventDefault();
+            window.applyAdminFilterGrafik();
+            return false;
+        });
+    }
 
     /* ── Reactive Listener for Theme Changes ── */
     window.addEventListener('simoli:theme-changed', function(e) {
         var d = e.detail;
         var p = d.primary;
-        var sec = d.secondary || '#d97706';
+        var sec = d.secondary || '#0284c7';
         var acc = d.accent || p;
         var dark = d.isDark;
         var lClr = dark ? '#9ca3af' : '#6b7280';
@@ -1136,7 +1947,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (chartStatusDonut) {
             chartStatusDonut.updateOptions({
-                colors: [p, sec, '#ef4444'],
+                colors: [p, amber, '#ef4444'],
                 stroke: { colors: [bg] },
                 plotOptions: {
                     pie: {
@@ -1153,9 +1964,20 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
+        if (chartVolume) {
+            chartVolume.updateOptions({
+                colors: [p, sec],
+                grid: { borderColor: gClr },
+                xaxis: { labels: { style: { colors: lClr } } },
+                yaxis: { labels: { style: { colors: lClr } } },
+                legend: { labels: { colors: lClr } },
+                tooltip: { theme: dark ? 'dark' : 'light' }
+            });
+        }
+
         if (chartTrend) {
             chartTrend.updateOptions({
-                colors: [p, sec],
+                colors: [p, amber],
                 grid: { borderColor: gClr },
                 xaxis: { labels: { style: { colors: lClr } } },
                 yaxis: { labels: { style: { colors: lClr } } },
@@ -1180,7 +2002,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (chartMaintPerPks) {
             chartMaintPerPks.updateOptions({
-                colors: [sec, p],
+                colors: [amber, p],
                 grid: { borderColor: gClr },
                 xaxis: { labels: { style: { colors: lClr } } },
                 yaxis: { labels: { style: { colors: lClr } } },

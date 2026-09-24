@@ -37,7 +37,7 @@ return [
 
     'sidobe' => [
         'url' => env('SIDOBE_WA_URL', 'https://api.sidobe.com/wa/v1'),
-        'secret_key' => env('SIDOBE_WA_SECRET', 'lWRBndGzxoDBZDilgoKTsLvePaYEaspKZCyFbirxRTyaxzrOEO'),
+        'secret_key' => env('SIDOBE_WA_SECRET', 'secret_key'),
     ],
 
 ];

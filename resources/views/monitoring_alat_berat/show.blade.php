@@ -14,10 +14,17 @@
 
 @section('page-actions')
 <div class="d-flex align-items-center gap-2 flex-wrap">
-    @if(Auth::user()->isUnit())
+    @if(Auth::user()->isAdmin() || Auth::user()->id_pks == $log->id_pks)
     <a href="{{ route('monitoring-alat-berat.edit', $log->id) }}" class="btn-ptpn btn-ptpn-primary" style="padding:9px 16px;font-size:13px;border-radius:12px;">
         <i class="feather-edit-2 me-1" style="font-size:14px;"></i> Edit Log Data
     </a>
+    <form action="{{ route('monitoring-alat-berat.destroy', $log->id) }}" method="POST" class="d-inline form-delete">
+        @csrf
+        @method('DELETE')
+        <button type="submit" class="btn-ptpn" style="padding:9px 16px;font-size:13px;border-radius:12px;background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-weight:700;">
+            <i class="feather-trash-2" style="font-size:14px;"></i> Hapus
+        </button>
+    </form>
     @endif
     <a href="{{ route('monitoring-alat-berat.index') }}" class="btn-ptpn btn-ptpn-outline" style="padding:9px 16px;font-size:13px;border-radius:12px;">
         <i class="feather-arrow-left me-1" style="font-size:14px;"></i> Kembali

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Pengaliran;
 use App\Models\Pks;
+use App\Services\FileCompressionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -178,7 +179,7 @@ class PengaliranController extends Controller
     {
         $user = Auth::user();
         $pksList = Pks::orderBy('NAMA')->get();
-        $defaultPksId = $user->id_pks ?: ($pksList->first() ? $pksList->first()->id_pks : 1);
+        $defaultPksId = ($user->isUnit() && $user->id_pks) ? $user->id_pks : ($pksList->whereNotIn('akro', ['TEP', 'DTM', 'DBR'])->first() ? $pksList->whereNotIn('akro', ['TEP', 'DTM', 'DBR'])->first()->id_pks : 1);
         $pksProgress = $this->getPksProgress($defaultPksId);
 
         // Ambil data izin SK terkini per PKS (prioritaskan tanggal_terbit terbaru)
@@ -256,8 +257,7 @@ class PengaliranController extends Controller
         if ($request->hasFile('foto')) {
             $file = $request->file('foto');
             $filename = time() . '_' . $file->getClientOriginalName();
-            $file->move(public_path('gallery'), $filename);
-            $validated['foto'] = $filename;
+            $validated['foto'] = FileCompressionService::compressAndSave($file, public_path('gallery'), $filename);
         }
 
         Pengaliran::create($validated);
@@ -353,8 +353,7 @@ class PengaliranController extends Controller
         if ($request->hasFile('foto')) {
             $file = $request->file('foto');
             $filename = time() . '_' . $file->getClientOriginalName();
-            $file->move(public_path('gallery'), $filename);
-            $validated['foto'] = $filename;
+            $validated['foto'] = FileCompressionService::compressAndSave($file, public_path('gallery'), $filename);
         }
 
         // Unit user: otomatis set id_pks ke ID user sendiri
@@ -371,13 +370,16 @@ class PengaliranController extends Controller
     public function destroy($id)
     {
         $user = Auth::user();
+        $pengaliran = Pengaliran::findOrFail($id);
 
-        // Hanya admin yang boleh menghapus data
-        if ($user->isUnit()) {
-            abort(403, 'Unit tidak memiliki akses untuk menghapus data.');
+        if ($user->isUnit() && $pengaliran->id_pks != $user->id_pks) {
+            abort(403, 'Anda tidak memiliki akses untuk menghapus data unit lain.');
         }
 
-        $pengaliran = Pengaliran::findOrFail($id);
+        if ($pengaliran->foto && file_exists(public_path('gallery/' . $pengaliran->foto))) {
+            @unlink(public_path('gallery/' . $pengaliran->foto));
+        }
+
         $pengaliran->delete();
 
         return redirect()->route('pengaliran.index')
