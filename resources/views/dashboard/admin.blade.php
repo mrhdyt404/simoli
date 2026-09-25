@@ -2192,42 +2192,44 @@ document.addEventListener('DOMContentLoaded', function() {
             // 1. Update Volume Chart
             if (chartVolume) {
                 chartVolume.updateOptions({
-                    xaxis: { categories: categories },
-                    series: [
-                        { name: 'Volume Limbah Dialirkan (m³)', data: seriesDialirkan },
-                        { name: 'Volume Limbah Dihasilkan (m³)', data: seriesDihasilkan }
-                    ]
-                }, true, true);
+                    xaxis: { categories: categories }
+                }, false, false);
+                chartVolume.updateSeries([
+                    { name: 'Volume Limbah Dialirkan (m³)', data: seriesDialirkan },
+                    { name: 'Volume Limbah Dihasilkan (m³)', data: seriesDihasilkan }
+                ], true);
             }
 
             // 2. Update Vol per PKS Chart
             if (chartVolPerPks && payload.pksNames) {
                 chartVolPerPks.updateOptions({
-                    xaxis: { categories: payload.pksNames },
-                    series: [{ name: 'Vol. Dialirkan (m³)', data: payload.pksVols || [] }]
-                }, true, true);
+                    xaxis: { categories: payload.pksNames }
+                }, false, false);
+                chartVolPerPks.updateSeries([
+                    { name: 'Vol. Dialirkan (m³)', data: payload.pksVols || [] }
+                ], true);
             }
 
             // 3. Update Maint per PKS Chart
             if (chartMaintPerPks && payload.pksNames) {
                 chartMaintPerPks.updateOptions({
-                    xaxis: { categories: payload.pksNames },
-                    series: [
-                        { name: 'Flat Bed', data: payload.pksFlatBed || [] },
-                        { name: 'Long Bed', data: payload.pksLongBed || [] }
-                    ]
-                }, true, true);
+                    xaxis: { categories: payload.pksNames }
+                }, false, false);
+                chartMaintPerPks.updateSeries([
+                    { name: 'Flat Bed', data: payload.pksFlatBed || [] },
+                    { name: 'Long Bed', data: payload.pksLongBed || [] }
+                ], true);
             }
 
             // 4. Update Trend Activity Chart
             if (chartTrend) {
                 chartTrend.updateOptions({
-                    xaxis: { categories: categories },
-                    series: [
-                        { name: 'Pengaliran LA', data: payload.trendPengaliran || [] },
-                        { name: 'Pemeliharaan Bed', data: payload.trendPemeliharaan || [] }
-                    ]
-                }, true, true);
+                    xaxis: { categories: categories }
+                }, false, false);
+                chartTrend.updateSeries([
+                    { name: 'Pengaliran LA', data: payload.trendPengaliran || [] },
+                    { name: 'Pemeliharaan Bed', data: payload.trendPemeliharaan || [] }
+                ], true);
             }
 
             // 5. Update KPI Summary Badges

@@ -974,10 +974,12 @@ class DashboardController extends Controller
             }
         }
 
-        // Perbandingan PKS (jika filter PKS dipilih, tampilkan PKS tsb; jika tidak dipilih/Semua, tampilkan semua PKS)
+        // Perbandingan PKS (jika filter PKS dipilih, tampilkan PKS tsb; jika tidak dipilih/Semua, tampilkan semua 12 PKS)
         $pksQuery = Pks::query();
         if ($idPks) {
             $pksQuery->where('id_pks', $idPks);
+        } else {
+            $pksQuery->whereNotIn('akro', ['TEP', 'DTM', 'DBR']);
         }
         $pksList = $pksQuery->orderBy('nama')->get();
 
