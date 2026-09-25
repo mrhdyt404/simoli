@@ -635,16 +635,352 @@
 
     html.app-skin-dark .section-header { border-color: rgba(34, 197, 94, 0.12) !important; }
 
-    /* === RESPONSIVE === */
-    @media (max-width: 991.98px) {
-        .hero-stat-grid { grid-template-columns: repeat(2, 1fr); }
+    /* === SIMOLI AI ASSISTANT STYLES === */
+    .simoli-ai-banner {
+        background: linear-gradient(135deg, #062817 0%, #0c3e23 50%, #064e3b 100%);
+        border: 1.5px solid rgba(74, 222, 128, 0.35);
+        border-radius: 18px;
+        box-shadow: 0 10px 30px rgba(6, 78, 59, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+        padding: 20px 24px;
+        margin-bottom: 26px;
+        position: relative;
+        overflow: hidden;
+        animation: fadeUpCard 0.4s ease-out;
+    }
+
+    .simoli-ai-banner::before {
+        content: '';
+        position: absolute;
+        top: -60px; right: -60px;
+        width: 220px; height: 220px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(74, 222, 128, 0.25) 0%, transparent 70%);
+        pointer-events: none;
+    }
+
+    .ai-banner-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 12px;
+        border-radius: 50px;
+        background: rgba(74, 222, 128, 0.15);
+        border: 1px solid rgba(74, 222, 128, 0.3);
+        color: #86efac;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+    }
+
+    .ai-badge-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        border-radius: 10px;
+        font-size: 12px;
+        font-weight: 700;
+        transition: all 0.2s ease;
+    }
+
+    .ai-chip-warning {
+        background: rgba(245, 158, 11, 0.18);
+        border: 1px solid rgba(245, 158, 11, 0.4);
+        color: #fef3c7;
+    }
+
+    .ai-chip-danger {
+        background: rgba(239, 68, 68, 0.18);
+        border: 1px solid rgba(239, 68, 68, 0.4);
+        color: #fee2e2;
+    }
+
+    .ai-chip-success {
+        background: rgba(34, 197, 94, 0.18);
+        border: 1px solid rgba(34, 197, 94, 0.4);
+        color: #dcfce7;
+    }
+
+    /* Floating AI Button */
+    .simoli-ai-fab {
+        position: fixed;
+        bottom: 28px;
+        right: 28px;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 20px;
+        background: linear-gradient(135deg, #16a34a 0%, #059669 50%, #047857 100%);
+        color: #ffffff;
+        border: 1.5px solid rgba(255, 255, 255, 0.35);
+        border-radius: 50px;
+        box-shadow: 0 10px 28px rgba(22, 163, 74, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+        cursor: pointer;
+        font-family: 'Outfit', sans-serif;
+        font-weight: 800;
+        font-size: 14px;
+        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        text-decoration: none;
+    }
+
+    .simoli-ai-fab:hover {
+        transform: translateY(-4px) scale(1.03);
+        box-shadow: 0 16px 36px rgba(22, 163, 74, 0.55);
+        color: #ffffff;
+    }
+
+    .ai-fab-icon-wrap {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+    }
+
+    .ai-fab-badge {
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #ef4444;
+        color: #ffffff;
+        font-size: 11px;
+        font-weight: 900;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid #ffffff;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+    }
+
+    /* AI Chat Drawer */
+    .simoli-ai-backdrop {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(3, 13, 7, 0.6);
+        backdrop-filter: blur(4px);
+        z-index: 10000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .simoli-ai-backdrop.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .simoli-ai-drawer {
+        position: fixed;
+        top: 0;
+        right: -520px;
+        width: 100%;
+        max-width: 480px;
+        height: 100vh;
+        background: #ffffff;
+        z-index: 10001;
+        box-shadow: -10px 0 40px rgba(0, 0, 0, 0.3);
+        display: flex;
+        flex-direction: column;
+        transition: right 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    html.app-skin-dark .simoli-ai-drawer {
+        background: #0a2317;
+        color: #e2e8f0;
+        border-left: 1px solid rgba(34, 197, 94, 0.2);
+    }
+
+    .simoli-ai-drawer.active {
+        right: 0;
+    }
+
+    .ai-drawer-header {
+        padding: 18px 22px;
+        background: linear-gradient(135deg, #0f3d26 0%, #166534 100%);
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .ai-drawer-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        background: #f8fafc;
+    }
+
+    html.app-skin-dark .ai-drawer-body {
+        background: #071a11;
+    }
+
+    .ai-msg {
+        display: flex;
+        gap: 10px;
+        max-width: 92%;
+        animation: fadeUpCard 0.25s ease-out;
+    }
+
+    .ai-msg.user-msg {
+        align-self: flex-end;
+        flex-direction: row-reverse;
+    }
+
+    .ai-msg-avatar {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+        flex-shrink: 0;
+    }
+
+    .ai-avatar-bot {
+        background: linear-gradient(135deg, #16a34a, #059669);
+        color: #ffffff;
+        box-shadow: 0 4px 10px rgba(22, 163, 74, 0.3);
+    }
+
+    .ai-avatar-user {
+        background: linear-gradient(135deg, #0284c7, #0369a1);
+        color: #ffffff;
+    }
+
+    .ai-bubble {
+        padding: 12px 16px;
+        border-radius: 16px;
+        font-size: 13px;
+        line-height: 1.55;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        position: relative;
+    }
+
+    .ai-bubble-bot {
+        background: #ffffff;
+        border: 1px solid rgba(22, 163, 74, 0.15);
+        color: #1e293b;
+        border-top-left-radius: 4px;
+    }
+
+    html.app-skin-dark .ai-bubble-bot {
+        background: #0f3322;
+        border-color: rgba(34, 197, 94, 0.2);
+        color: #e2e8f0;
+    }
+
+    .ai-bubble-user {
+        background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+        color: #ffffff;
+        border-top-right-radius: 4px;
+    }
+
+    .ai-bubble table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 11.5px;
+        margin: 10px 0;
+    }
+
+    .ai-bubble th, .ai-bubble td {
+        padding: 6px 8px;
+        border: 1px solid rgba(0,0,0,0.1);
+    }
+
+    html.app-skin-dark .ai-bubble th, html.app-skin-dark .ai-bubble td {
+        border-color: rgba(255,255,255,0.1);
+    }
+
+    .ai-bubble th {
+        background: rgba(22, 163, 74, 0.1);
+        font-weight: 700;
+    }
+
+    .ai-drawer-footer {
+        padding: 14px 18px;
+        background: #ffffff;
+        border-top: 1px solid rgba(22, 163, 74, 0.12);
+    }
+
+    html.app-skin-dark .ai-drawer-footer {
+        background: #0a2317;
+        border-color: rgba(34, 197, 94, 0.2);
+    }
+
+    .ai-prompt-chip {
+        border-radius: 50px;
+        padding: 5px 12px;
+        font-size: 11.5px;
+        font-weight: 600;
+        background: rgba(22, 163, 74, 0.08);
+        border: 1px solid rgba(22, 163, 74, 0.2);
+        color: #166534;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    html.app-skin-dark .ai-prompt-chip {
+        background: rgba(34, 197, 94, 0.12);
+        border-color: rgba(34, 197, 94, 0.3);
+        color: #86efac;
+    }
+
+    .ai-prompt-chip:hover {
+        background: #16a34a;
+        color: #ffffff;
+        transform: translateY(-1px);
+    }
+
+    .ai-typing-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 8px 12px;
+    }
+
+    .ai-typing-indicator span {
+        width: 6px; height: 6px;
+        border-radius: 50%;
+        background: #16a34a;
+        animation: typingDot 1.4s infinite ease-in-out both;
+    }
+
+    .ai-typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+    .ai-typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+
+    @keyframes typingDot {
+        0%, 80%, 100% { transform: scale(0); opacity: 0.3; }
+        40% { transform: scale(1); opacity: 1; }
     }
 
     @media (max-width: 575.98px) {
-        .hero-stat-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-        .admin-hero-inner { padding: 20px; }
-        .hero-stat-val { font-size: 22px; }
-        .filter-tabs-wrapper { overflow-x: auto; flex-wrap: nowrap; padding: 4px; }
+        .simoli-ai-fab {
+            bottom: 20px;
+            right: 16px;
+            padding: 10px 16px;
+            font-size: 12.5px;
+        }
+        .simoli-ai-drawer {
+            max-width: 100%;
+        }
     }
 </style>
 @endsection
@@ -730,6 +1066,70 @@
                             <div class="hero-stat-lbl">Belum Input</div>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {{-- ================================================================
+         AI ASSISTANT DAILY AUDIT & NOTIFICATION BANNER
+         ================================================================ --}}
+    <section class="simoli-ai-banner" aria-label="Notifikasi AI Asisten SIMOLI">
+        <div class="row align-items-center g-3">
+            <div class="col-lg-8">
+                <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                    <span class="ai-banner-pill">
+                        <i class="feather-cpu" style="font-size:12px;"></i>
+                        SIMOLI AI Assistant (TEP)
+                    </span>
+                    <span class="badge rounded-pill {{ ($missingPengaliranCount == 0 && $missingPemeliharaanCount == 0 && $missingAlatBeratCount == 0) ? 'bg-success' : 'bg-warning text-dark' }}" style="font-size:11px;padding:4px 10px;">
+                        <i class="feather-activity me-1"></i> Audit Harian {{ $selectedDate->locale('id')->translatedFormat('d F Y') }}
+                    </span>
+                </div>
+                <h4 class="text-white fw-bold mb-2" style="font-family:'Outfit',sans-serif;font-size:clamp(16px, 1.2vw + 12px, 20px);">
+                    @if($missingPengaliranCount == 0 && $missingPemeliharaanCount == 0 && $missingAlatBeratCount == 0)
+                        <i class="feather-check-circle text-success me-1"></i> Seluruh 12 Unit PKS Telah Menginput Data Lengkap Hari Ini!
+                    @else
+                        <i class="feather-bell text-warning me-1"></i> Pemberitahuan AI: Terdapat Input Laporan Harian yang Belum Lengkap
+                    @endif
+                </h4>
+                <p class="text-white-50 mb-3" style="font-size:13px;line-height:1.5;max-width:680px;">
+                    Asisten AI SIMOLI secara otomatis memantau kepatuhan penginputan data harian untuk <strong>Pengaliran Land Aplikasi</strong>, <strong>Pemeliharaan Kolam &amp; Bed</strong>, serta <strong>Operasional Alat Berat</strong> pada 12 Unit PKS.
+                </p>
+
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <div class="ai-badge-chip {{ $missingPengaliranCount > 0 ? 'ai-chip-warning' : 'ai-chip-success' }}">
+                        <i class="feather-droplet"></i>
+                        <span>Pengaliran: <strong>{{ $missingPengaliranCount > 0 ? $missingPengaliranCount . ' Belum' : 'Lengkap (12)' }}</strong></span>
+                    </div>
+                    <div class="ai-badge-chip {{ $missingPemeliharaanCount > 0 ? 'ai-chip-warning' : 'ai-chip-success' }}">
+                        <i class="feather-tool"></i>
+                        <span>Pemeliharaan: <strong>{{ $missingPemeliharaanCount > 0 ? $missingPemeliharaanCount . ' Belum' : 'Lengkap (12)' }}</strong></span>
+                    </div>
+                    <div class="ai-badge-chip {{ $missingAlatBeratCount > 0 ? 'ai-chip-danger' : 'ai-chip-success' }}">
+                        <i class="feather-truck"></i>
+                        <span>Alat Berat: <strong>{{ $missingAlatBeratCount > 0 ? $missingAlatBeratCount . ' Belum' : 'Lengkap (12)' }}</strong></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4 text-lg-end">
+                <div class="d-flex flex-column flex-sm-row flex-lg-column gap-2 justify-content-lg-end">
+                    <button type="button" class="btn btn-success fw-bold d-inline-flex align-items-center justify-content-center gap-2 shadow-sm"
+                            style="background:#22c55e;border-color:#22c55e;border-radius:12px;padding:10px 18px;"
+                            onclick="openAiAssistant('pks mana saja yang belum input data pengaliran, pemeliharaan, dan alat berat hari ini?')">
+                        <i class="feather-message-square"></i>
+                        <span>Tanya AI Asisten</span>
+                    </button>
+
+                    @if($missingPengaliranCount > 0 || $missingPemeliharaanCount > 0 || $missingAlatBeratCount > 0)
+                        <button type="button" class="btn btn-outline-light fw-semibold d-inline-flex align-items-center justify-content-center gap-2"
+                                style="border-radius:12px;padding:10px 18px;background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.25);"
+                                onclick="triggerBatchReminder('{{ $tanggal }}')">
+                            <i class="feather-send text-warning"></i>
+                            <span>Kirim WA Pengingat Semua</span>
+                        </button>
+                    @endif
                 </div>
             </div>
         </div>
@@ -1246,12 +1646,14 @@
                     <thead>
                         <tr>
                             <th style="width:48px;text-align:center;">#</th>
-                            <th style="min-width:200px;">PKS (Pabrik Kelapa Sawit)</th>
+                            <th style="min-width:180px;">PKS (Pabrik Kelapa Sawit)</th>
                             <th>Pengaliran LA</th>
                             <th>Pemeliharaan Bed</th>
+                            <th>Alat Berat</th>
                             <th>Rencana Tahunan</th>
-                            <th style="width:130px;text-align:center;">Kelengkapan</th>
-                            <th style="width:140px;text-align:center;">Status</th>
+                            <th style="width:120px;text-align:center;">Kelengkapan</th>
+                            <th style="width:120px;text-align:center;">Status</th>
+                            <th style="width:130px;text-align:center;">Aksi Pengingat</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1262,10 +1664,12 @@
                             $avatar = $pksAvatarColors[$akro] ?? 'linear-gradient(135deg,#16a34a,#059669)';
                             $pksId  = $item['pks']->id_pks ?? $item['pks']->ID;
                             $adaRencana = $rencanaMap[$pksId] ?? false;
-                            $done = ($item['pengaliran'] ? 1 : 0) + ($item['pemeliharaan'] ? 1 : 0) + ($adaRencana ? 1 : 0);
-                            $chipClass = $done == 3 ? 'chip-safe' : ($done > 0 ? 'chip-warning' : 'chip-danger');
-                            $chipLabel = $done == 3 ? 'Lengkap' : ($done > 0 ? 'Sebagian' : 'Belum Input');
-                            $chipIcon  = $done == 3 ? 'feather-check-circle' : ($done > 0 ? 'feather-clock' : 'feather-x-circle');
+                            $hasAlat = $item['alat_berat'] ?? false;
+                            $done = ($item['pengaliran'] ? 1 : 0) + ($item['pemeliharaan'] ? 1 : 0) + ($hasAlat ? 1 : 0) + ($adaRencana ? 1 : 0);
+                            $chipClass = $done == 4 ? 'chip-safe' : ($done > 0 ? 'chip-warning' : 'chip-danger');
+                            $chipLabel = $done == 4 ? 'Lengkap' : ($done > 0 ? 'Sebagian' : 'Belum Input');
+                            $chipIcon  = $done == 4 ? 'feather-check-circle' : ($done > 0 ? 'feather-clock' : 'feather-x-circle');
+                            $isMissingAny = (!$item['pengaliran'] || !$item['pemeliharaan'] || !$hasAlat);
                         @endphp
                         <tr>
                             <td style="text-align:center;font-weight:700;color:#9ca3af;font-size:12px;">{{ $no++ }}</td>
@@ -1274,7 +1678,9 @@
                                     <div class="pks-avatar" style="background:{{ $avatar }};">{{ $akro }}</div>
                                     <div>
                                         <div style="font-weight:700;font-size:13px;">{{ $item['pks']->nama }}</div>
-                                        <div style="font-size:10.5px;color:#6b7280;font-weight:600;">PKS {{ $akro }}</div>
+                                        <div style="font-size:10.5px;color:#6b7280;font-weight:600;">
+                                            PKS {{ $akro }} &bull; Asisten: <span class="text-dark fw-bold">{{ $item['pks']->asisten ?: 'Belum diset' }}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </td>
@@ -1293,6 +1699,13 @@
                                 @endif
                             </td>
                             <td>
+                                @if($hasAlat)
+                                    <span class="mod-pill mod-pill-ok"><i class="feather-check-circle"></i> Sudah Input</span>
+                                @else
+                                    <span class="mod-pill mod-pill-err"><i class="feather-x-circle"></i> Belum Ada</span>
+                                @endif
+                            </td>
+                            <td>
                                 @if($adaRencana)
                                     <span class="mod-pill mod-pill-ok"><i class="feather-check-circle"></i> Tersedia</span>
                                 @else
@@ -1300,10 +1713,10 @@
                                 @endif
                             </td>
                             <td style="text-align:center;">
-                                <div style="font-size:12px;font-weight:800;margin-bottom:6px;">{{ $done }} / 3</div>
+                                <div style="font-size:12px;font-weight:800;margin-bottom:6px;">{{ $done }} / 4</div>
                                 <div style="height:6px;border-radius:10px;background:rgba(22,163,74,0.1);overflow:hidden;">
-                                    <div style="height:100%;border-radius:10px;width:{{ ($done/3)*100 }}%;
-                                        background:{{ $done==3 ? 'linear-gradient(90deg,#16a34a,#4ade80)' : ($done>0 ? 'linear-gradient(90deg,#d97706,#fbbf24)' : '#ef4444') }};
+                                    <div style="height:100%;border-radius:10px;width:{{ ($done/4)*100 }}%;
+                                        background:{{ $done==4 ? 'linear-gradient(90deg,#16a34a,#4ade80)' : ($done>0 ? 'linear-gradient(90deg,#d97706,#fbbf24)' : '#ef4444') }};
                                         transition:width 1s ease;"></div>
                                 </div>
                             </td>
@@ -1312,6 +1725,21 @@
                                     <i class="{{ $chipIcon }}" style="font-size:12px;"></i>
                                     {{ $chipLabel }}
                                 </span>
+                            </td>
+                            <td style="text-align:center;">
+                                @if($isMissingAny)
+                                    <button type="button" class="btn btn-sm btn-outline-success fw-bold d-inline-flex align-items-center gap-1"
+                                            style="font-size:11px;padding:4px 10px;border-radius:8px;"
+                                            title="Kirim notifikasi WA pengingat ke Asisten PKS {{ $item['pks']->nama }}"
+                                            onclick="triggerSingleReminder({{ $pksId }}, '{{ addslashes($item['pks']->nama) }}', '{{ $tanggal }}')">
+                                        <i class="feather-send text-success"></i>
+                                        <span>Kirim WA</span>
+                                    </button>
+                                @else
+                                    <span class="text-success fw-bold" style="font-size:11px;">
+                                        <i class="feather-check"></i> Lengkap
+                                    </span>
+                                @endif
                             </td>
                         </tr>
                         @endforeach
@@ -1384,6 +1812,114 @@
             </div>
         </div>
     </section>
+
+    {{-- ================================================================
+         6. SIMOLI AI ASSISTANT — FLOATING ACTION BUTTON (FAB)
+         ================================================================ --}}
+    <div class="simoli-ai-fab" id="btnOpenAiAssistant" onclick="openAiAssistant()" title="Buka AI Asisten SIMOLI (Shortcut: Alt + A)">
+        <div class="ai-fab-icon-wrap position-relative">
+            <i class="feather-cpu"></i>
+            @if($missingPengaliranCount > 0 || $missingPemeliharaanCount > 0 || $missingAlatBeratCount > 0)
+                <span class="ai-fab-badge">{{ ($missingPengaliranCount > 0 ? 1 : 0) + ($missingPemeliharaanCount > 0 ? 1 : 0) + ($missingAlatBeratCount > 0 ? 1 : 0) }}</span>
+            @endif
+        </div>
+        <span>AI Asisten TEP</span>
+    </div>
+
+    {{-- ================================================================
+         7. SIMOLI AI ASSISTANT — SLIDING CHAT DRAWER & MODAL
+         ================================================================ --}}
+    <div class="simoli-ai-backdrop" id="aiAssistantBackdrop" onclick="closeAiAssistant()"></div>
+
+    <aside class="simoli-ai-drawer" id="aiAssistantDrawer" aria-label="SIMOLI AI Assistant Drawer">
+        {{-- Header --}}
+        <div class="ai-drawer-header">
+            <div class="d-flex align-items-center gap-3">
+                <div class="ai-msg-avatar ai-avatar-bot">
+                    <i class="feather-cpu"></i>
+                </div>
+                <div>
+                    <h6 class="text-white fw-bold mb-0" style="font-family:'Outfit',sans-serif;font-size:15px;">
+                        SIMOLI AI Assistant
+                    </h6>
+                    <div class="d-flex align-items-center gap-1 text-white-50" style="font-size:11px;">
+                        <span class="live-dot" style="width:6px;height:6px;"></span>
+                        <span>Online &bull; Admin TEP PTPN IV</span>
+                    </div>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <button type="button" class="btn btn-sm btn-link text-white p-1" onclick="clearAiChat()" title="Bersihkan Percakapan">
+                    <i class="feather-trash-2" style="font-size:15px;"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-link text-white p-1" onclick="closeAiAssistant()" title="Tutup">
+                    <i class="feather-x" style="font-size:18px;"></i>
+                </button>
+            </div>
+        </div>
+
+        {{-- Quick Prompts Bar --}}
+        <div style="padding:10px 16px;background:rgba(22,163,74,0.04);border-bottom:1px solid rgba(22,163,74,0.1);overflow-x:auto;white-space:nowrap;display:flex;gap:6px;">
+            <button type="button" class="ai-prompt-chip" onclick="askAiPrompt('pks mana saja yang belum input data pengaliran, pemeliharaan, dan alat berat hari ini?')">
+                🚨 Belum Input Hari Ini
+            </button>
+            <button type="button" class="ai-prompt-chip" onclick="askAiPrompt('berapa total volume limbah dialirkan dan dihasilkan bulan ini?')">
+                💧 Rekap Pengaliran
+            </button>
+            <button type="button" class="ai-prompt-chip" onclick="askAiPrompt('bagaimana status ketersediaan dan jam kerja alat berat?')">
+                🚜 Status Alat Berat
+            </button>
+            <button type="button" class="ai-prompt-chip" onclick="askAiPrompt('tampilkan ringkasan pemeliharaan kolam dan bed bulan ini')">
+                🛠️ Pemeliharaan
+            </button>
+            <button type="button" class="ai-prompt-chip" onclick="askAiPrompt('berikan ringkasan eksekutif kepatuhan seluruh unit pks')">
+                📊 Briefing Eksekutif
+            </button>
+        </div>
+
+        {{-- Chat Messages Body --}}
+        <div class="ai-drawer-body" id="aiChatMessages">
+            {{-- Welcome Bot Message --}}
+            <div class="ai-msg">
+                <div class="ai-msg-avatar ai-avatar-bot">
+                    <i class="feather-cpu"></i>
+                </div>
+                <div class="ai-bubble ai-bubble-bot">
+                    <p class="mb-2 fw-bold text-success">
+                        👋 Halo Admin TEP! Saya SIMOLI AI Assistant.
+                    </p>
+                    <p class="mb-2 text-muted" style="font-size:12.5px;">
+                        Saya siap membantu memantau kepatuhan pelaporan harian, menganalisis data pengaliran limbah LA, pemeliharaan kolam/bed, dan operasional alat berat pada 12 unit PKS PTPN IV.
+                    </p>
+                    <div style="background:rgba(22,163,74,0.06);border:1px solid rgba(22,163,74,0.15);border-radius:10px;padding:10px;margin-top:8px;font-size:12px;">
+                        <strong class="d-block text-dark mb-1">📌 Status Pantauan Hari Ini ({{ $selectedDate->locale('id')->translatedFormat('d M Y') }}):</strong>
+                        <div class="d-flex flex-column gap-1">
+                            <span>💧 Pengaliran: <strong>{{ $sudahPengaliran }}/{{ $totalPks }} Unit</strong> ({{ $missingPengaliranCount }} Belum)</span>
+                            <span>🛠️ Pemeliharaan: <strong>{{ $sudahPemeliharaan }}/{{ $totalPks }} Unit</strong> ({{ $missingPemeliharaanCount }} Belum)</span>
+                            <span>🚜 Alat Berat: <strong>{{ $sudahAlatBerat }}/{{ $totalPks }} Unit</strong> ({{ $missingAlatBeratCount }} Belum)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Footer / Input Bar --}}
+        <div class="ai-drawer-footer">
+            <form id="aiChatForm" onsubmit="event.preventDefault(); submitAiMessage();" class="d-flex align-items-center gap-2">
+                <input type="text" id="aiQueryInput" class="form-control"
+                       placeholder="Ketik pertanyaan (mis: 'PKS mana belum input?')..."
+                       style="border-radius:24px;padding:9px 18px;font-size:13px;border:1.5px solid rgba(22,163,74,0.25);"
+                       autocomplete="off">
+                <button type="submit" id="btnSendAi" class="btn btn-success d-flex align-items-center justify-content-center"
+                        style="width:40px;height:40px;border-radius:50%;background:#16a34a;border:none;flex-shrink:0;">
+                    <i class="feather-send" style="font-size:15px;"></i>
+                </button>
+            </form>
+            <div class="text-muted text-center mt-2" style="font-size:10.5px;">
+                SIMOLI AI Engine &bull; Tekan <kbd style="font-size:10px;">Enter</kbd> untuk mengirim &bull; <kbd style="font-size:10px;">Alt+A</kbd> untuk toggle
+            </div>
+        </div>
+    </aside>
 
 </article>
 @endsection
@@ -1733,7 +2269,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             var activeBadge = document.getElementById('adminActiveFilterBadge');
             if (activeBadge) {
-                activeBadge.innerHTML = '<i class="feather-check-circle me-1"></i> ' + curPLabel + (isAllPks ? '' : ' • ' + pksText);
+                var filterSpesifikText = nilaiVal ? (' • ' + (jenisVal === 'blok' ? 'Blok ' : (jenisVal === 'no_bak' ? 'Bak ' : 'Bed ')) + nilaiVal) : '';
+                activeBadge.innerHTML = '<i class="feather-check-circle me-1"></i> ' + curPLabel + (isAllPks ? '' : ' • ' + pksText) + filterSpesifikText;
             }
 
             var badgePeriodeChart = document.getElementById('mainChartBadgePeriode');
@@ -1845,10 +2382,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (pksSel) pksSel.value = '';
         if (jenisSel) jenisSel.value = 'flat_bed';
         if (nilaiSel) nilaiSel.value = '';
-        if (tahunSel) tahunSel.value = '{{ date('Y') }}';
-        if (bulanSel) bulanSel.value = '{{ date('m') }}';
-        if (tglMulaiInp) tglMulaiInp.value = '{{ date('Y-m-01') }}';
-        if (tglSelesaiInp) tglSelesaiInp.value = '{{ date('Y-m-d') }}';
+        if (tahunSel) tahunSel.value = '{{ $tahun ?? date('Y') }}';
+        if (bulanSel) bulanSel.value = '{{ $bulan ?? date('m') }}';
+        if (tglMulaiInp) tglMulaiInp.value = '{{ $tglMulai ?? date('Y-m-01') }}';
+        if (tglSelesaiInp) tglSelesaiInp.value = '{{ $tglSelesai ?? date('Y-m-d') }}';
 
         fetch("{{ route('dashboard.pilihan-filter') }}?jenis=flat_bed&id_pks=", {
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
@@ -2011,6 +2548,422 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     });
+
+    // Keyboard shortcut Alt + A to toggle AI Assistant
+    document.addEventListener('keydown', function(e) {
+        if (e.altKey && (e.key === 'a' || e.key === 'A')) {
+            e.preventDefault();
+            var drawer = document.getElementById('aiAssistantDrawer');
+            if (drawer && drawer.classList.contains('active')) {
+                closeAiAssistant();
+            } else {
+                openAiAssistant();
+            }
+        }
+    });
 });
+
+/* ================================================================
+   SIMOLI AI ASSISTANT JAVASCRIPT CONTROLLER
+   ================================================================ */
+var aiChatHistory = [];
+var isAiLoading = false;
+
+function openAiAssistant(initialQuery) {
+    var backdrop = document.getElementById('aiAssistantBackdrop');
+    var drawer   = document.getElementById('aiAssistantDrawer');
+    if (backdrop && drawer) {
+        backdrop.classList.add('active');
+        drawer.classList.add('active');
+        var input = document.getElementById('aiQueryInput');
+        if (input) {
+            setTimeout(function() { input.focus(); }, 300);
+        }
+        if (initialQuery) {
+            askAiPrompt(initialQuery);
+        }
+    }
+}
+
+function closeAiAssistant() {
+    var backdrop = document.getElementById('aiAssistantBackdrop');
+    var drawer   = document.getElementById('aiAssistantDrawer');
+    if (backdrop && drawer) {
+        backdrop.classList.remove('active');
+        drawer.classList.remove('active');
+    }
+}
+
+function clearAiChat() {
+    var container = document.getElementById('aiChatMessages');
+    if (!container) return;
+    container.innerHTML = `
+        <div class="ai-msg">
+            <div class="ai-msg-avatar ai-avatar-bot"><i class="feather-cpu"></i></div>
+            <div class="ai-bubble ai-bubble-bot">
+                <p class="mb-2 fw-bold text-success">👋 Percakapan dibersihkan. Ada yang bisa saya bantu terkait laporan SIMOLI?</p>
+                <p class="mb-0 text-muted" style="font-size:12px;">Anda dapat menanyakan tentang status input harian, volume pengaliran, pemeliharaan kolam/bed, atau operasional alat berat.</p>
+            </div>
+        </div>
+    `;
+    aiChatHistory = [];
+}
+
+function askAiPrompt(promptText) {
+    var input = document.getElementById('aiQueryInput');
+    if (input) {
+        input.value = promptText;
+        submitAiMessage();
+    }
+}
+
+function submitAiMessage() {
+    if (isAiLoading) return;
+    var input = document.getElementById('aiQueryInput');
+    if (!input) return;
+    var query = input.value.trim();
+    if (!query) return;
+
+    input.value = '';
+    appendUserBubble(query);
+    showAiTyping();
+
+    isAiLoading = true;
+    var csrfToken = document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : '{{ csrf_token() }}';
+
+    fetch("{{ route('ai.chat') }}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrfToken,
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            query: query,
+            tanggal: "{{ $tanggal }}"
+        })
+    })
+    .then(function(res) {
+        if (!res.ok) throw new Error('HTTP error ' + res.status);
+        return res.json();
+    })
+    .then(function(data) {
+        hideAiTyping();
+        isAiLoading = false;
+        if (data.success && data.data) {
+            appendAiBubble(data.data.answer, data.data.suggested_actions, data.data.badges);
+        } else {
+            appendAiBubble("Maaf, terjadi kendala saat memproses pertanyaan Anda: " + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(function(err) {
+        hideAiTyping();
+        isAiLoading = false;
+        appendAiBubble("⚠️ Gagal terhubung ke layanan AI Assistant SIMOLI. Silakan periksa koneksi atau coba beberapa saat lagi.");
+    });
+}
+
+function appendUserBubble(text) {
+    var container = document.getElementById('aiChatMessages');
+    if (!container) return;
+    var div = document.createElement('div');
+    div.className = 'ai-msg user-msg';
+    div.innerHTML = `
+        <div class="ai-msg-avatar ai-avatar-user"><i class="feather-user"></i></div>
+        <div class="ai-bubble ai-bubble-user">
+            ${escapeHtml(text)}
+        </div>
+    `;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+}
+
+function showAiTyping() {
+    var container = document.getElementById('aiChatMessages');
+    if (!container) return;
+    var div = document.createElement('div');
+    div.id = 'aiTypingBubble';
+    div.className = 'ai-msg';
+    div.innerHTML = `
+        <div class="ai-msg-avatar ai-avatar-bot"><i class="feather-cpu"></i></div>
+        <div class="ai-bubble ai-bubble-bot">
+            <div class="ai-typing-indicator">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+    `;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+}
+
+function hideAiTyping() {
+    var typing = document.getElementById('aiTypingBubble');
+    if (typing) typing.remove();
+}
+
+function appendAiBubble(markdownText, actions, badges) {
+    var container = document.getElementById('aiChatMessages');
+    if (!container) return;
+
+    var htmlContent = parseSimpleMarkdown(markdownText);
+    var badgeHtml = '';
+    if (badges && badges.length > 0) {
+        badgeHtml = '<div class="d-flex flex-wrap gap-1 mb-2">' + badges.map(function(b) {
+            return '<span class="badge bg-light text-dark border" style="font-size:10px;">' + escapeHtml(b) + '</span>';
+        }).join('') + '</div>';
+    }
+
+    var actionHtml = '';
+    if (actions && actions.length > 0) {
+        actionHtml = '<div class="d-flex flex-wrap gap-1 mt-3 pt-2 border-top">' + actions.map(function(act) {
+            if (act.action_type === 'trigger_reminder_all') {
+                return '<button type="button" class="btn btn-sm btn-outline-success fw-bold" style="font-size:11px;" onclick="triggerBatchReminder(\'{{ $tanggal }}\')">' + escapeHtml(act.label) + '</button>';
+            }
+            if (act.query) {
+                return '<button type="button" class="btn btn-sm btn-outline-primary fw-bold" style="font-size:11px;" onclick="askAiPrompt(\'' + escapeHtml(act.query).replace(/'/g, "\\'") + '\')">' + escapeHtml(act.label) + '</button>';
+            }
+            return '';
+        }).join('') + '</div>';
+    }
+
+    var div = document.createElement('div');
+    div.className = 'ai-msg';
+    div.innerHTML = `
+        <div class="ai-msg-avatar ai-avatar-bot"><i class="feather-cpu"></i></div>
+        <div class="ai-bubble ai-bubble-bot">
+            ${badgeHtml}
+            <div>${htmlContent}</div>
+            ${actionHtml}
+        </div>
+    `;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+}
+
+function escapeHtml(text) {
+    var map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+    return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
+}
+
+function parseSimpleMarkdown(md) {
+    if (!md) return '';
+    var text = md;
+
+    // Headers
+    text = text.replace(/^### (.*$)/gim, '<h6 class="fw-bold mt-2 mb-2 text-success">$1</h6>');
+    text = text.replace(/^#### (.*$)/gim, '<div class="fw-bold mt-2 mb-1 text-dark" style="font-size:13px;">$1</div>');
+
+    // Bold & Italic
+    text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    text = text.replace(/`([^`]+)`/g, '<code class="bg-light px-1 rounded text-danger" style="font-size:11.5px;">$1</code>');
+
+    // Horizontal Rule
+    text = text.replace(/^---$/gim, '<hr class="my-2" style="opacity:0.15;">');
+
+    // Simple Tables
+    var lines = text.split('\n');
+    var inTable = false;
+    var tableHtml = '';
+    var resultLines = [];
+
+    for (var i = 0; i < lines.length; i++) {
+        var line = lines[i].trim();
+        if (line.startsWith('|') && line.endsWith('|')) {
+            var cols = line.split('|').filter(function(c, idx, arr) { return idx > 0 && idx < arr.length - 1; });
+            if (!inTable) {
+                inTable = true;
+                tableHtml = '<div class="table-responsive my-2"><table class="table table-sm table-bordered mb-0"><thead><tr>';
+                cols.forEach(function(c) { tableHtml += '<th>' + c.trim() + '</th>'; });
+                tableHtml += '</tr></thead><tbody>';
+            } else if (line.indexOf('---') !== -1 || line.indexOf(':---') !== -1) {
+                // separator row, skip
+            } else {
+                tableHtml += '<tr>';
+                cols.forEach(function(c) { tableHtml += '<td>' + c.trim() + '</td>'; });
+                tableHtml += '</tr>';
+            }
+        } else {
+            if (inTable) {
+                inTable = false;
+                tableHtml += '</tbody></table></div>';
+                resultLines.push(tableHtml);
+            }
+            resultLines.push(line);
+        }
+    }
+    if (inTable) {
+        tableHtml += '</tbody></table></div>';
+        resultLines.push(tableHtml);
+    }
+
+    text = resultLines.join('\n');
+
+    // Bullet points
+    text = text.replace(/^\s*[-•]\s+(.*)$/gim, '<div class="d-flex align-items-start gap-2 mb-1" style="font-size:12.5px;"><span class="text-success">&bull;</span><span>$1</span></div>');
+    text = text.replace(/^\s*([0-9]+)\.\s+(.*)$/gim, '<div class="d-flex align-items-start gap-2 mb-1" style="font-size:12.5px;"><span class="badge bg-light text-dark border" style="font-size:10px;">$1</span><span>$2</span></div>');
+
+    // Paragraph line breaks
+    text = text.replace(/\n\n+/g, '<div class="my-2"></div>');
+    text = text.replace(/\n/g, '<br>');
+
+    return text;
+}
+
+/* ================================================================
+   NOTIFIKASI WHATSAPP PENGINGAT (SINGLE & BATCH)
+   ================================================================ */
+function triggerSingleReminder(pksId, pksName, tanggal) {
+    if (typeof Swal === 'undefined') {
+        if (!confirm('Kirim pesan pengingat WhatsApp ke Asisten PKS ' + pksName + '?')) return;
+        executeSingleReminder(pksId, pksName, tanggal);
+    } else {
+        Swal.fire({
+            title: 'Kirim Pengingat WhatsApp?',
+            html: `Apakah Anda ingin mengirimkan notifikasi pengingat ke Asisten <strong>PKS ${pksName}</strong> untuk melengkapi laporan harian yang belum diinput?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#16a34a',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: '<i class="feather-send me-1"></i> Ya, Kirim Sekarang',
+            cancelButtonText: 'Batal'
+        }).then(function(result) {
+            if (result.isConfirmed) {
+                executeSingleReminder(pksId, pksName, tanggal);
+            }
+        });
+    }
+}
+
+function executeSingleReminder(pksId, pksName, tanggal) {
+    var csrfToken = document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : '{{ csrf_token() }}';
+
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            title: 'Mengirim WhatsApp...',
+            text: 'Menghubungi WhatsApp Gateway Sidobe untuk PKS ' + pksName,
+            allowOutsideClick: false,
+            didOpen: function() { Swal.showLoading(); }
+        });
+    }
+
+    fetch("{{ route('ai.send-reminder') }}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrfToken,
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            id_pks: pksId,
+            tanggal: tanggal || "{{ $tanggal }}"
+        })
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(res) {
+        if (typeof Swal !== 'undefined') {
+            if (res.success) {
+                Swal.fire({
+                    title: 'Berhasil Terkirim!',
+                    text: res.message,
+                    icon: 'success',
+                    confirmButtonColor: '#16a34a'
+                });
+            } else {
+                Swal.fire({
+                    title: 'Gagal Mengirim',
+                    text: res.message || 'Terjadi kesalahan saat mengirim pengingat.',
+                    icon: 'warning',
+                    confirmButtonColor: '#16a34a'
+                });
+            }
+        } else {
+            alert(res.message);
+        }
+    })
+    .catch(function(err) {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire('Error', 'Gagal memproses pengiriman WhatsApp.', 'error');
+        } else {
+            alert('Gagal memproses pengiriman WhatsApp.');
+        }
+    });
+}
+
+function triggerBatchReminder(tanggal) {
+    if (typeof Swal === 'undefined') {
+        if (!confirm('Kirim pengingat WhatsApp ke seluruh Asisten PKS yang belum input hari ini?')) return;
+        executeBatchReminder(tanggal);
+    } else {
+        Swal.fire({
+            title: 'Kirim Pengingat WhatsApp Massal?',
+            html: `Sistem akan mengirimkan pesan WhatsApp ke <strong>seluruh Asisten PKS</strong> yang belum melengkapi laporan Pengaliran, Pemeliharaan, atau Alat Berat hari ini.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#16a34a',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: '<i class="feather-send me-1"></i> Ya, Kirim ke Semua PKS',
+            cancelButtonText: 'Batal'
+        }).then(function(result) {
+            if (result.isConfirmed) {
+                executeBatchReminder(tanggal);
+            }
+        });
+    }
+}
+
+function executeBatchReminder(tanggal) {
+    var csrfToken = document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : '{{ csrf_token() }}';
+
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            title: 'Mengirim Pengingat Massal...',
+            text: 'Sedang memproses antrian pesan WhatsApp via Gateway Sidobe...',
+            allowOutsideClick: false,
+            didOpen: function() { Swal.showLoading(); }
+        });
+    }
+
+    fetch("{{ route('ai.send-batch-reminder') }}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrfToken,
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            tanggal: tanggal || "{{ $tanggal }}"
+        })
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(res) {
+        if (typeof Swal !== 'undefined') {
+            if (res.success) {
+                Swal.fire({
+                    title: 'Proses Selesai!',
+                    html: `<p>${res.message}</p>`,
+                    icon: 'success',
+                    confirmButtonColor: '#16a34a'
+                });
+            } else {
+                Swal.fire({
+                    title: 'Perhatian',
+                    text: res.message || 'Tidak ada notifikasi yang terkirim.',
+                    icon: 'info',
+                    confirmButtonColor: '#16a34a'
+                });
+            }
+        } else {
+            alert(res.message);
+        }
+    })
+    .catch(function(err) {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire('Error', 'Gagal memproses pengiriman batch WhatsApp.', 'error');
+        } else {
+            alert('Gagal memproses pengiriman batch WhatsApp.');
+        }
+    });
+}
 </script>
 @endsection

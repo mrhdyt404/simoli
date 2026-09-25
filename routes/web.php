@@ -15,6 +15,7 @@ use App\Http\Controllers\MonitoringAlatBeratController;
 use App\Http\Controllers\ReportAlatBeratController;
 use App\Http\Controllers\PerizinanLaController;
 use App\Http\Controllers\PemetaanLaController;
+use App\Http\Controllers\AiAssistantController;
 
 // Login Routes
 Route::get('/', fn() => redirect('/login'));
@@ -73,6 +74,14 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/dashboard/pilihan-filter', [DashboardController::class, 'pilihanFilter'])
         ->name('dashboard.pilihan-filter');
+
+    // AI Assistant SIMOLI (TEP)
+    Route::prefix('ai-assistant')->name('ai.')->group(function () {
+        Route::post('/chat', [AiAssistantController::class, 'chat'])->name('chat');
+        Route::get('/daily-audit', [AiAssistantController::class, 'dailyAudit'])->name('daily-audit');
+        Route::post('/send-reminder', [AiAssistantController::class, 'sendReminder'])->name('send-reminder');
+        Route::post('/send-batch-reminder', [AiAssistantController::class, 'sendBatchReminder'])->name('send-batch-reminder');
+    });
 
     Route::get('/api/sync/pull', [\App\Http\Controllers\Api\SyncApiController::class, 'pull']);
 

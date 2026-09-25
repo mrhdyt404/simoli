@@ -55,45 +55,7 @@ class DashboardController extends Controller
         }
         $jenis = $request->input('jenis', 'flat_bed');
 
-        $query = Pengaliran::query();
-        if ($idPks) {
-            $query->where('id_pks', $idPks);
-        }
-
-        if ($jenis == 'blok') {
-            $pilihan = (clone $query)
-                ->whereNotNull('blok')
-                ->where('blok', '!=', '')
-                ->where('blok', '!=', '-')
-                ->where('blok', '!=', '0')
-                ->where('blok', '!=', 0)
-                ->distinct()
-                ->pluck('blok')
-                ->toArray();
-        } elseif ($jenis == 'no_bak') {
-            $pilihan = (clone $query)
-                ->whereNotNull('no_bak')
-                ->where('no_bak', '!=', '')
-                ->where('no_bak', '!=', '-')
-                ->where('no_bak', '!=', '0')
-                ->where('no_bak', '!=', 0)
-                ->distinct()
-                ->pluck('no_bak')
-                ->toArray();
-        } else {
-            $pilihan = (clone $query)
-                ->whereNotNull('flat_bed')
-                ->where('flat_bed', '!=', '')
-                ->where('flat_bed', '!=', '-')
-                ->where('flat_bed', '!=', '0')
-                ->where('flat_bed', '!=', 0)
-                ->distinct()
-                ->pluck('flat_bed')
-                ->toArray();
-        }
-
-        natsort($pilihan);
-        $pilihan = array_values($pilihan);
+        $pilihan = $this->getPilihanFilterList($idPks, $jenis);
 
         return response()->json([
             'success'     => true,
@@ -103,19 +65,133 @@ class DashboardController extends Controller
         ]);
     }
 
+    private function getPilihanFilterList(?int $idPks, string $jenis): array
+    {
+        $qPengaliran = Pengaliran::query();
+        $qPemeliharaan = Pemeliharaan::query();
+
+        if ($idPks) {
+            $qPengaliran->where('id_pks', $idPks);
+            $qPemeliharaan->where('id_pks', $idPks);
+        }
+
+        $collected = [];
+
+        if ($jenis === 'blok') {
+            $pPengaliran = (clone $qPengaliran)
+                ->whereNotNull('blok')
+                ->where('blok', '!=', '')
+                ->where('blok', '!=', '-')
+                ->where('blok', '!=', '0')
+                ->distinct()
+                ->pluck('blok')
+                ->toArray();
+
+            $pPemeliharaan = (clone $qPemeliharaan)
+                ->whereNotNull('blok')
+                ->where('blok', '!=', '')
+                ->where('blok', '!=', '-')
+                ->where('blok', '!=', '0')
+                ->distinct()
+                ->pluck('blok')
+                ->toArray();
+
+            $allRaw = array_unique(array_merge($pPengaliran, $pPemeliharaan));
+            foreach ($allRaw as $raw) {
+                $rawTrim = trim((string) $raw);
+                if ($rawTrim === '' || $rawTrim === '-') continue;
+                if (!in_array($rawTrim, $collected)) {
+                    $collected[] = $rawTrim;
+                }
+                // Split multi-block values (e.g. C26/D22) to allow exact single-block filtering
+                $parts = preg_split('/[\/,\s]+/', $rawTrim, -1, PREG_SPLIT_NO_EMPTY);
+                foreach ($parts as $p) {
+                    $p = trim($p);
+                    if ($p !== '' && $p !== '-' && !in_array($p, $collected)) {
+                        $collected[] = $p;
+                    }
+                }
+            }
+        } elseif ($jenis === 'no_bak') {
+            $pPengaliran = (clone $qPengaliran)
+                ->whereNotNull('no_bak')
+                ->where('no_bak', '!=', '')
+                ->where('no_bak', '!=', '-')
+                ->where('no_bak', '!=', '0')
+                ->distinct()
+                ->pluck('no_bak')
+                ->toArray();
+
+            $pPemeliharaan = (clone $qPemeliharaan)
+                ->whereNotNull('no_bak')
+                ->where('no_bak', '!=', '')
+                ->where('no_bak', '!=', '-')
+                ->where('no_bak', '!=', '0')
+                ->distinct()
+                ->pluck('no_bak')
+                ->toArray();
+
+            $allRaw = array_unique(array_merge($pPengaliran, $pPemeliharaan));
+            foreach ($allRaw as $raw) {
+                $rawTrim = trim((string) $raw);
+                if ($rawTrim === '' || $rawTrim === '-') continue;
+                if (!in_array($rawTrim, $collected)) {
+                    $collected[] = $rawTrim;
+                }
+                $parts = preg_split('/[\/,\s]+/', $rawTrim, -1, PREG_SPLIT_NO_EMPTY);
+                foreach ($parts as $p) {
+                    $p = trim($p);
+                    if ($p !== '' && $p !== '-' && !in_array($p, $collected)) {
+                        $collected[] = $p;
+                    }
+                }
+            }
+        } else {
+            $pPengaliran = (clone $qPengaliran)
+                ->whereNotNull('flat_bed')
+                ->where('flat_bed', '!=', '')
+                ->where('flat_bed', '!=', '-')
+                ->where('flat_bed', '!=', '0')
+                ->where('flat_bed', '!=', 0)
+                ->distinct()
+                ->pluck('flat_bed')
+                ->toArray();
+
+            $pPemeliharaan = (clone $qPemeliharaan)
+                ->whereNotNull('flat_bed')
+                ->where('flat_bed', '!=', '')
+                ->where('flat_bed', '!=', '-')
+                ->where('flat_bed', '!=', '0')
+                ->where('flat_bed', '!=', 0)
+                ->distinct()
+                ->pluck('flat_bed')
+                ->toArray();
+
+            $collected = array_unique(array_merge($pPengaliran, $pPemeliharaan));
+        }
+
+        natsort($collected);
+        return array_values($collected);
+    }
+
     /**
      * Dashboard untuk Admin: monitoring semua PKS
      */
     private function adminDashboard(string $tanggal, ?Request $request = null)
     {
         $user = Auth::user();
-        $pksList = Pks::orderBy('nama')->get();
+        $pksList = Pks::whereNotIn('akro', ['TEP', 'DTM', 'DBR'])->orderBy('nama')->get();
 
         $selectedDate = Carbon::parse($tanggal);
         $selectedYear = $selectedDate->year;
+        $selectedMonth = $selectedDate->format('m');
 
-        // Status monitoring per PKS
+        // Status monitoring per PKS (Pengaliran, Pemeliharaan, dan Alat Berat)
         $monitoringData = [];
+        $missingPengaliranPks = [];
+        $missingPemeliharaanPks = [];
+        $missingAlatBeratPks = [];
+
         foreach ($pksList as $pks) {
             $hasPengaliran = Pengaliran::where('id_pks', $pks->id_pks)
                 ->whereDate('tanggal', $tanggal)
@@ -125,18 +201,31 @@ class DashboardController extends Controller
                 ->whereDate('tanggal', $tanggal)
                 ->exists();
 
+            $hasAlatBerat = MonitoringAlatBerat::where('id_pks', $pks->id_pks)
+                ->whereDate('tanggal', $tanggal)
+                ->exists();
+
+            $countDone = ($hasPengaliran ? 1 : 0) + ($hasPemeliharaan ? 1 : 0) + ($hasAlatBerat ? 1 : 0);
+
             $monitoringData[] = [
                 'pks' => $pks,
                 'pks_id' => $pks->id_pks,
                 'pengaliran' => $hasPengaliran,
                 'pemeliharaan' => $hasPemeliharaan,
+                'alat_berat' => $hasAlatBerat,
+                'count_done' => $countDone,
+                'is_complete' => ($countDone === 3),
                 'prioritas' =>
-                    ($hasPengaliran && $hasPemeliharaan)
+                    ($countDone === 3)
                     ? 3
-                    : (($hasPengaliran || $hasPemeliharaan)
+                    : (($countDone > 0)
                         ? 2
                         : 1),
             ];
+
+            if (!$hasPengaliran) $missingPengaliranPks[] = $pks;
+            if (!$hasPemeliharaan) $missingPemeliharaanPks[] = $pks;
+            if (!$hasAlatBerat) $missingAlatBeratPks[] = $pks;
         }
 
         // Summary counts
@@ -147,13 +236,18 @@ class DashboardController extends Controller
             ->toArray();
         $sudahPengaliran = collect($monitoringData)->where('pengaliran', true)->count();
         $sudahPemeliharaan = collect($monitoringData)->where('pemeliharaan', true)->count();
-        $sudahLengkap = collect($monitoringData)->filter(fn($d) => $d['pengaliran'] && $d['pemeliharaan'])->count();
-        $sebagian = collect($monitoringData)->filter(fn($d) => ($d['pengaliran'] || $d['pemeliharaan']) && !($d['pengaliran'] && $d['pemeliharaan']))->count();
+        $sudahAlatBerat = collect($monitoringData)->where('alat_berat', true)->count();
+        $sudahLengkap = collect($monitoringData)->filter(fn($d) => $d['pengaliran'] && $d['pemeliharaan'] && $d['alat_berat'])->count();
+        $sebagian = collect($monitoringData)->filter(fn($d) => ($d['pengaliran'] || $d['pemeliharaan'] || $d['alat_berat']) && !($d['pengaliran'] && $d['pemeliharaan'] && $d['alat_berat']))->count();
         $belumAda = $totalPks - $sudahLengkap - $sebagian;
 
+        $missingPengaliranCount = count($missingPengaliranPks);
+        $missingPemeliharaanCount = count($missingPemeliharaanPks);
+        $missingAlatBeratCount = count($missingAlatBeratPks);
+
         // ============ STATISTIK PENGALIRAN (bulan ini) ============
-        $startOfMonth = Carbon::parse($tanggal)->startOfMonth();
-        $endOfMonth = Carbon::parse($tanggal)->endOfMonth();
+        $startOfMonth = $selectedDate->copy()->startOfMonth();
+        $endOfMonth = $selectedDate->copy()->endOfMonth();
 
         $pengaliranBulanIni = Pengaliran::whereBetween('tanggal', [$startOfMonth, $endOfMonth]);
         $statPengaliran = [
@@ -265,23 +359,30 @@ class DashboardController extends Controller
             'total_bbm' => MonitoringAlatBerat::whereBetween('tanggal', [$startOfMonth, $endOfMonth])->sum('bbm_liter'),
         ];
 
-        // Filter Grafik Data (Default: 'semua' / Keseluruhan data)
+        // Filter Grafik Data (Default: 'semua' / Keseluruhan data, disinkronkan dengan tanggal terpilih jika ada)
         $periode = $request ? $request->input('periode', 'semua') : 'semua';
-        $tahun = $request ? $request->input('tahun', date('Y')) : date('Y');
-        $bulan = $request ? $request->input('bulan', date('m')) : date('m');
+        $tahun = $request ? $request->input('tahun', (string)$selectedYear) : (string)$selectedYear;
+        $bulan = $request ? $request->input('bulan', $selectedMonth) : $selectedMonth;
         $jenis = $request ? $request->input('jenis', 'flat_bed') : 'flat_bed';
         $nilai = $request ? $request->input('nilai') : null;
         $idPksFilter = $request ? $request->input('id_pks') : null;
-        $tglMulai = $request ? $request->input('tgl_mulai', Carbon::now()->startOfMonth()->toDateString()) : Carbon::now()->startOfMonth()->toDateString();
-        $tglSelesai = $request ? $request->input('tgl_selesai', Carbon::now()->toDateString()) : Carbon::now()->toDateString();
+        $tglMulai = $request ? $request->input('tgl_mulai', $startOfMonth->toDateString()) : $startOfMonth->toDateString();
+        $tglSelesai = $request ? $request->input('tgl_selesai', $selectedDate->toDateString()) : $selectedDate->toDateString();
 
-        $tahunDb = Pengaliran::selectRaw('YEAR(tanggal) as yr')
+        $tahunPengaliran = Pengaliran::selectRaw('YEAR(tanggal) as yr')
             ->whereNotNull('tanggal')
             ->distinct()
             ->pluck('yr')
             ->toArray();
 
-        $tahunList = array_unique(array_merge([date('Y'), (int)date('Y') - 1], array_map('intval', $tahunDb)));
+        $tahunPemeliharaan = Pemeliharaan::selectRaw('YEAR(tanggal) as yr')
+            ->whereNotNull('tanggal')
+            ->distinct()
+            ->pluck('yr')
+            ->toArray();
+
+        $tahunDb = array_unique(array_merge($tahunPengaliran, $tahunPemeliharaan));
+        $tahunList = array_unique(array_merge([date('Y'), (int)date('Y') - 1, $selectedYear], array_map('intval', $tahunDb)));
         rsort($tahunList);
 
         $grafikRes = $this->getGrafikData($user, [
@@ -301,9 +402,16 @@ class DashboardController extends Controller
             'totalPks',
             'sudahPengaliran',
             'sudahPemeliharaan',
+            'sudahAlatBerat',
             'sudahLengkap',
             'sebagian',
             'belumAda',
+            'missingPengaliranCount',
+            'missingPemeliharaanCount',
+            'missingAlatBeratCount',
+            'missingPengaliranPks',
+            'missingPemeliharaanPks',
+            'missingAlatBeratPks',
             'statPengaliran',
             'statPemeliharaan',
             'statRencana',
@@ -557,64 +665,56 @@ class DashboardController extends Controller
         $tglMulai   = $params['tgl_mulai'] ?? null;
         $tglSelesai = $params['tgl_selesai'] ?? null;
 
-        $pilihanQuery = Pengaliran::query();
-        if ($idPks) {
-            $pilihanQuery->where('id_pks', $idPks);
-        }
-
-        if ($jenis == 'blok') {
-            $pilihan = (clone $pilihanQuery)
-                ->whereNotNull('blok')
-                ->where('blok', '!=', '')
-                ->where('blok', '!=', '-')
-                ->where('blok', '!=', '0')
-                ->where('blok', '!=', 0)
-                ->distinct()
-                ->pluck('blok')
-                ->toArray();
-        } elseif ($jenis == 'no_bak') {
-            $pilihan = (clone $pilihanQuery)
-                ->whereNotNull('no_bak')
-                ->where('no_bak', '!=', '')
-                ->where('no_bak', '!=', '-')
-                ->where('no_bak', '!=', '0')
-                ->where('no_bak', '!=', 0)
-                ->distinct()
-                ->pluck('no_bak')
-                ->toArray();
-        } else {
-            $pilihan = (clone $pilihanQuery)
-                ->whereNotNull('flat_bed')
-                ->where('flat_bed', '!=', '')
-                ->where('flat_bed', '!=', '-')
-                ->where('flat_bed', '!=', '0')
-                ->where('flat_bed', '!=', 0)
-                ->distinct()
-                ->pluck('flat_bed')
-                ->toArray();
-        }
-
-        natsort($pilihan);
-        $pilihan = array_values($pilihan);
+        $pilihan = $this->getPilihanFilterList($idPks, $jenis);
 
         $baseQuery = Pengaliran::query();
         $pemeliharaanBaseQuery = Pemeliharaan::query();
 
+        // Setup query for PKS breakdown
+        $pksStatsPengaliran = Pengaliran::query();
+        $pksStatsPemeliharaan = Pemeliharaan::query();
+
         if ($idPks) {
             $baseQuery->where('id_pks', $idPks);
             $pemeliharaanBaseQuery->where('id_pks', $idPks);
+            $pksStatsPengaliran->where('id_pks', $idPks);
+            $pksStatsPemeliharaan->where('id_pks', $idPks);
         }
 
         if ($nilai !== null && $nilai !== '' && $nilai !== 'Semua' && $nilai !== '0' && $nilai !== 0 && $nilai !== '-') {
-            if ($jenis == 'blok') {
-                $baseQuery->where('blok', $nilai);
-                $pemeliharaanBaseQuery->where('blok', $nilai);
-            } elseif ($jenis == 'no_bak') {
-                $baseQuery->where('no_bak', $nilai);
-                $pemeliharaanBaseQuery->where('no_bak', $nilai);
+            if ($jenis === 'blok') {
+                $applyBlok = function($q) use ($nilai) {
+                    $q->where(function($sub) use ($nilai) {
+                        $sub->where('blok', $nilai)
+                            ->orWhere('blok', 'LIKE', "{$nilai}/%")
+                            ->orWhere('blok', 'LIKE', "%/{$nilai}")
+                            ->orWhere('blok', 'LIKE', "%/{$nilai}/%")
+                            ->orWhere('blok', 'LIKE', "%{$nilai}%");
+                    });
+                };
+                $applyBlok($baseQuery);
+                $applyBlok($pemeliharaanBaseQuery);
+                $applyBlok($pksStatsPengaliran);
+                $applyBlok($pksStatsPemeliharaan);
+            } elseif ($jenis === 'no_bak') {
+                $applyBak = function($q) use ($nilai) {
+                    $q->where(function($sub) use ($nilai) {
+                        $sub->where('no_bak', $nilai)
+                            ->orWhere('no_bak', 'LIKE', "{$nilai}/%")
+                            ->orWhere('no_bak', 'LIKE', "%/{$nilai}")
+                            ->orWhere('no_bak', 'LIKE', "%/{$nilai}/%")
+                            ->orWhere('no_bak', 'LIKE', "%{$nilai}%");
+                    });
+                };
+                $applyBak($baseQuery);
+                $applyBak($pemeliharaanBaseQuery);
+                $applyBak($pksStatsPengaliran);
+                $applyBak($pksStatsPemeliharaan);
             } else {
                 $baseQuery->where('flat_bed', $nilai);
                 $pemeliharaanBaseQuery->where('flat_bed', $nilai);
+                $pksStatsPengaliran->where('flat_bed', $nilai);
+                $pksStatsPemeliharaan->where('flat_bed', $nilai);
             }
         }
 
@@ -623,28 +723,6 @@ class DashboardController extends Controller
         $volumeDihasilkan = [];
         $trendPengaliran = [];
         $trendPemeliharaan = [];
-
-        // Setup query for PKS breakdown
-        $pksStatsPengaliran = Pengaliran::query();
-        $pksStatsPemeliharaan = Pemeliharaan::query();
-
-        if ($idPks) {
-            $pksStatsPengaliran->where('id_pks', $idPks);
-            $pksStatsPemeliharaan->where('id_pks', $idPks);
-        }
-
-        if ($nilai !== null && $nilai !== '' && $nilai !== 'Semua' && $nilai !== '0' && $nilai !== 0 && $nilai !== '-') {
-            if ($jenis == 'blok') {
-                $pksStatsPengaliran->where('blok', $nilai);
-                $pksStatsPemeliharaan->where('blok', $nilai);
-            } elseif ($jenis == 'no_bak') {
-                $pksStatsPengaliran->where('no_bak', $nilai);
-                $pksStatsPemeliharaan->where('no_bak', $nilai);
-            } else {
-                $pksStatsPengaliran->where('flat_bed', $nilai);
-                $pksStatsPemeliharaan->where('flat_bed', $nilai);
-            }
-        }
 
         $namaBulanShort = [
             1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'Mei', 6 => 'Jun',
@@ -695,16 +773,21 @@ class DashboardController extends Controller
                 ->groupBy(DB::raw('YEAR(tanggal)'), DB::raw('MONTH(tanggal)'))
                 ->orderBy(DB::raw('YEAR(tanggal)'))
                 ->orderBy(DB::raw('MONTH(tanggal)'))
-                ->get();
+                ->get()
+                ->keyBy(fn($r) => $r->yr . '-' . $r->mo);
 
             $mMap = (clone $pemeliharaanBaseQuery)
                 ->selectRaw('YEAR(tanggal) as yr, MONTH(tanggal) as mo, COUNT(*) as cnt')
                 ->whereNotNull('tanggal')
                 ->groupBy(DB::raw('YEAR(tanggal)'), DB::raw('MONTH(tanggal)'))
+                ->orderBy(DB::raw('YEAR(tanggal)'))
+                ->orderBy(DB::raw('MONTH(tanggal)'))
                 ->get()
                 ->keyBy(fn($r) => $r->yr . '-' . $r->mo);
 
-            if ($records->isEmpty()) {
+            $allKeys = array_unique(array_merge($records->keys()->toArray(), $mMap->keys()->toArray()));
+
+            if (empty($allKeys)) {
                 for ($m = 1; $m <= 12; $m++) {
                     $labels[] = ($namaBulanShort[$m] ?? $m) . ' ' . date('Y');
                     $volumeDialirkan[]  = 0;
@@ -713,15 +796,21 @@ class DashboardController extends Controller
                     $trendPemeliharaan[] = 0;
                 }
             } else {
-                foreach ($records as $rec) {
-                    $yr = $rec->yr;
-                    $mo = $rec->mo;
-                    $labels[] = ($namaBulanShort[(int)$mo] ?? $mo) . ' ' . $yr;
-                    $volumeDialirkan[]  = round((float)$rec->dialirkan, 2);
-                    $volumeDihasilkan[] = round((float)$rec->dihasilkan, 2);
-                    $trendPengaliran[]  = (int)$rec->cnt;
+                usort($allKeys, function($a, $b) {
+                    [$yA, $mA] = explode('-', $a);
+                    [$yB, $mB] = explode('-', $b);
+                    return ($yA != $yB) ? ($yA <=> $yB) : ($mA <=> $mB);
+                });
 
-                    $key = $yr . '-' . $mo;
+                foreach ($allKeys as $key) {
+                    [$yr, $mo] = explode('-', $key);
+                    $labels[] = ($namaBulanShort[(int)$mo] ?? $mo) . ' ' . $yr;
+
+                    $rowP = $records->get($key);
+                    $volumeDialirkan[]  = $rowP ? round((float)$rowP->dialirkan, 2) : 0;
+                    $volumeDihasilkan[] = $rowP ? round((float)$rowP->dihasilkan, 2) : 0;
+                    $trendPengaliran[]  = $rowP ? (int)$rowP->cnt : 0;
+
                     $rowM = $mMap->get($key);
                     $trendPemeliharaan[] = $rowM ? (int)$rowM->cnt : 0;
                 }
@@ -742,16 +831,15 @@ class DashboardController extends Controller
                 ->get()
                 ->keyBy('yr');
 
-            $yearQuery = Pengaliran::query();
-            if ($idPks) {
-                $yearQuery->where('id_pks', $idPks);
-            }
-            $years = $yearQuery->whereNotNull('tanggal')
+            $yearsP = (clone $baseQuery)->whereNotNull('tanggal')
                 ->selectRaw('DISTINCT YEAR(tanggal) as yr')
-                ->pluck('yr')
-                ->map(fn($y) => (int)$y)
-                ->filter()
-                ->toArray();
+                ->pluck('yr')->map(fn($y) => (int)$y)->toArray();
+
+            $yearsM = (clone $pemeliharaanBaseQuery)->whereNotNull('tanggal')
+                ->selectRaw('DISTINCT YEAR(tanggal) as yr')
+                ->pluck('yr')->map(fn($y) => (int)$y)->toArray();
+
+            $years = array_unique(array_filter(array_merge($yearsP, $yearsM)));
 
             if (empty($years)) {
                 $years = [(int)date('Y') - 1, (int)date('Y')];
@@ -764,6 +852,9 @@ class DashboardController extends Controller
             if ($minYear == $maxYear) {
                 $minYear = $maxYear - 1;
             }
+
+            $pksStatsPengaliran->whereBetween('tanggal', ["{$minYear}-01-01", "{$maxYear}-12-31"]);
+            $pksStatsPemeliharaan->whereBetween('tanggal', ["{$minYear}-01-01", "{$maxYear}-12-31"]);
 
             $allYears = range($minYear, $maxYear);
 
@@ -854,7 +945,7 @@ class DashboardController extends Controller
                 $trendPemeliharaan[] = $wTrendM;
             }
         } else {
-            // Harian
+            // Harian (Default)
             $pksStatsPengaliran->whereYear('tanggal', $tahun)->whereMonth('tanggal', $bulan);
             $pksStatsPemeliharaan->whereYear('tanggal', $tahun)->whereMonth('tanggal', $bulan);
 

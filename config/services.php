@@ -40,4 +40,9 @@ return [
         'secret_key' => env('SIDOBE_WA_SECRET', 'secret_key'),
     ],
 
+    'gemini' => [
+        'api_key' => env('GEMINI_API_KEY'),
+        'model' => env('GEMINI_MODEL', 'gemini-1.5-flash'),
+    ],
+
 ];
