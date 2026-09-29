@@ -384,8 +384,8 @@ class SimoliAiAssistantService
             }
         }
 
-        // 14. Year only: tahun 2025 or sepanjang 2025
-        if (preg_match('/(?:tahun|thn|sepanjang)\s+(\d{4})\b/i', $q, $m) || preg_match('/\b(20\d{2})\b/', $q, $m)) {
+        // 14. Year only: tahun 2022, 2025, 2026 or sepanjang 2022
+        if (preg_match('/(?:tahun|thn|sepanjang)?\s*\b(20\d{2})\b/i', $q, $m)) {
             $year = (int)$m[1];
             $d = Carbon::createFromDate($year, 1, 1);
             return [
@@ -469,6 +469,17 @@ class SimoliAiAssistantService
         $unitBreakdown = AlatBerat::where('status', 'Breakdown')->count();
         $unitRolling = AlatBerat::where('status', 'Rolling')->count();
 
+        // Base Query RKP / Rencana Kerja
+        $targetYear = (int) $startDate->year;
+        $rencanaQ = Rencana::with('pks')->where('tahun', $targetYear);
+        if ($targetPks) {
+            $rencanaQ->where('id_pks', $targetPks->id_pks);
+        }
+        $rencanaRecords = $rencanaQ->get();
+        $totalRencanaFlatBed = self::numericSum($rencanaRecords, 'flat_bed');
+        $totalRencanaLongBed = self::numericSum($rencanaRecords, 'long_bed');
+        $availableRencanaYears = Rencana::distinct()->orderBy('tahun', 'desc')->pluck('tahun')->values()->all();
+
         // Per-PKS Breakdown jika Multi PKS
         $pksBreakdown = [];
         if (!$targetPks) {
@@ -535,6 +546,15 @@ class SimoliAiAssistantService
                 'total_log' => $countLogAb,
                 'items' => $monitoringAbRecords,
             ],
+            'rencana' => [
+                'records' => $rencanaRecords->count(),
+                'flat_bed' => $totalRencanaFlatBed,
+                'long_bed' => $totalRencanaLongBed,
+                'total_bed' => $totalRencanaFlatBed + $totalRencanaLongBed,
+                'tahun' => $targetYear,
+                'available_years' => $availableRencanaYears,
+                'items' => $rencanaRecords,
+            ],
             'pks_breakdown' => $pksBreakdown,
         ];
     }
@@ -559,8 +579,8 @@ class SimoliAiAssistantService
             try {
                 $geminiResponse = $this->callGeminiApi($query, $audit, $scopedData, $targetPks, $dateRange);
                 if (!empty($geminiResponse)) {
-                    $badges = $this->buildBadgesForScopedData($scopedData, $targetPks);
-                    $actions = $this->buildActionsForScopedData($scopedData, $targetPks);
+                    $badges = $this->buildBadgesForScopedData($query, $scopedData, $targetPks);
+                    $actions = $this->buildActionsForScopedData($query, $scopedData, $targetPks);
 
                     return [
                         'success' => true,
@@ -607,6 +627,7 @@ class SimoliAiAssistantService
         $p = $scopedData['pengaliran'];
         $m = $scopedData['pemeliharaan'];
         $ab = $scopedData['alat_berat'];
+        $r = $scopedData['rencana'];
 
         $systemContext = "Anda adalah SIMOLI AI Assistant untuk Tim Admin TEP (Bagian Teknik & Pengolahan) PTPN IV Regional III.\n"
             . "Tugas Anda adalah memberikan jawaban dan rekapitulasi data yang 100% AKURAT, LENGKAP, dan RELEVAN dengan rentang waktu serta unit PKS yang ditanyakan.\n\n"
@@ -614,7 +635,13 @@ class SimoliAiAssistantService
             . "- {$pksContext}\n"
             . "- PERIODE DIMINTA: {$scopedData['periode_label']} ({$dateRange['start_date']->format('Y-m-d')} s/d {$dateRange['end_date']->format('Y-m-d')})\n\n"
             . "=== DATA DATABASE REAL-TIME SESUAI PERIODE & PKS DI ATAS ===\n"
-            . "1. PENGALIRAN LAND APLIKASI (LA):\n"
+            . "1. RKP / RENCANA KERJA TAHUN {$r['tahun']}:\n"
+            . "   - Status Data RKP: " . ($r['records'] > 0 ? "Tersedia ({$r['records']} record)" : "TIDAK ADA DATA DI DATABASE untuk tahun {$r['tahun']}") . "\n"
+            . "   - Target Flat Bed: " . number_format($r['flat_bed']) . " Bed\n"
+            . "   - Target Long Bed: " . number_format($r['long_bed']) . " Bed\n"
+            . "   - Total Target Bed RKP: " . number_format($r['total_bed']) . " Bed\n"
+            . "   - Tahun RKP yang tersedia di sistem: " . (empty($r['available_years']) ? '-' : implode(', ', $r['available_years'])) . "\n\n"
+            . "2. PENGALIRAN LAND APLIKASI (LA):\n"
             . "   - Total Entri Transaksi: {$p['records']}\n"
             . "   - Vol. Limbah Dihasilkan (PKS): " . number_format($p['vol_dihasilkan'], 2) . " m³\n"
             . "   - Vol. Limbah Dialirkan (LA): " . number_format($p['vol_dialirkan'], 2) . " m³\n"
@@ -622,24 +649,22 @@ class SimoliAiAssistantService
             . "   - Luas Area Aplikasi: " . number_format($p['luas_area'], 2) . " Ha\n"
             . "   - Lokasi Blok: {$p['bloks']}\n"
             . "   - Bak Distribusi: {$p['baks']}\n\n"
-            . "2. PEMELIHARAAN KOLAM IPAL & BED:\n"
+            . "3. PEMELIHARAAN KOLAM IPAL & BED:\n"
             . "   - Total Kegiatan: {$m['records']}\n"
             . "   - Flat Bed Dirawat: " . number_format($m['flat_bed']) . " Bed\n"
             . "   - Long Bed Dirawat: " . number_format($m['long_bed']) . " Bed\n"
             . "   - Total Tenaga Kerja (HK): " . number_format($m['jumlah_hk']) . " HK\n"
             . "   - Metode Mekanis (Alat Berat): {$m['mekanis']} Kegiatan | Manual: {$m['manual']} Kegiatan\n\n"
-            . "3. OPERASIONAL ALAT BERAT:\n"
+            . "4. OPERASIONAL ALAT BERAT:\n"
             . "   - Total Jam Kerja (HM): " . number_format($ab['total_hm'], 2) . " Jam\n"
             . "   - Total Konsumsi BBM: " . number_format($ab['total_bbm'], 2) . " Liter\n"
             . "   - Status Populasi Unit: Ready {$ab['operational']}, Breakdown {$ab['breakdown']}, Maint {$ab['maintenance']}, Rolling {$ab['rolling']} dari total {$ab['total_unit']} Unit\n\n"
-            . "=== STATUS AUDIT KEPATUHAN HARIAN (TANGGAL {$audit['tanggal_formatted']}) ===\n"
-            . "- Lengkap: {$audit['count_lengkap']} PKS | Sebagian: {$audit['count_sebagian']} PKS | Belum Input: {$audit['count_belum_ada']} PKS\n"
-            . "- PKS Belum Input Pengaliran: " . ($audit['missing_pengaliran_count'] === 0 ? 'Nihil (Semua Sudah)' : implode(', ', array_map(fn($x) => $x['akro'], $audit['missing_pengaliran']))) . "\n\n"
-            . "INSTRUKSI JAWABAN:\n"
-            . "- Jawablah spesifik sesuai unit dan periode yang diminta di atas.\n"
-            . "- Gunakan format Markdown rapi dengan emoji, poin-poin tegas, angka format Indonesia (titik pemisah ribuan, koma pemisah desimal).\n"
-            . "- Sertakan volume limbah dihasilkan, volume dialirkan, bed, dan luas area jika ditanya pengaliran.\n"
-            . "- Jika tidak ada data transaksi pada rentang tersebut, nyatakan dengan jelas bahwa data belum tercatat untuk periode tersebut.";
+            . "=== ATURAN PENTING & INTEGRITAS JAWABAN ===\n"
+            . "- JIKA USER MENANYAKAN RKP / RENCANA / RKAP: Jawablah berdasarkan data RKP di poin 1. Jika data RKP tidak ada di database untuk tahun tersebut, katakan DENGAN TEGAS bahwa data RKP tahun tersebut TIDAK DITEMUKAN / BELUM DIINPUT di SIMOLI, dan sebutkan tahun RKP yang ada di sistem. JANGAN PERNAH menampilkan data pengaliran limbah jika user menanyakan RKP!\n"
+            . "- JIKA USER MENANYAKAN PENGALIRAN: Jawablah berdasarkan poin 2.\n"
+            . "- JIKA USER MENANYAKAN PEMELIHARAAN: Jawablah berdasarkan poin 3.\n"
+            . "- JIKA USER MENANYAKAN ALAT BERAT: Jawablah berdasarkan poin 4.\n"
+            . "- Gunakan format Markdown rapi dengan emoji, poin-poin tegas, dan angka format Indonesia.";
 
         $url = "https://generativelanguage.googleapis.com/v1beta/models/{$this->geminiModel}:generateContent?key=" . $this->geminiApiKey;
 
@@ -653,7 +678,7 @@ class SimoliAiAssistantService
                 ]
             ],
             'generationConfig' => [
-                'temperature' => 0.2,
+                'temperature' => 0.1,
                 'maxOutputTokens' => 1200,
             ]
         ]);
@@ -678,14 +703,80 @@ class SimoliAiAssistantService
     ): array {
         $q = strtolower(trim($rawQuery));
         $actions = [];
-        $badges = $this->buildBadgesForScopedData($scopedData, $targetPks);
+        $badges = $this->buildBadgesForScopedData($rawQuery, $scopedData, $targetPks);
 
         $p = $scopedData['pengaliran'];
         $m = $scopedData['pemeliharaan'];
         $ab = $scopedData['alat_berat'];
+        $r = $scopedData['rencana'];
         $periodeLabel = $scopedData['periode_label'];
 
-        // 1. Cek Unit / PKS yang Belum Input (Audit Kepatuhan)
+        // 1. KASUS KHUSUS RKP / RENCANA KERJA (Keywords: rkp, rencana, rkap, target bed)
+        if (
+            str_contains($q, 'rkp') ||
+            str_contains($q, 'rencana') ||
+            str_contains($q, 'rkap') ||
+            str_contains($q, 'target bed')
+        ) {
+            $tahunRencana = $r['tahun'];
+            $pksTitle = $targetPks ? "PKS {$targetPks->nama} ({$targetPks->akro})" : "12 Unit Mill PKS";
+
+            $text = "### 📋 **Laporan RKP / Rencana Kerja SIMOLI**\n";
+            $text .= "📅 **Tahun Anggaran:** {$tahunRencana}\n";
+            $text .= "🏢 **Cakupan:** {$pksTitle}\n\n";
+
+            if ($r['records'] === 0) {
+                $text .= "⚠️ **Data RKP Tidak Ditemukan**\n";
+                $text .= "Data RKP (Rencana Kerja Operasional) untuk **Tahun {$tahunRencana}** belum terdaftar di database SIMOLI.\n\n";
+                if (!empty($r['available_years'])) {
+                    $text .= "💡 *Tahun RKP yang tercatat di sistem:* **" . implode(', ', $r['available_years']) . "**.\n\n";
+                }
+                $text .= "📌 Anda dapat menambahkan RKP tahun {$tahunRencana} melalui menu **Kelola Rencana** di aplikasi SIMOLI.";
+
+                return [
+                    'text' => $text,
+                    'badges' => [
+                        "RKP {$tahunRencana}: Tidak Ada",
+                        "Tersedia: " . (empty($r['available_years']) ? '-' : implode(', ', $r['available_years'])),
+                    ],
+                    'actions' => [
+                        [
+                            'label' => "📋 Lihat RKP Tahun " . ($r['available_years'][0] ?? date('Y')),
+                            'query' => "data rkp tahun " . ($r['available_years'][0] ?? date('Y')),
+                        ]
+                    ]
+                ];
+            }
+
+            // Jika ada data RKP
+            $text .= "📊 **Target Kapasitas Bed RKP {$tahunRencana}:**\n";
+            $text .= "- 🟫 **Target Flat Bed:** " . number_format($r['flat_bed'], 0, ',', '.') . " Bed\n";
+            $text .= "- 🟩 **Target Long Bed:** " . number_format($r['long_bed'], 0, ',', '.') . " Bed\n";
+            $text .= "- 🎯 **Total Target Bed:** " . number_format($r['total_bed'], 0, ',', '.') . " Bed\n";
+            $text .= "- 📋 **Unit Terdata:** {$r['records']} Unit PKS\n\n";
+
+            if ($r['items']->count() > 0 && !$targetPks) {
+                $text .= "🏢 **Rincian Target RKP per Unit PKS ({$tahunRencana}):**\n";
+                $text .= "| No | PKS | Flat Bed | Long Bed | Total Bed |\n";
+                $text .= "| :-: | :--- | -: | -: | -: |\n";
+                foreach ($r['items'] as $idx => $item) {
+                    $pksName = $item->pks ? $item->pks->akro : ($item->nama ?: 'PKS');
+                    $fb = number_format($item->flat_bed, 0, ',', '.');
+                    $lb = number_format($item->long_bed, 0, ',', '.');
+                    $tb = number_format(($item->flat_bed + $item->long_bed), 0, ',', '.');
+                    $text .= "| " . ($idx + 1) . " | **{$pksName}** | {$fb} Bed | {$lb} Bed | **{$tb} Bed** |\n";
+                }
+                $text .= "\n";
+            }
+
+            return [
+                'text' => $text,
+                'badges' => $badges,
+                'actions' => $this->buildActionsForScopedData($rawQuery, $scopedData, $targetPks),
+            ];
+        }
+
+        // 2. Cek Unit / PKS yang Belum Input (Audit Kepatuhan)
         if (
             str_contains($q, 'belum input') ||
             str_contains($q, 'belum isi') ||
@@ -762,7 +853,7 @@ class SimoliAiAssistantService
             ];
         }
 
-        // 2. KASUS SPESIFIK UNIT PKS (misal: "rekap pengaliran pks tanah putih tanggal 12 januari 2026")
+        // 3. KASUS SPESIFIK UNIT PKS (misal: "rekap pengaliran pks tanah putih tanggal 12 januari 2026")
         if ($targetPks) {
             $pksName = $targetPks->nama;
             $pksAkro = $targetPks->akro;
@@ -788,7 +879,7 @@ class SimoliAiAssistantService
                 return [
                     'text' => $text,
                     'badges' => $badges,
-                    'actions' => $this->buildActionsForScopedData($scopedData, $targetPks),
+                    'actions' => $this->buildActionsForScopedData($rawQuery, $scopedData, $targetPks),
                 ];
             }
 
@@ -810,17 +901,17 @@ class SimoliAiAssistantService
                 return [
                     'text' => $text,
                     'badges' => $badges,
-                    'actions' => $this->buildActionsForScopedData($scopedData, $targetPks),
+                    'actions' => $this->buildActionsForScopedData($rawQuery, $scopedData, $targetPks),
                 ];
             }
 
-            // Default untuk PKS spesifik: LAPORAN PENGALIRAN / LENGKAP
+            // Default untuk PKS spesifik: LAPORAN PENGALIRAN
             $text = "### 💧 **Laporan Pengaliran Limbah — PKS {$pksName} ({$pksAkro})**\n";
             $text .= "📅 **Periode:** {$periodeLabel}\n";
             $text .= "👤 **Asisten:** {$asisten}\n\n";
 
             if ($p['records'] === 0) {
-                $text .= "ℹ️ *Belum ada catatan pengaliran limbah untuk PKS {$pksName} pada periode {$periodeLabel}.*\n\n";
+                $text .= "ℹ️ *Tidak ada catatan pengaliran limbah untuk PKS {$pksName} pada periode {$periodeLabel} di database SIMOLI.*\n\n";
                 $text .= "💡 *Catatan:* Silakan pastikan operator atau asisten unit telah menginput transaksi pengaliran pada tanggal tersebut.";
             } else {
                 $text .= "📊 **Akumulasi Kinerja Pengaliran:**\n";
@@ -854,11 +945,11 @@ class SimoliAiAssistantService
             return [
                 'text' => $text,
                 'badges' => $badges,
-                'actions' => $this->buildActionsForScopedData($scopedData, $targetPks),
+                'actions' => $this->buildActionsForScopedData($rawQuery, $scopedData, $targetPks),
             ];
         }
 
-        // 3. Pertanyaan Seputar Alat Berat (Multi / All PKS)
+        // 4. Pertanyaan Seputar Alat Berat (Multi / All PKS)
         if (
             str_contains($q, 'alat berat') ||
             str_contains($q, 'excavator') ||
@@ -898,11 +989,11 @@ class SimoliAiAssistantService
                     "Breakdown: {$ab['breakdown']}",
                     "Total HM: " . number_format($ab['total_hm'], 1) . " Jam",
                 ],
-                'actions' => $this->buildActionsForScopedData($scopedData, null),
+                'actions' => $this->buildActionsForScopedData($rawQuery, $scopedData, null),
             ];
         }
 
-        // 4. Pertanyaan Seputar Pemeliharaan (Multi / All PKS)
+        // 5. Pertanyaan Seputar Pemeliharaan (Multi / All PKS)
         if (
             str_contains($q, 'pemeliharaan') ||
             str_contains($q, 'rawat') ||
@@ -914,13 +1005,17 @@ class SimoliAiAssistantService
             $text = "### 🛠️ **Laporan Pemeliharaan Kolam IPAL & Bed**\n";
             $text .= "📅 **Periode:** {$periodeLabel}\n\n";
 
-            $text .= "📊 **Realisasi Pemeliharaan Fisik:**\n";
-            $text .= "- 🟫 **Flat Bed Dibersihkan/Dirawat:** " . number_format($m['flat_bed'], 0, ',', '.') . " Bed\n";
-            $text .= "- 🟩 **Long Bed Dirawat:** " . number_format($m['long_bed'], 0, ',', '.') . " Bed\n";
-            $text .= "- 👷 **Penggunaan Tenaga Kerja (HK):** " . number_format($m['jumlah_hk'], 0, ',', '.') . " HK\n";
-            $text .= "- 🚜 **Metode Mekanis (Alat Berat):** " . number_format($m['mekanis']) . " Kegiatan\n";
-            $text .= "- 🧤 **Metode Manual:** " . number_format($m['manual']) . " Kegiatan\n";
-            $text .= "- 📋 **Total Catatan:** " . number_format($m['records']) . " Transaksi\n\n";
+            if ($m['records'] === 0) {
+                $text .= "ℹ️ *Tidak ditemukan catatan transaksi pemeliharaan untuk periode {$periodeLabel} di database SIMOLI.*\n";
+            } else {
+                $text .= "📊 **Realisasi Pemeliharaan Fisik:**\n";
+                $text .= "- 🟫 **Flat Bed Dibersihkan/Dirawat:** " . number_format($m['flat_bed'], 0, ',', '.') . " Bed\n";
+                $text .= "- 🟩 **Long Bed Dirawat:** " . number_format($m['long_bed'], 0, ',', '.') . " Bed\n";
+                $text .= "- 👷 **Penggunaan Tenaga Kerja (HK):** " . number_format($m['jumlah_hk'], 0, ',', '.') . " HK\n";
+                $text .= "- 🚜 **Metode Mekanis (Alat Berat):** " . number_format($m['mekanis']) . " Kegiatan\n";
+                $text .= "- 🧤 **Metode Manual:** " . number_format($m['manual']) . " Kegiatan\n";
+                $text .= "- 📋 **Total Catatan:** " . number_format($m['records']) . " Transaksi\n\n";
+            }
 
             return [
                 'text' => $text,
@@ -929,56 +1024,94 @@ class SimoliAiAssistantService
                     'Long Bed: ' . number_format($m['long_bed']) . ' Bed',
                     'Tenaga: ' . number_format($m['jumlah_hk']) . ' HK',
                 ],
-                'actions' => $this->buildActionsForScopedData($scopedData, null),
+                'actions' => $this->buildActionsForScopedData($rawQuery, $scopedData, null),
             ];
         }
 
-        // 5. Default / Rekap Pengaliran (Multi / All PKS)
+        // 6. Default / Rekap Pengaliran (Multi / All PKS)
         $text = "### 💧 **Laporan Pengaliran Limbah Land Application (LA)**\n";
         $text .= "📅 **Periode:** {$periodeLabel}\n";
         $text .= "🏢 **Cakupan:** 12 Unit Mill PKS\n\n";
 
-        $text .= "📊 **Akumulasi Kinerja Pengaliran:**\n";
-        $text .= "- 🧪 **Limbah Dihasilkan (PKS):** " . number_format($p['vol_dihasilkan'], 2, ',', '.') . " m³\n";
-        $text .= "- 🌊 **Limbah Dialirkan (LA):** " . number_format($p['vol_dialirkan'], 2, ',', '.') . " m³\n";
-        $persenDialirkan = $p['vol_dihasilkan'] > 0 ? round(($p['vol_dialirkan'] / $p['vol_dihasilkan']) * 100, 1) : 0;
-        $text .= "- 📈 **Rasio Pengaliran Limbah:** **{$persenDialirkan}%**\n";
-        $text .= "- 🌱 **Aplikasi Flat Bed:** " . number_format($p['flat_bed'], 0, ',', '.') . " Bed\n";
-        $text .= "- 🗺️ **Luas Area Aplikasi:** " . number_format($p['luas_area'], 2, ',', '.') . " Hektar\n";
-        $text .= "- 📋 **Total Entri Data:** " . number_format($p['records']) . " Transaksi\n\n";
+        if ($p['records'] === 0) {
+            $text .= "ℹ️ *Tidak ditemukan data pengaliran limbah untuk periode {$periodeLabel} di database SIMOLI.*\n";
+        } else {
+            $text .= "📊 **Akumulasi Kinerja Pengaliran:**\n";
+            $text .= "- 🧪 **Limbah Dihasilkan (PKS):** " . number_format($p['vol_dihasilkan'], 2, ',', '.') . " m³\n";
+            $text .= "- 🌊 **Limbah Dialirkan (LA):** " . number_format($p['vol_dialirkan'], 2, ',', '.') . " m³\n";
+            $persenDialirkan = $p['vol_dihasilkan'] > 0 ? round(($p['vol_dialirkan'] / $p['vol_dihasilkan']) * 100, 1) : 0;
+            $text .= "- 📈 **Rasio Pengaliran Limbah:** **{$persenDialirkan}%**\n";
+            $text .= "- 🌱 **Aplikasi Flat Bed:** " . number_format($p['flat_bed'], 0, ',', '.') . " Bed\n";
+            $text .= "- 🗺️ **Luas Area Aplikasi:** " . number_format($p['luas_area'], 2, ',', '.') . " Hektar\n";
+            $text .= "- 📋 **Total Entri Data:** " . number_format($p['records']) . " Transaksi\n\n";
 
-        // Tabel Breakdown per PKS jika ada data
-        if (!empty($scopedData['pks_breakdown']) && $p['records'] > 0) {
-            $text .= "🏢 **Rekap Singkat per PKS:**\n";
-            $text .= "| PKS | Vol Dihasilkan | Vol Dialirkan | Flat Bed | Luas |\n";
-            $text .= "| :--- | -: | -: | -: | -: |\n";
-            foreach (array_slice($scopedData['pks_breakdown'], 0, 12) as $row) {
-                if ($row['vol_dialirkan'] > 0 || $row['vol_dihasilkan'] > 0 || $row['flat_bed_pengaliran'] > 0) {
-                    $vh = number_format($row['vol_dihasilkan'], 0, ',', '.');
-                    $va = number_format($row['vol_dialirkan'], 0, ',', '.');
-                    $fb = number_format($row['flat_bed_pengaliran'], 0, ',', '.');
-                    $la = number_format($row['luas_area'], 1, ',', '.');
-                    $text .= "| **{$row['akro']}** | {$vh} m³ | {$va} m³ | {$fb} Bed | {$la} Ha |\n";
+            // Tabel Breakdown per PKS jika ada data
+            if (!empty($scopedData['pks_breakdown']) && $p['records'] > 0) {
+                $text .= "🏢 **Rekap Singkat per PKS:**\n";
+                $text .= "| PKS | Vol Dihasilkan | Vol Dialirkan | Flat Bed | Luas |\n";
+                $text .= "| :--- | -: | -: | -: | -: |\n";
+                foreach (array_slice($scopedData['pks_breakdown'], 0, 12) as $row) {
+                    if ($row['vol_dialirkan'] > 0 || $row['vol_dihasilkan'] > 0 || $row['flat_bed_pengaliran'] > 0) {
+                        $vh = number_format($row['vol_dihasilkan'], 0, ',', '.');
+                        $va = number_format($row['vol_dialirkan'], 0, ',', '.');
+                        $fb = number_format($row['flat_bed_pengaliran'], 0, ',', '.');
+                        $la = number_format($row['luas_area'], 1, ',', '.');
+                        $text .= "| **{$row['akro']}** | {$vh} m³ | {$va} m³ | {$fb} Bed | {$la} Ha |\n";
+                    }
                 }
+                $text .= "\n";
             }
-            $text .= "\n";
         }
 
         return [
             'text' => $text,
             'badges' => $badges,
-            'actions' => $this->buildActionsForScopedData($scopedData, null),
+            'actions' => $this->buildActionsForScopedData($rawQuery, $scopedData, null),
         ];
     }
 
     /**
      * Helper Membuat Badges Stat Ringkas
      */
-    protected function buildBadgesForScopedData(array $scopedData, ?Pks $targetPks): array
+    protected function buildBadgesForScopedData(string $query, array $scopedData, ?Pks $targetPks): array
     {
-        $p = $scopedData['pengaliran'];
+        $q = strtolower($query);
         $badges = [];
 
+        // Jika menanyakan RKP
+        if (str_contains($q, 'rkp') || str_contains($q, 'rencana') || str_contains($q, 'rkap')) {
+            $r = $scopedData['rencana'];
+            if ($r['records'] > 0) {
+                $badges[] = "RKP {$r['tahun']}: " . number_format($r['total_bed']) . " Bed";
+                $badges[] = "Flat: " . number_format($r['flat_bed']) . " Bed";
+            } else {
+                $badges[] = "RKP {$r['tahun']}: Tidak Ditemukan";
+            }
+            return $badges;
+        }
+
+        // Jika menanyakan Pemeliharaan
+        if (str_contains($q, 'pemeliharaan') || str_contains($q, 'rawat') || str_contains($q, 'kolam')) {
+            $m = $scopedData['pemeliharaan'];
+            if ($m['records'] > 0) {
+                $badges[] = "Flat Bed: " . number_format($m['flat_bed']) . " Bed";
+                $badges[] = "Tenaga: " . number_format($m['jumlah_hk']) . " HK";
+            } else {
+                $badges[] = "Pemeliharaan: 0 Data";
+            }
+            return $badges;
+        }
+
+        // Jika menanyakan Alat Berat
+        if (str_contains($q, 'alat berat') || str_contains($q, 'excavator') || str_contains($q, 'hm') || str_contains($q, 'bbm')) {
+            $ab = $scopedData['alat_berat'];
+            $badges[] = "Total HM: " . number_format($ab['total_hm'], 1) . " Jam";
+            $badges[] = "BBM: " . number_format($ab['total_bbm'], 0) . " L";
+            return $badges;
+        }
+
+        // Pengaliran
+        $p = $scopedData['pengaliran'];
         if ($p['vol_dihasilkan'] > 0) {
             $badges[] = 'Vol Dihasilkan: ' . number_format($p['vol_dihasilkan'], 0, ',', '.') . ' m³';
         }
@@ -1005,7 +1138,7 @@ class SimoliAiAssistantService
     /**
      * Helper Membuat Tombol Action Rekomendasi
      */
-    protected function buildActionsForScopedData(array $scopedData, ?Pks $targetPks): array
+    protected function buildActionsForScopedData(string $query, array $scopedData, ?Pks $targetPks): array
     {
         $actions = [];
 
@@ -1015,8 +1148,8 @@ class SimoliAiAssistantService
                 'query' => "rekap data pengaliran pks {$targetPks->nama} bulan ini",
             ];
             $actions[] = [
-                'label' => "🛠️ Cek Pemeliharaan PKS {$targetPks->akro}",
-                'query' => "rekap pemeliharaan pks {$targetPks->nama} bulan ini",
+                'label' => "📋 Cek RKP PKS {$targetPks->akro}",
+                'query' => "data rkp pks {$targetPks->nama} tahun " . date('Y'),
             ];
         } else {
             $actions[] = [
@@ -1024,8 +1157,8 @@ class SimoliAiAssistantService
                 'query' => 'pks mana saja yang belum input data hari ini?',
             ];
             $actions[] = [
-                'label' => '🚜 Cek Kesiapan Alat Berat',
-                'query' => 'bagaimana status ketersediaan alat berat?',
+                'label' => '📋 Cek RKP Tahun ' . date('Y'),
+                'query' => 'data rkp tahun ' . date('Y'),
             ];
         }
 
