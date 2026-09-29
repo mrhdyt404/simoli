@@ -18,11 +18,44 @@ class SimoliAiAssistantService
     protected ?string $geminiApiKey;
     protected string $geminiModel;
 
+    public static array $bulanMap = [
+        'januari' => 1, 'jan' => 1, 'january' => 1,
+        'februari' => 2, 'feb' => 2, 'february' => 2,
+        'maret' => 3, 'mar' => 3, 'march' => 3,
+        'april' => 4, 'apr' => 4,
+        'mei' => 5, 'may' => 5,
+        'juni' => 6, 'jun' => 6, 'june' => 6,
+        'juli' => 7, 'jul' => 7, 'july' => 7,
+        'agustus' => 8, 'agu' => 8, 'ags' => 8, 'aug' => 8, 'august' => 8,
+        'september' => 9, 'sep' => 9, 'sept' => 9,
+        'oktober' => 10, 'okt' => 10, 'oct' => 10, 'october' => 10,
+        'november' => 11, 'nov' => 11,
+        'desember' => 12, 'des' => 12, 'dec' => 12, 'december' => 12,
+    ];
+
     public function __construct(SidobeWaService $waService)
     {
         $this->waService = $waService;
         $this->geminiApiKey = config('services.gemini.api_key', env('GEMINI_API_KEY'));
         $this->geminiModel = config('services.gemini.model', env('GEMINI_MODEL', 'gemini-1.5-flash'));
+    }
+
+    /**
+     * Helper Penjumlahan Numerik Aman (menghindari unsupported operand type jika string tersimpan)
+     */
+    public static function numericSum($items, string $field): float|int
+    {
+        return $items->sum(function ($item) use ($field) {
+            $value = is_array($item) ? ($item[$field] ?? 0) : ($item->{$field} ?? 0);
+
+            if (is_numeric($value)) {
+                return $value + 0;
+            }
+
+            $sanitized = preg_replace('/[^0-9.-]/', '', (string) $value);
+
+            return is_numeric($sanitized) ? $sanitized + 0 : 0;
+        });
     }
 
     /**
@@ -116,27 +149,318 @@ class SimoliAiAssistantService
         $startOfMonth = $targetDate->copy()->startOfMonth();
         $endOfMonth = $targetDate->copy()->endOfMonth();
 
-        // Pengaliran
-        $pengaliranQ = Pengaliran::whereBetween('tanggal', [$startOfMonth, $endOfMonth]);
-        $totalVolDihasilkan = (clone $pengaliranQ)->sum('vol_limbah_dihasilkan') ?: 0;
-        $totalVolDialirkan = (clone $pengaliranQ)->sum('vol_limbah_dialirkan') ?: 0;
-        $totalFlatBedPengaliran = (clone $pengaliranQ)->sum('flat_bed') ?: 0;
-        $totalLuasArea = (clone $pengaliranQ)->sum('luas_area') ?: 0;
-        $countPengaliranRecords = (clone $pengaliranQ)->count();
+        return $this->getScopedData([
+            'type' => 'month',
+            'start_date' => $startOfMonth,
+            'end_date' => $endOfMonth,
+            'label' => 'Bulan ' . $targetDate->locale('id')->translatedFormat('F Y'),
+            'is_custom' => false,
+        ]);
+    }
 
-        // Pemeliharaan
-        $pemeliharaanQ = Pemeliharaan::whereBetween('tanggal', [$startOfMonth, $endOfMonth]);
-        $totalFlatBedPemeliharaan = (clone $pemeliharaanQ)->sum('flat_bed') ?: 0;
-        $totalLongBedPemeliharaan = (clone $pemeliharaanQ)->sum('long_bed') ?: 0;
-        $totalHk = (clone $pemeliharaanQ)->sum('jumlah_hk') ?: 0;
-        $totalMekanis = (clone $pemeliharaanQ)->where('jenis_pemeliharaan', '1')->count();
-        $totalManual = (clone $pemeliharaanQ)->where('jenis_pemeliharaan', '2')->count();
+    /**
+     * Helper Parser untuk Mendeteksi Unit PKS dari Prompt Pertanyaan User
+     */
+    public function parsePksFromQuery(string $query): ?Pks
+    {
+        $q = strtolower(trim($query));
+        $allPks = Pks::whereNotIn('akro', ['TEP', 'DTM', 'DBR'])->get();
 
-        // Alat Berat
-        $monitoringAbQ = MonitoringAlatBerat::whereBetween('tanggal', [$startOfMonth, $endOfMonth]);
-        $totalHm = (clone $monitoringAbQ)->sum('total_hm') ?: 0;
-        $totalBbm = (clone $monitoringAbQ)->sum('bbm_liter') ?: 0;
-        $countLogAb = (clone $monitoringAbQ)->count();
+        foreach ($allPks as $pks) {
+            $namaClean = strtolower(trim($pks->nama));
+            $akroClean = strtolower(trim($pks->akro));
+
+            // Check acronym (with word boundaries)
+            if (preg_match('/\b' . preg_quote($akroClean, '/') . '\b/i', $q)) {
+                return $pks;
+            }
+
+            // Check full name
+            if (preg_match('/\b' . preg_quote($namaClean, '/') . '\b/i', $q)) {
+                return $pks;
+            }
+
+            // Check without "pks" prefix
+            $withoutPks = str_replace('pks ', '', $namaClean);
+            if ($withoutPks !== $namaClean && preg_match('/\b' . preg_quote($withoutPks, '/') . '\b/i', $q)) {
+                return $pks;
+            }
+
+            // Check without "sei " prefix if distinctive
+            $withoutSei = str_replace('sei ', '', $namaClean);
+            if ($withoutSei !== $namaClean && strlen($withoutSei) >= 4 && preg_match('/\b' . preg_quote($withoutSei, '/') . '\b/i', $q)) {
+                return $pks;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Helper Parser untuk Mendeteksi Rentang Tanggal / Periode dari Prompt Pertanyaan User
+     */
+    public function parseDateRangeFromQuery(string $query, ?string $fallbackDate = null): array
+    {
+        $now = $fallbackDate ? Carbon::parse($fallbackDate) : Carbon::now('Asia/Jakarta');
+        $q = strtolower(trim($query));
+
+        // 1. Relative: Kemarin
+        if (preg_match('/\bkemarin\b/i', $q)) {
+            $d = $now->copy()->subDay();
+            return [
+                'type' => 'single',
+                'start_date' => $d->copy()->startOfDay(),
+                'end_date' => $d->copy()->endOfDay(),
+                'label' => $d->locale('id')->translatedFormat('l, d F Y') . ' (Kemarin)',
+                'is_custom' => true,
+            ];
+        }
+
+        // 2. Relative: Hari ini
+        if (preg_match('/\bhari ini\b/i', $q)) {
+            return [
+                'type' => 'single',
+                'start_date' => $now->copy()->startOfDay(),
+                'end_date' => $now->copy()->endOfDay(),
+                'label' => $now->locale('id')->translatedFormat('l, d F Y') . ' (Hari Ini)',
+                'is_custom' => false,
+            ];
+        }
+
+        // 3. Relative: Minggu lalu
+        if (preg_match('/\bminggu lalu\b/i', $q)) {
+            $start = $now->copy()->subWeek()->startOfWeek();
+            $end = $now->copy()->subWeek()->endOfWeek();
+            return [
+                'type' => 'range',
+                'start_date' => $start->startOfDay(),
+                'end_date' => $end->endOfDay(),
+                'label' => 'Minggu Lalu (' . $start->format('d/m/Y') . ' – ' . $end->format('d/m/Y') . ')',
+                'is_custom' => true,
+            ];
+        }
+
+        // 4. Relative: Minggu ini
+        if (preg_match('/\bminggu ini\b/i', $q)) {
+            $start = $now->copy()->startOfWeek();
+            $end = $now->copy()->endOfWeek();
+            return [
+                'type' => 'range',
+                'start_date' => $start->startOfDay(),
+                'end_date' => $end->endOfDay(),
+                'label' => 'Minggu Ini (' . $start->format('d/m/Y') . ' – ' . $end->format('d/m/Y') . ')',
+                'is_custom' => true,
+            ];
+        }
+
+        // 5. Relative: Bulan lalu
+        if (preg_match('/\bbulan lalu\b/i', $q)) {
+            $lastMonth = $now->copy()->subMonth();
+            return [
+                'type' => 'month',
+                'start_date' => $lastMonth->copy()->startOfMonth(),
+                'end_date' => $lastMonth->copy()->endOfMonth(),
+                'label' => 'Bulan ' . $lastMonth->locale('id')->translatedFormat('F Y'),
+                'is_custom' => true,
+            ];
+        }
+
+        // 6. Relative: Bulan ini
+        if (preg_match('/\bbulan ini\b/i', $q)) {
+            return [
+                'type' => 'month',
+                'start_date' => $now->copy()->startOfMonth(),
+                'end_date' => $now->copy()->endOfMonth(),
+                'label' => 'Bulan ' . $now->locale('id')->translatedFormat('F Y'),
+                'is_custom' => false,
+            ];
+        }
+
+        // 7. Date Range: dd/mm/yyyy - dd/mm/yyyy
+        if (preg_match('/(?:dari\s+)?(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})\s*(?:s\/?d|sampai|hingga|\-|sd|ke)\s*(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/i', $q, $m)) {
+            $start = Carbon::createFromDate((int)$m[3], (int)$m[2], (int)$m[1])->startOfDay();
+            $end = Carbon::createFromDate((int)$m[6], (int)$m[5], (int)$m[4])->endOfDay();
+            return [
+                'type' => 'range',
+                'start_date' => $start,
+                'end_date' => $end,
+                'label' => $start->locale('id')->translatedFormat('d F Y') . ' – ' . $end->locale('id')->translatedFormat('d F Y'),
+                'is_custom' => true,
+            ];
+        }
+
+        // 8. Date Range: d1 bulan1 y1 s/d d2 bulan2 y2 (e.g., 1 januari 2026 sampai 15 januari 2026)
+        if (preg_match('/(?:dari\s+)?(\d{1,2})\s+([a-zA-Z]+)(?:\s+(\d{4}))?\s*(?:s\/?d|sampai|hingga|\-|sd|ke)\s*(\d{1,2})\s+([a-zA-Z]+)\s+(\d{4})/i', $q, $m)) {
+            $m1 = self::$bulanMap[strtolower($m[2])] ?? null;
+            $m2 = self::$bulanMap[strtolower($m[5])] ?? null;
+            if ($m1 && $m2) {
+                $y2 = (int)$m[6];
+                $y1 = !empty($m[3]) ? (int)$m[3] : $y2;
+                $start = Carbon::createFromDate($y1, $m1, (int)$m[1])->startOfDay();
+                $end = Carbon::createFromDate($y2, $m2, (int)$m[4])->endOfDay();
+                return [
+                    'type' => 'range',
+                    'start_date' => $start,
+                    'end_date' => $end,
+                    'label' => $start->locale('id')->translatedFormat('d F Y') . ' – ' . $end->locale('id')->translatedFormat('d F Y'),
+                    'is_custom' => true,
+                ];
+            }
+        }
+
+        // 9. Date Range: d1 s/d d2 bulan yyyy (e.g., 1 s/d 15 januari 2026, 1-15 jan 2026)
+        if (preg_match('/(?:dari\s+)?(\d{1,2})\s*(?:s\/?d|sampai|hingga|\-|sd|ke)\s*(\d{1,2})\s+([a-zA-Z]+)(?:\s+(\d{4}))?/i', $q, $m)) {
+            $monthNum = self::$bulanMap[strtolower($m[3])] ?? null;
+            if ($monthNum) {
+                $year = !empty($m[4]) ? (int)$m[4] : (int)$now->year;
+                $start = Carbon::createFromDate($year, $monthNum, (int)$m[1])->startOfDay();
+                $end = Carbon::createFromDate($year, $monthNum, (int)$m[2])->endOfDay();
+                return [
+                    'type' => 'range',
+                    'start_date' => $start,
+                    'end_date' => $end,
+                    'label' => sprintf("%02d – %02d %s %d", (int)$m[1], (int)$m[2], Carbon::createFromDate($year, $monthNum, 1)->locale('id')->translatedFormat('F'), $year),
+                    'is_custom' => true,
+                ];
+            }
+        }
+
+        // 10. Single Date: dd/mm/yyyy or dd-mm-yyyy
+        if (preg_match('/(?:tanggal|tgl)?\s*(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/i', $q, $m)) {
+            $d = Carbon::createFromDate((int)$m[3], (int)$m[2], (int)$m[1]);
+            return [
+                'type' => 'single',
+                'start_date' => $d->copy()->startOfDay(),
+                'end_date' => $d->copy()->endOfDay(),
+                'label' => $d->locale('id')->translatedFormat('l, d F Y'),
+                'is_custom' => true,
+            ];
+        }
+
+        // 11. Single Date: 12 januari 2026 or tanggal 12 januari 2026
+        if (preg_match('/(?:tanggal|tgl)?\s*(\d{1,2})\s+([a-zA-Z]+)(?:\s+(\d{4}))?/i', $q, $m)) {
+            $monthNum = self::$bulanMap[strtolower($m[2])] ?? null;
+            if ($monthNum) {
+                $year = !empty($m[3]) ? (int)$m[3] : (int)$now->year;
+                $d = Carbon::createFromDate($year, $monthNum, (int)$m[1]);
+                return [
+                    'type' => 'single',
+                    'start_date' => $d->copy()->startOfDay(),
+                    'end_date' => $d->copy()->endOfDay(),
+                    'label' => $d->locale('id')->translatedFormat('l, d F Y'),
+                    'is_custom' => true,
+                ];
+            }
+        }
+
+        // 12. Month & Year: bulan januari 2026 or januari 2026
+        if (preg_match('/(?:bulan|bln)?\s*([a-zA-Z]+)\s+(\d{4})\b/i', $q, $m)) {
+            $monthNum = self::$bulanMap[strtolower($m[1])] ?? null;
+            if ($monthNum) {
+                $year = (int)$m[2];
+                $d = Carbon::createFromDate($year, $monthNum, 1);
+                return [
+                    'type' => 'month',
+                    'start_date' => $d->copy()->startOfMonth(),
+                    'end_date' => $d->copy()->endOfMonth(),
+                    'label' => 'Bulan ' . $d->locale('id')->translatedFormat('F Y'),
+                    'is_custom' => true,
+                ];
+            }
+        }
+
+        // 13. Month only: bulan januari
+        if (preg_match('/(?:bulan|bln)\s+([a-zA-Z]+)\b/i', $q, $m)) {
+            $monthNum = self::$bulanMap[strtolower($m[1])] ?? null;
+            if ($monthNum) {
+                $d = Carbon::createFromDate((int)$now->year, $monthNum, 1);
+                return [
+                    'type' => 'month',
+                    'start_date' => $d->copy()->startOfMonth(),
+                    'end_date' => $d->copy()->endOfMonth(),
+                    'label' => 'Bulan ' . $d->locale('id')->translatedFormat('F Y'),
+                    'is_custom' => true,
+                ];
+            }
+        }
+
+        // 14. Year only: tahun 2025 or sepanjang 2025
+        if (preg_match('/(?:tahun|thn|sepanjang)\s+(\d{4})\b/i', $q, $m) || preg_match('/\b(20\d{2})\b/', $q, $m)) {
+            $year = (int)$m[1];
+            $d = Carbon::createFromDate($year, 1, 1);
+            return [
+                'type' => 'year',
+                'start_date' => $d->copy()->startOfYear(),
+                'end_date' => $d->copy()->endOfYear(),
+                'label' => 'Tahun ' . $year,
+                'is_custom' => true,
+            ];
+        }
+
+        // Default: Fallback to current month
+        return [
+            'type' => 'default',
+            'start_date' => $now->copy()->startOfMonth(),
+            'end_date' => $now->copy()->endOfMonth(),
+            'label' => 'Bulan ' . $now->locale('id')->translatedFormat('F Y'),
+            'is_custom' => false,
+        ];
+    }
+
+    /**
+     * Dapatkan Data Statistik Lengkap dari Database Sesuai Rentang Waktu dan/atau Unit PKS
+     */
+    public function getScopedData(array $dateRange, ?Pks $targetPks = null): array
+    {
+        $startDate = $dateRange['start_date'];
+        $endDate = $dateRange['end_date'];
+
+        // Base Query Pengaliran
+        $pengaliranQ = Pengaliran::with('pks')
+            ->whereBetween('tanggal', [$startDate->format('Y-m-d 00:00:00'), $endDate->format('Y-m-d 23:59:59')]);
+
+        if ($targetPks) {
+            $pengaliranQ->where('id_pks', $targetPks->id_pks);
+        }
+
+        $pengaliranRecords = $pengaliranQ->orderBy('tanggal', 'asc')->get();
+        $totalVolDihasilkan = self::numericSum($pengaliranRecords, 'vol_limbah_dihasilkan');
+        $totalVolDialirkan = self::numericSum($pengaliranRecords, 'vol_limbah_dialirkan');
+        $totalFlatBedPengaliran = self::numericSum($pengaliranRecords, 'flat_bed');
+        $totalLuasArea = self::numericSum($pengaliranRecords, 'luas_area');
+        $countPengaliranRecords = $pengaliranRecords->count();
+
+        // Distinct Block & Bak
+        $bloks = $pengaliranRecords->pluck('blok')->filter(fn($v) => $v && $v !== '-')->unique()->values()->all();
+        $baks = $pengaliranRecords->pluck('no_bak')->filter(fn($v) => $v && $v !== '-')->unique()->values()->all();
+
+        // Base Query Pemeliharaan
+        $pemeliharaanQ = Pemeliharaan::with('pks')
+            ->whereBetween('tanggal', [$startDate->format('Y-m-d 00:00:00'), $endDate->format('Y-m-d 23:59:59')]);
+
+        if ($targetPks) {
+            $pemeliharaanQ->where('id_pks', $targetPks->id_pks);
+        }
+
+        $pemeliharaanRecords = $pemeliharaanQ->orderBy('tanggal', 'asc')->get();
+        $totalFlatBedPemeliharaan = self::numericSum($pemeliharaanRecords, 'flat_bed');
+        $totalLongBedPemeliharaan = self::numericSum($pemeliharaanRecords, 'long_bed');
+        $totalHk = self::numericSum($pemeliharaanRecords, 'jumlah_hk');
+        $totalMekanis = $pemeliharaanRecords->where('jenis_pemeliharaan', '1')->count();
+        $totalManual = $pemeliharaanRecords->where('jenis_pemeliharaan', '2')->count();
+
+        // Base Query Monitoring Alat Berat
+        $monitoringAbQ = MonitoringAlatBerat::with('pks', 'alatBerat')
+            ->whereBetween('tanggal', [$startDate->format('Y-m-d 00:00:00'), $endDate->format('Y-m-d 23:59:59')]);
+
+        if ($targetPks) {
+            $monitoringAbQ->where('id_pks', $targetPks->id_pks);
+        }
+
+        $monitoringAbRecords = $monitoringAbQ->orderBy('tanggal', 'asc')->get();
+        $totalHm = self::numericSum($monitoringAbRecords, 'total_hm');
+        $totalBbm = self::numericSum($monitoringAbRecords, 'bbm_liter');
+        $countLogAb = $monitoringAbRecords->count();
 
         // Status Master Alat Berat
         $totalUnitAlat = AlatBerat::count();
@@ -145,22 +469,60 @@ class SimoliAiAssistantService
         $unitBreakdown = AlatBerat::where('status', 'Breakdown')->count();
         $unitRolling = AlatBerat::where('status', 'Rolling')->count();
 
+        // Per-PKS Breakdown jika Multi PKS
+        $pksBreakdown = [];
+        if (!$targetPks) {
+            $allOperationalPks = Pks::whereNotIn('akro', ['TEP', 'DTM', 'DBR'])->orderBy('nama')->get();
+            foreach ($allOperationalPks as $p) {
+                $pksPeng = $pengaliranRecords->where('id_pks', $p->id_pks);
+                $pksPem = $pemeliharaanRecords->where('id_pks', $p->id_pks);
+                $pksAb = $monitoringAbRecords->where('id_pks', $p->id_pks);
+
+                $pksBreakdown[] = [
+                    'id_pks' => $p->id_pks,
+                    'nama' => $p->nama,
+                    'akro' => $p->akro,
+                    'vol_dihasilkan' => self::numericSum($pksPeng, 'vol_limbah_dihasilkan'),
+                    'vol_dialirkan' => self::numericSum($pksPeng, 'vol_limbah_dialirkan'),
+                    'flat_bed_pengaliran' => self::numericSum($pksPeng, 'flat_bed'),
+                    'luas_area' => self::numericSum($pksPeng, 'luas_area'),
+                    'count_pengaliran' => $pksPeng->count(),
+                    'flat_bed_pemeliharaan' => self::numericSum($pksPem, 'flat_bed'),
+                    'long_bed_pemeliharaan' => self::numericSum($pksPem, 'long_bed'),
+                    'jumlah_hk' => self::numericSum($pksPem, 'jumlah_hk'),
+                    'total_hm' => self::numericSum($pksAb, 'total_hm'),
+                    'total_bbm' => self::numericSum($pksAb, 'bbm_liter'),
+                ];
+            }
+        }
+
         return [
-            'bulan_label' => $targetDate->locale('id')->translatedFormat('F Y'),
+            'periode_label' => $dateRange['label'],
+            'date_range' => $dateRange,
+            'target_pks' => $targetPks ? [
+                'id_pks' => $targetPks->id_pks,
+                'nama' => $targetPks->nama,
+                'akro' => $targetPks->akro,
+                'asisten' => $targetPks->asisten,
+            ] : null,
             'pengaliran' => [
                 'records' => $countPengaliranRecords,
                 'vol_dihasilkan' => $totalVolDihasilkan,
                 'vol_dialirkan' => $totalVolDialirkan,
                 'flat_bed' => $totalFlatBedPengaliran,
                 'luas_area' => $totalLuasArea,
+                'bloks' => empty($bloks) ? '-' : implode(', ', $bloks),
+                'baks' => empty($baks) ? '-' : implode(', ', $baks),
+                'items' => $pengaliranRecords,
             ],
             'pemeliharaan' => [
-                'records' => (clone $pemeliharaanQ)->count(),
+                'records' => $pemeliharaanRecords->count(),
                 'flat_bed' => $totalFlatBedPemeliharaan,
                 'long_bed' => $totalLongBedPemeliharaan,
                 'jumlah_hk' => $totalHk,
                 'mekanis' => $totalMekanis,
                 'manual' => $totalManual,
+                'items' => $pemeliharaanRecords,
             ],
             'alat_berat' => [
                 'total_unit' => $totalUnitAlat,
@@ -171,7 +533,9 @@ class SimoliAiAssistantService
                 'total_hm' => $totalHm,
                 'total_bbm' => $totalBbm,
                 'total_log' => $countLogAb,
+                'items' => $monitoringAbRecords,
             ],
+            'pks_breakdown' => $pksBreakdown,
         ];
     }
 
@@ -181,20 +545,33 @@ class SimoliAiAssistantService
     public function answerQuery(string $query, ?string $date = null): array
     {
         $targetDate = $date ? Carbon::parse($date)->format('Y-m-d') : Carbon::now('Asia/Jakarta')->format('Y-m-d');
-        $audit = $this->getDailyAudit($targetDate);
-        $stats = $this->getMonthlyStatistics($targetDate);
+        
+        // 1. Ekstrak Unit PKS dan Rentang Waktu dari prompt pertanyaan
+        $targetPks = $this->parsePksFromQuery($query);
+        $dateRange = $this->parseDateRangeFromQuery($query, $targetDate);
 
-        // 1. Coba gunakan Gemini API jika key tersedia
+        // 2. Dapatkan data audit kepatuhan dan scoped statistik database
+        $audit = $this->getDailyAudit($dateRange['type'] === 'single' ? $dateRange['start_date']->format('Y-m-d') : $targetDate);
+        $scopedData = $this->getScopedData($dateRange, $targetPks);
+
+        // 3. Coba gunakan Gemini API jika key tersedia
         if (!empty($this->geminiApiKey)) {
             try {
-                $geminiResponse = $this->callGeminiApi($query, $audit, $stats);
+                $geminiResponse = $this->callGeminiApi($query, $audit, $scopedData, $targetPks, $dateRange);
                 if (!empty($geminiResponse)) {
+                    $badges = $this->buildBadgesForScopedData($scopedData, $targetPks);
+                    $actions = $this->buildActionsForScopedData($scopedData, $targetPks);
+
                     return [
                         'success' => true,
                         'source' => 'gemini',
                         'answer' => $geminiResponse,
+                        'badges' => $badges,
+                        'suggested_actions' => $actions,
                         'audit' => $audit,
-                        'stats' => $stats,
+                        'stats' => $scopedData,
+                        'target_pks' => $targetPks ? $targetPks->nama : null,
+                        'date_range' => $dateRange['label'],
                     ];
                 }
             } catch (\Throwable $e) {
@@ -202,8 +579,8 @@ class SimoliAiAssistantService
             }
         }
 
-        // 2. Gunakan Intelligent Heuristic & NLP SIMOLI Engine
-        $localAnswer = $this->generateIntelligentLocalAnswer($query, $audit, $stats);
+        // 4. Gunakan Intelligent Heuristic & NLP SIMOLI Engine
+        $localAnswer = $this->generateIntelligentLocalAnswer($query, $audit, $scopedData, $targetPks, $dateRange);
 
         return [
             'success' => true,
@@ -212,34 +589,57 @@ class SimoliAiAssistantService
             'badges' => $localAnswer['badges'] ?? [],
             'suggested_actions' => $localAnswer['actions'] ?? [],
             'audit' => $audit,
-            'stats' => $stats,
+            'stats' => $scopedData,
+            'target_pks' => $targetPks ? $targetPks->nama : null,
+            'date_range' => $dateRange['label'],
         ];
     }
 
     /**
-     * Panggil Google Gemini API
+     * Panggil Google Gemini API dengan Konteks Data Sesuai Rentang Waktu dan Unit PKS
      */
-    protected function callGeminiApi(string $query, array $audit, array $stats): ?string
+    protected function callGeminiApi(string $query, array $audit, array $scopedData, ?Pks $targetPks, array $dateRange): ?string
     {
-        $systemContext = "Anda adalah SIMOLI AI Assistant untuk Tim Admin TEP (Bagian Teknik & Pengolahan) PTPN IV Regional III. "
-            . "Tugas Anda adalah memantau dan memberikan laporan real-time mengenai pengaliran limbah (Land Application/LA), pemeliharaan kolam IPAL/bed, dan operasional alat berat pada 12 unit PKS.\n\n"
-            . "=== DATA REAL-TIME TANGGAL: {$audit['tanggal_formatted']} ===\n"
-            . "- Total PKS: {$audit['total_pks']}\n"
-            . "- PKS Lengkap input (Pengaliran, Pemeliharaan, Alat Berat): {$audit['count_lengkap']}\n"
-            . "- PKS Sebagian input: {$audit['count_sebagian']}\n"
-            . "- PKS Belum ada input sama sekali: {$audit['count_belum_ada']}\n\n"
-            . "PKS BELUM INPUT PENGALIRAN (" . $audit['missing_pengaliran_count'] . " unit): " . implode(', ', array_map(fn($p) => $p['nama'] . " (" . $p['akro'] . ")", $audit['missing_pengaliran'])) . "\n"
-            . "PKS BELUM INPUT PEMELIHARAAN (" . $audit['missing_pemeliharaan_count'] . " unit): " . implode(', ', array_map(fn($p) => $p['nama'] . " (" . $p['akro'] . ")", $audit['missing_pemeliharaan'])) . "\n"
-            . "PKS BELUM INPUT ALAT BERAT (" . $audit['missing_alat_berat_count'] . " unit): " . implode(', ', array_map(fn($p) => $p['nama'] . " (" . $p['akro'] . ")", $audit['missing_alat_berat'])) . "\n\n"
-            . "=== STATISTIK BULANAN ({$stats['bulan_label']}) ===\n"
-            . "- Vol Limbah Dihasilkan: " . number_format($stats['pengaliran']['vol_dihasilkan'], 2) . " m³\n"
-            . "- Vol Limbah Dialirkan: " . number_format($stats['pengaliran']['vol_dialirkan'], 2) . " m³\n"
-            . "- Total Flat Bed Dialirkan: " . number_format($stats['pengaliran']['flat_bed']) . " Bed\n"
-            . "- Luas Area Aplikasi: " . number_format($stats['pengaliran']['luas_area'], 2) . " Ha\n"
-            . "- Pemeliharaan Flat Bed: " . number_format($stats['pemeliharaan']['flat_bed']) . " Bed, Long Bed: " . number_format($stats['pemeliharaan']['long_bed']) . " Bed, Total Tenaga Kerja: " . number_format($stats['pemeliharaan']['jumlah_hk']) . " HK\n"
-            . "- Alat Berat: {$stats['alat_berat']['total_unit']} Unit (Ready/Operational: {$stats['alat_berat']['operational']}, Maintenance: {$stats['alat_berat']['maintenance']}, Breakdown: {$stats['alat_berat']['breakdown']}, Rolling: {$stats['alat_berat']['rolling']})\n"
-            . "- Total Jam Kerja Alat (HM): " . number_format($stats['alat_berat']['total_hm'], 2) . " Jam, Total BBM: " . number_format($stats['alat_berat']['total_bbm'], 2) . " Liter.\n\n"
-            . "Gunakan format Markdown profesional dengan emoji, poin-poin tegas, bolding, dan tabel jika relevan. Berikan rekomendasi tindak lanjut yang jelas untuk Admin TEP.";
+        $pksContext = $targetPks 
+            ? "PKS SPESIFIK: {$targetPks->nama} ({$targetPks->akro}) - Asisten: " . ($targetPks->asisten ?: '-')
+            : "LINGKUP UNIT: Seluruh 12 Unit PKS PTPN IV Regional III";
+
+        $p = $scopedData['pengaliran'];
+        $m = $scopedData['pemeliharaan'];
+        $ab = $scopedData['alat_berat'];
+
+        $systemContext = "Anda adalah SIMOLI AI Assistant untuk Tim Admin TEP (Bagian Teknik & Pengolahan) PTPN IV Regional III.\n"
+            . "Tugas Anda adalah memberikan jawaban dan rekapitulasi data yang 100% AKURAT, LENGKAP, dan RELEVAN dengan rentang waktu serta unit PKS yang ditanyakan.\n\n"
+            . "=== PARAMETER FILTER PERTANYAAN ===\n"
+            . "- {$pksContext}\n"
+            . "- PERIODE DIMINTA: {$scopedData['periode_label']} ({$dateRange['start_date']->format('Y-m-d')} s/d {$dateRange['end_date']->format('Y-m-d')})\n\n"
+            . "=== DATA DATABASE REAL-TIME SESUAI PERIODE & PKS DI ATAS ===\n"
+            . "1. PENGALIRAN LAND APLIKASI (LA):\n"
+            . "   - Total Entri Transaksi: {$p['records']}\n"
+            . "   - Vol. Limbah Dihasilkan (PKS): " . number_format($p['vol_dihasilkan'], 2) . " m³\n"
+            . "   - Vol. Limbah Dialirkan (LA): " . number_format($p['vol_dialirkan'], 2) . " m³\n"
+            . "   - Aplikasi Flat Bed: " . number_format($p['flat_bed']) . " Bed\n"
+            . "   - Luas Area Aplikasi: " . number_format($p['luas_area'], 2) . " Ha\n"
+            . "   - Lokasi Blok: {$p['bloks']}\n"
+            . "   - Bak Distribusi: {$p['baks']}\n\n"
+            . "2. PEMELIHARAAN KOLAM IPAL & BED:\n"
+            . "   - Total Kegiatan: {$m['records']}\n"
+            . "   - Flat Bed Dirawat: " . number_format($m['flat_bed']) . " Bed\n"
+            . "   - Long Bed Dirawat: " . number_format($m['long_bed']) . " Bed\n"
+            . "   - Total Tenaga Kerja (HK): " . number_format($m['jumlah_hk']) . " HK\n"
+            . "   - Metode Mekanis (Alat Berat): {$m['mekanis']} Kegiatan | Manual: {$m['manual']} Kegiatan\n\n"
+            . "3. OPERASIONAL ALAT BERAT:\n"
+            . "   - Total Jam Kerja (HM): " . number_format($ab['total_hm'], 2) . " Jam\n"
+            . "   - Total Konsumsi BBM: " . number_format($ab['total_bbm'], 2) . " Liter\n"
+            . "   - Status Populasi Unit: Ready {$ab['operational']}, Breakdown {$ab['breakdown']}, Maint {$ab['maintenance']}, Rolling {$ab['rolling']} dari total {$ab['total_unit']} Unit\n\n"
+            . "=== STATUS AUDIT KEPATUHAN HARIAN (TANGGAL {$audit['tanggal_formatted']}) ===\n"
+            . "- Lengkap: {$audit['count_lengkap']} PKS | Sebagian: {$audit['count_sebagian']} PKS | Belum Input: {$audit['count_belum_ada']} PKS\n"
+            . "- PKS Belum Input Pengaliran: " . ($audit['missing_pengaliran_count'] === 0 ? 'Nihil (Semua Sudah)' : implode(', ', array_map(fn($x) => $x['akro'], $audit['missing_pengaliran']))) . "\n\n"
+            . "INSTRUKSI JAWABAN:\n"
+            . "- Jawablah spesifik sesuai unit dan periode yang diminta di atas.\n"
+            . "- Gunakan format Markdown rapi dengan emoji, poin-poin tegas, angka format Indonesia (titik pemisah ribuan, koma pemisah desimal).\n"
+            . "- Sertakan volume limbah dihasilkan, volume dialirkan, bed, dan luas area jika ditanya pengaliran.\n"
+            . "- Jika tidak ada data transaksi pada rentang tersebut, nyatakan dengan jelas bahwa data belum tercatat untuk periode tersebut.";
 
         $url = "https://generativelanguage.googleapis.com/v1beta/models/{$this->geminiModel}:generateContent?key=" . $this->geminiApiKey;
 
@@ -248,7 +648,7 @@ class SimoliAiAssistantService
                 [
                     'role' => 'user',
                     'parts' => [
-                        ['text' => $systemContext . "\n\nPertanyaan Admin TEP: " . $query]
+                        ['text' => $systemContext . "\n\nPertanyaan User: " . $query]
                     ]
                 ]
             ],
@@ -267,15 +667,25 @@ class SimoliAiAssistantService
     }
 
     /**
-     * Engine NLP & Analisis Heuristik Internal SIMOLI
+     * Engine NLP & Analisis Heuristik Internal SIMOLI Sesuai Rentang Waktu & Unit PKS
      */
-    protected function generateIntelligentLocalAnswer(string $rawQuery, array $audit, array $stats): array
-    {
+    protected function generateIntelligentLocalAnswer(
+        string $rawQuery,
+        array $audit,
+        array $scopedData,
+        ?Pks $targetPks,
+        array $dateRange
+    ): array {
         $q = strtolower(trim($rawQuery));
         $actions = [];
-        $badges = [];
+        $badges = $this->buildBadgesForScopedData($scopedData, $targetPks);
 
-        // 1. Cek Unit / PKS yang Belum Input Hari Ini
+        $p = $scopedData['pengaliran'];
+        $m = $scopedData['pemeliharaan'];
+        $ab = $scopedData['alat_berat'];
+        $periodeLabel = $scopedData['periode_label'];
+
+        // 1. Cek Unit / PKS yang Belum Input (Audit Kepatuhan)
         if (
             str_contains($q, 'belum input') ||
             str_contains($q, 'belum isi') ||
@@ -301,11 +711,11 @@ class SimoliAiAssistantService
             // Rincian Pengaliran
             $text .= "#### 💧 **1. Pengaliran Land Aplikasi (LA)**\n";
             if ($audit['missing_pengaliran_count'] === 0) {
-                $text .= "✅ *Semua 12 Unit PKS telah menginput data pengaliran hari ini.*\n\n";
+                $text .= "✅ *Semua 12 Unit PKS telah menginput data pengaliran untuk tanggal ini.*\n\n";
             } else {
                 $text .= "⚠️ **{$audit['missing_pengaliran_count']} PKS Belum Input Pengaliran:**\n";
-                foreach ($audit['missing_pengaliran'] as $idx => $p) {
-                    $text .= ($idx + 1) . ". **{$p['nama']} ({$p['akro']})** — Asisten: {$p['asisten']}\n";
+                foreach ($audit['missing_pengaliran'] as $idx => $pItem) {
+                    $text .= ($idx + 1) . ". **{$pItem['nama']} ({$pItem['akro']})** — Asisten: {$pItem['asisten']}\n";
                 }
                 $text .= "\n";
             }
@@ -313,11 +723,11 @@ class SimoliAiAssistantService
             // Rincian Pemeliharaan
             $text .= "#### 🛠️ **2. Pemeliharaan Kolam IPAL & Bed**\n";
             if ($audit['missing_pemeliharaan_count'] === 0) {
-                $text .= "✅ *Semua 12 Unit PKS telah menginput data pemeliharaan hari ini.*\n\n";
+                $text .= "✅ *Semua 12 Unit PKS telah menginput data pemeliharaan untuk tanggal ini.*\n\n";
             } else {
                 $text .= "⚠️ **{$audit['missing_pemeliharaan_count']} PKS Belum Input Pemeliharaan:**\n";
-                foreach ($audit['missing_pemeliharaan'] as $idx => $p) {
-                    $text .= ($idx + 1) . ". **{$p['nama']} ({$p['akro']})** — Asisten: {$p['asisten']}\n";
+                foreach ($audit['missing_pemeliharaan'] as $idx => $pItem) {
+                    $text .= ($idx + 1) . ". **{$pItem['nama']} ({$pItem['akro']})** — Asisten: {$pItem['asisten']}\n";
                 }
                 $text .= "\n";
             }
@@ -325,16 +735,16 @@ class SimoliAiAssistantService
             // Rincian Alat Berat
             $text .= "#### 🚜 **3. Operasional Alat Berat**\n";
             if ($audit['missing_alat_berat_count'] === 0) {
-                $text .= "✅ *Semua 12 Unit PKS telah menginput laporan kerja alat berat hari ini.*\n\n";
+                $text .= "✅ *Semua 12 Unit PKS telah menginput laporan kerja alat berat untuk tanggal ini.*\n\n";
             } else {
                 $text .= "⚠️ **{$audit['missing_alat_berat_count']} PKS Belum Input Alat Berat:**\n";
-                foreach ($audit['missing_alat_berat'] as $idx => $p) {
-                    $text .= ($idx + 1) . ". **{$p['nama']} ({$p['akro']})** — Asisten: {$p['asisten']}\n";
+                foreach ($audit['missing_alat_berat'] as $idx => $pItem) {
+                    $text .= ($idx + 1) . ". **{$pItem['nama']} ({$pItem['akro']})** — Asisten: {$pItem['asisten']}\n";
                 }
                 $text .= "\n";
             }
 
-            $text .= "💡 *Rekomendasi:* Anda dapat mengirimkan pengingat instan melalui WhatsApp ke seluruh Asisten PKS yang belum melakukan input hari ini.";
+            $text .= "💡 *Rekomendasi:* Anda dapat mengirimkan pengingat instan melalui WhatsApp ke seluruh Asisten PKS yang belum melakukan input.";
 
             $actions[] = [
                 'label' => '📲 Kirim WhatsApp Pengingat ke Semua PKS Tertunda',
@@ -352,7 +762,103 @@ class SimoliAiAssistantService
             ];
         }
 
-        // 2. Pertanyaan Seputar Alat Berat
+        // 2. KASUS SPESIFIK UNIT PKS (misal: "rekap pengaliran pks tanah putih tanggal 12 januari 2026")
+        if ($targetPks) {
+            $pksName = $targetPks->nama;
+            $pksAkro = $targetPks->akro;
+            $asisten = $targetPks->asisten ?: 'Belum diset';
+
+            // Jika secara spesifik menanyakan Pemeliharaan
+            if (str_contains($q, 'pemeliharaan') || str_contains($q, 'kolam') || str_contains($q, 'rawat')) {
+                $text = "### 🛠️ **Laporan Pemeliharaan — PKS {$pksName} ({$pksAkro})**\n";
+                $text .= "📅 **Periode:** {$periodeLabel}\n";
+                $text .= "👤 **Asisten:** {$asisten}\n\n";
+
+                if ($m['records'] === 0) {
+                    $text .= "ℹ️ *Belum ada catatan transaksi pemeliharaan untuk PKS {$pksName} pada periode {$periodeLabel}.*\n";
+                } else {
+                    $text .= "📊 **Realisasi Pemeliharaan Fisik:**\n";
+                    $text .= "- 🟫 **Aplikasi Flat Bed Dirawat:** " . number_format($m['flat_bed'], 0, ',', '.') . " Bed\n";
+                    $text .= "- 🟩 **Aplikasi Long Bed Dirawat:** " . number_format($m['long_bed'], 0, ',', '.') . " Bed\n";
+                    $text .= "- 👷 **Penggunaan Tenaga Kerja:** " . number_format($m['jumlah_hk'], 0, ',', '.') . " HK\n";
+                    $text .= "- 🚜 **Kegiatan Mekanis:** {$m['mekanis']} | 🧤 **Manual:** {$m['manual']}\n";
+                    $text .= "- 📋 **Total Log Tercatat:** {$m['records']} Transaksi\n";
+                }
+
+                return [
+                    'text' => $text,
+                    'badges' => $badges,
+                    'actions' => $this->buildActionsForScopedData($scopedData, $targetPks),
+                ];
+            }
+
+            // Jika secara spesifik menanyakan Alat Berat
+            if (str_contains($q, 'alat berat') || str_contains($q, 'excavator') || str_contains($q, 'bbm') || str_contains($q, 'hm')) {
+                $text = "### 🚜 **Laporan Operasional Alat Berat — PKS {$pksName} ({$pksAkro})**\n";
+                $text .= "📅 **Periode:** {$periodeLabel}\n";
+                $text .= "👤 **Asisten:** {$asisten}\n\n";
+
+                if ($ab['total_log'] === 0) {
+                    $text .= "ℹ️ *Belum ada catatan log alat berat untuk PKS {$pksName} pada periode {$periodeLabel}.*\n";
+                } else {
+                    $text .= "📊 **Kinerja Jam Kerja & BBM:**\n";
+                    $text .= "- 🕒 **Total Jam Kerja (HM):** " . number_format($ab['total_hm'], 2, ',', '.') . " Jam\n";
+                    $text .= "- ⛽ **Total Konsumsi BBM:** " . number_format($ab['total_bbm'], 2, ',', '.') . " Liter\n";
+                    $text .= "- 📝 **Total Log Shift:** " . number_format($ab['total_log']) . " Laporan\n";
+                }
+
+                return [
+                    'text' => $text,
+                    'badges' => $badges,
+                    'actions' => $this->buildActionsForScopedData($scopedData, $targetPks),
+                ];
+            }
+
+            // Default untuk PKS spesifik: LAPORAN PENGALIRAN / LENGKAP
+            $text = "### 💧 **Laporan Pengaliran Limbah — PKS {$pksName} ({$pksAkro})**\n";
+            $text .= "📅 **Periode:** {$periodeLabel}\n";
+            $text .= "👤 **Asisten:** {$asisten}\n\n";
+
+            if ($p['records'] === 0) {
+                $text .= "ℹ️ *Belum ada catatan pengaliran limbah untuk PKS {$pksName} pada periode {$periodeLabel}.*\n\n";
+                $text .= "💡 *Catatan:* Silakan pastikan operator atau asisten unit telah menginput transaksi pengaliran pada tanggal tersebut.";
+            } else {
+                $text .= "📊 **Akumulasi Kinerja Pengaliran:**\n";
+                $text .= "- 🧪 **Limbah Dihasilkan (PKS):** " . number_format($p['vol_dihasilkan'], 2, ',', '.') . " m³\n";
+                $text .= "- 🌊 **Limbah Dialirkan (LA):** " . number_format($p['vol_dialirkan'], 2, ',', '.') . " m³\n";
+                $persenDialirkan = $p['vol_dihasilkan'] > 0 ? round(($p['vol_dialirkan'] / $p['vol_dihasilkan']) * 100, 1) : 0;
+                $text .= "- 📈 **Rasio Pengaliran Limbah:** **{$persenDialirkan}%**\n";
+                $text .= "- 🌱 **Aplikasi Flat Bed:** " . number_format($p['flat_bed'], 0, ',', '.') . " Bed\n";
+                $text .= "- 🗺️ **Luas Area Aplikasi:** " . number_format($p['luas_area'], 2, ',', '.') . " Hektar\n";
+                $text .= "- 🧱 **Lokasi Blok:** {$p['bloks']}\n";
+                $text .= "- 🚰 **Bak Distribusi:** {$p['baks']}\n";
+                $text .= "- 📋 **Total Entri Data:** {$p['records']} Transaksi\n\n";
+
+                // Jika single day atau rentang <= 7 hari, tampilkan rincian baris jika ada
+                if ($p['items']->count() > 0 && ($dateRange['type'] === 'single' || $p['items']->count() <= 10)) {
+                    $text .= "📝 **Rincian Transaksi:**\n";
+                    $text .= "| No | Tanggal | Jam | Blok | Bak | Dihasilkan | Dialirkan | Flat Bed |\n";
+                    $text .= "| :-: | :-: | :-: | :-: | :-: | -: | -: | -: |\n";
+                    foreach ($p['items']->take(10) as $idx => $item) {
+                        $tgl = Carbon::parse($item->tanggal)->format('d/m/Y');
+                        $jam = $item->jam_mulai ? ($item->jam_mulai . '-' . $item->jam_selesai) : '-';
+                        $volH = number_format($item->vol_limbah_dihasilkan, 0, ',', '.');
+                        $volA = number_format($item->vol_limbah_dialirkan, 0, ',', '.');
+                        $bed = number_format($item->flat_bed, 0, ',', '.');
+                        $text .= "| " . ($idx + 1) . " | {$tgl} | {$jam} | {$item->blok} | {$item->no_bak} | {$volH} m³ | {$volA} m³ | {$bed} |\n";
+                    }
+                    $text .= "\n";
+                }
+            }
+
+            return [
+                'text' => $text,
+                'badges' => $badges,
+                'actions' => $this->buildActionsForScopedData($scopedData, $targetPks),
+            ];
+        }
+
+        // 3. Pertanyaan Seputar Alat Berat (Multi / All PKS)
         if (
             str_contains($q, 'alat berat') ||
             str_contains($q, 'excavator') ||
@@ -363,9 +869,8 @@ class SimoliAiAssistantService
             str_contains($q, 'hm') ||
             str_contains($q, 'jam kerja')
         ) {
-            $ab = $stats['alat_berat'];
             $text = "### 🚜 **Laporan Operasional Alat Berat SIMOLI**\n";
-            $text .= "📅 **Periode:** Bulan {$stats['bulan_label']}\n\n";
+            $text .= "📅 **Periode:** {$periodeLabel}\n\n";
 
             $text .= "📦 **Ketersediaan Unit Alat Berat:**\n";
             $text .= "| Status | Jumlah Unit | Persentase |\n";
@@ -377,7 +882,7 @@ class SimoliAiAssistantService
             $text .= "| 🔵 **Rolling (Mutasi)** | **{$ab['rolling']}** Unit | " . round(($ab['rolling'] / $totalUnit) * 100) . "% |\n";
             $text .= "| **Total Populasi Unit** | **{$ab['total_unit']}** Unit | 100% |\n\n";
 
-            $text .= "⏱️ **Kinerja Jam Kerja & Bahan Bakar (Bulan Berjalan):**\n";
+            $text .= "⏱️ **Kinerja Jam Kerja & Bahan Bakar ({$periodeLabel}):**\n";
             $text .= "- 🕒 **Total Jam Kerja (HM):** " . number_format($ab['total_hm'], 2, ',', '.') . " Jam\n";
             $text .= "- ⛽ **Total Konsumsi BBM:** " . number_format($ab['total_bbm'], 2, ',', '.') . " Liter\n";
             $text .= "- 📝 **Total Log Shift Masuk:** " . number_format($ab['total_log']) . " Laporan\n\n";
@@ -393,49 +898,11 @@ class SimoliAiAssistantService
                     "Breakdown: {$ab['breakdown']}",
                     "Total HM: " . number_format($ab['total_hm'], 1) . " Jam",
                 ],
+                'actions' => $this->buildActionsForScopedData($scopedData, null),
             ];
         }
 
-        // 3. Pertanyaan Seputar Pengaliran / Limbah
-        if (
-            str_contains($q, 'pengaliran') ||
-            str_contains($q, 'limbah') ||
-            str_contains($q, 'volume') ||
-            str_contains($q, 'debit') ||
-            str_contains($q, 'dialirkan') ||
-            str_contains($q, 'dihasilkan')
-        ) {
-            $p = $stats['pengaliran'];
-            $text = "### 💧 **Laporan Pengaliran Limbah Land Application (LA)**\n";
-            $text .= "📅 **Periode:** Bulan {$stats['bulan_label']}\n\n";
-
-            $text .= "📊 **Akumulasi Kinerja Pengaliran:**\n";
-            $text .= "- 🧪 **Limbah Dihasilkan (PKS):** " . number_format($p['vol_dihasilkan'], 2, ',', '.') . " m³\n";
-            $text .= "- 🌊 **Limbah Dialirkan (LA):** " . number_format($p['vol_dialirkan'], 2, ',', '.') . " m³\n";
-            $persenDialirkan = $p['vol_dihasilkan'] > 0 ? round(($p['vol_dialirkan'] / $p['vol_dihasilkan']) * 100, 1) : 0;
-            $text .= "- 📈 **Rasio Pengaliran Limbah:** **{$persenDialirkan}%**\n";
-            $text .= "- 🌱 **Aplikasi Flat Bed:** " . number_format($p['flat_bed'], 0, ',', '.') . " Bed\n";
-            $text .= "- 🗺️ **Luas Area Aplikasi:** " . number_format($p['luas_area'], 2, ',', '.') . " Hektar\n";
-            $text .= "- 📋 **Total Entri Data:** " . number_format($p['records']) . " Transaksi\n\n";
-
-            $text .= "📌 *Status Harian ({$audit['tanggal_formatted']}):* ";
-            if ($audit['missing_pengaliran_count'] === 0) {
-                $text .= "✅ Seluruh 12 Unit PKS telah menginput data pengaliran hari ini.";
-            } else {
-                $text .= "⚠️ Masih ada **{$audit['missing_pengaliran_count']} PKS** yang belum input pengaliran hari ini.";
-            }
-
-            return [
-                'text' => $text,
-                'badges' => [
-                    'Vol Dialirkan: ' . number_format($p['vol_dialirkan'], 0) . ' m³',
-                    'Luas: ' . number_format($p['luas_area'], 1) . ' Ha',
-                    'Aplikasi: ' . number_format($p['flat_bed']) . ' Bed',
-                ],
-            ];
-        }
-
-        // 4. Pertanyaan Seputar Pemeliharaan
+        // 4. Pertanyaan Seputar Pemeliharaan (Multi / All PKS)
         if (
             str_contains($q, 'pemeliharaan') ||
             str_contains($q, 'rawat') ||
@@ -444,23 +911,16 @@ class SimoliAiAssistantService
             str_contains($q, 'hk') ||
             str_contains($q, 'tenaga kerja')
         ) {
-            $m = $stats['pemeliharaan'];
             $text = "### 🛠️ **Laporan Pemeliharaan Kolam IPAL & Bed**\n";
-            $text .= "📅 **Periode:** Bulan {$stats['bulan_label']}\n\n";
+            $text .= "📅 **Periode:** {$periodeLabel}\n\n";
 
             $text .= "📊 **Realisasi Pemeliharaan Fisik:**\n";
             $text .= "- 🟫 **Flat Bed Dibersihkan/Dirawat:** " . number_format($m['flat_bed'], 0, ',', '.') . " Bed\n";
             $text .= "- 🟩 **Long Bed Dirawat:** " . number_format($m['long_bed'], 0, ',', '.') . " Bed\n";
             $text .= "- 👷 **Penggunaan Tenaga Kerja (HK):** " . number_format($m['jumlah_hk'], 0, ',', '.') . " HK\n";
             $text .= "- 🚜 **Metode Mekanis (Alat Berat):** " . number_format($m['mekanis']) . " Kegiatan\n";
-            $text .= "- 🧤 **Metode Manual:** " . number_format($m['manual']) . " Kegiatan\n\n";
-
-            $text .= "📌 *Status Harian ({$audit['tanggal_formatted']}):* ";
-            if ($audit['missing_pemeliharaan_count'] === 0) {
-                $text .= "✅ Seluruh 12 Unit PKS telah menginput data pemeliharaan hari ini.";
-            } else {
-                $text .= "⚠️ Masih ada **{$audit['missing_pemeliharaan_count']} PKS** yang belum input pemeliharaan hari ini.";
-            }
+            $text .= "- 🧤 **Metode Manual:** " . number_format($m['manual']) . " Kegiatan\n";
+            $text .= "- 📋 **Total Catatan:** " . number_format($m['records']) . " Transaksi\n\n";
 
             return [
                 'text' => $text,
@@ -469,48 +929,107 @@ class SimoliAiAssistantService
                     'Long Bed: ' . number_format($m['long_bed']) . ' Bed',
                     'Tenaga: ' . number_format($m['jumlah_hk']) . ' HK',
                 ],
+                'actions' => $this->buildActionsForScopedData($scopedData, null),
             ];
         }
 
-        // 5. Default: Executive Overview / Briefing Harian
-        $text = "### 🌿 **Executive Daily Briefing — SIMOLI PTPN IV**\n";
-        $text .= "📅 **Tanggal:** {$audit['tanggal_formatted']} | **Bulan:** {$stats['bulan_label']}\n\n";
+        // 5. Default / Rekap Pengaliran (Multi / All PKS)
+        $text = "### 💧 **Laporan Pengaliran Limbah Land Application (LA)**\n";
+        $text .= "📅 **Periode:** {$periodeLabel}\n";
+        $text .= "🏢 **Cakupan:** 12 Unit Mill PKS\n\n";
 
-        $text .= "#### 🚨 **Audit Kepatuhan Input Hari Ini:**\n";
-        $text .= "- 💧 **Pengaliran:** " . ($audit['missing_pengaliran_count'] === 0 ? '✅ 12/12 Lengkap' : "⚠️ {$audit['missing_pengaliran_count']} PKS Belum Input") . "\n";
-        $text .= "- 🛠️ **Pemeliharaan:** " . ($audit['missing_pemeliharaan_count'] === 0 ? '✅ 12/12 Lengkap' : "⚠️ {$audit['missing_pemeliharaan_count']} PKS Belum Input") . "\n";
-        $text .= "- 🚜 **Alat Berat:** " . ($audit['missing_alat_berat_count'] === 0 ? '✅ 12/12 Lengkap' : "⚠️ {$audit['missing_alat_berat_count']} PKS Belum Input") . "\n\n";
+        $text .= "📊 **Akumulasi Kinerja Pengaliran:**\n";
+        $text .= "- 🧪 **Limbah Dihasilkan (PKS):** " . number_format($p['vol_dihasilkan'], 2, ',', '.') . " m³\n";
+        $text .= "- 🌊 **Limbah Dialirkan (LA):** " . number_format($p['vol_dialirkan'], 2, ',', '.') . " m³\n";
+        $persenDialirkan = $p['vol_dihasilkan'] > 0 ? round(($p['vol_dialirkan'] / $p['vol_dihasilkan']) * 100, 1) : 0;
+        $text .= "- 📈 **Rasio Pengaliran Limbah:** **{$persenDialirkan}%**\n";
+        $text .= "- 🌱 **Aplikasi Flat Bed:** " . number_format($p['flat_bed'], 0, ',', '.') . " Bed\n";
+        $text .= "- 🗺️ **Luas Area Aplikasi:** " . number_format($p['luas_area'], 2, ',', '.') . " Hektar\n";
+        $text .= "- 📋 **Total Entri Data:** " . number_format($p['records']) . " Transaksi\n\n";
 
-        $text .= "#### 📈 **Sorotan Kinerja Bulan {$stats['bulan_label']}:**\n";
-        $text .= "- **Volume Limbah Dialirkan:** " . number_format($stats['pengaliran']['vol_dialirkan'], 2, ',', '.') . " m³\n";
-        $text .= "- **Total Luas Aplikasi:** " . number_format($stats['pengaliran']['luas_area'], 2, ',', '.') . " Ha\n";
-        $text .= "- **Pemeliharaan Flat Bed:** " . number_format($stats['pemeliharaan']['flat_bed']) . " Bed (" . number_format($stats['pemeliharaan']['jumlah_hk']) . " HK)\n";
-        $text .= "- **Jam Kerja Alat Berat (HM):** " . number_format($stats['alat_berat']['total_hm'], 2) . " Jam (Konsumsi BBM: " . number_format($stats['alat_berat']['total_bbm'], 2) . " L)\n";
-        $text .= "- **Kesiapan Unit Alat:** {$stats['alat_berat']['operational']} Ready / {$stats['alat_berat']['breakdown']} Breakdown dari {$stats['alat_berat']['total_unit']} Unit\n\n";
-
-        $text .= "💬 *Anda dapat menanyakan hal spesifik seperti:* `pks mana belum input pengaliran?`, `rekap alat berat breakdown`, `volume limbah bulan ini`, atau `kirim pengingat wa`.";
+        // Tabel Breakdown per PKS jika ada data
+        if (!empty($scopedData['pks_breakdown']) && $p['records'] > 0) {
+            $text .= "🏢 **Rekap Singkat per PKS:**\n";
+            $text .= "| PKS | Vol Dihasilkan | Vol Dialirkan | Flat Bed | Luas |\n";
+            $text .= "| :--- | -: | -: | -: | -: |\n";
+            foreach (array_slice($scopedData['pks_breakdown'], 0, 12) as $row) {
+                if ($row['vol_dialirkan'] > 0 || $row['vol_dihasilkan'] > 0 || $row['flat_bed_pengaliran'] > 0) {
+                    $vh = number_format($row['vol_dihasilkan'], 0, ',', '.');
+                    $va = number_format($row['vol_dialirkan'], 0, ',', '.');
+                    $fb = number_format($row['flat_bed_pengaliran'], 0, ',', '.');
+                    $la = number_format($row['luas_area'], 1, ',', '.');
+                    $text .= "| **{$row['akro']}** | {$vh} m³ | {$va} m³ | {$fb} Bed | {$la} Ha |\n";
+                }
+            }
+            $text .= "\n";
+        }
 
         return [
             'text' => $text,
-            'badges' => [
-                'Executive Ready',
-                '12 Unit PKS Terpantau',
-            ],
-            'actions' => [
-                [
-                    'label' => '🚨 Cek PKS Belum Input Hari Ini',
-                    'query' => 'pks mana saja yang belum input data hari ini?',
-                ],
-                [
-                    'label' => '🚜 Cek Kesiapan Alat Berat',
-                    'query' => 'bagaimana status alat berat dan konsumsi bbm?',
-                ],
-                [
-                    'label' => '💧 Cek Volume Pengaliran',
-                    'query' => 'berapa total volume limbah dialirkan bulan ini?',
-                ],
-            ],
+            'badges' => $badges,
+            'actions' => $this->buildActionsForScopedData($scopedData, null),
         ];
+    }
+
+    /**
+     * Helper Membuat Badges Stat Ringkas
+     */
+    protected function buildBadgesForScopedData(array $scopedData, ?Pks $targetPks): array
+    {
+        $p = $scopedData['pengaliran'];
+        $badges = [];
+
+        if ($p['vol_dihasilkan'] > 0) {
+            $badges[] = 'Vol Dihasilkan: ' . number_format($p['vol_dihasilkan'], 0, ',', '.') . ' m³';
+        }
+        if ($p['vol_dialirkan'] > 0) {
+            $badges[] = 'Vol Dialirkan: ' . number_format($p['vol_dialirkan'], 0, ',', '.') . ' m³';
+        }
+        if ($p['flat_bed'] > 0) {
+            $badges[] = 'Aplikasi: ' . number_format($p['flat_bed'], 0, ',', '.') . ' Bed';
+        }
+        if ($p['luas_area'] > 0) {
+            $badges[] = 'Luas: ' . number_format($p['luas_area'], 1, ',', '.') . ' Ha';
+        }
+
+        if (empty($badges)) {
+            $badges[] = 'Periode: ' . $scopedData['periode_label'];
+            if ($targetPks) {
+                $badges[] = 'PKS: ' . $targetPks->akro;
+            }
+        }
+
+        return $badges;
+    }
+
+    /**
+     * Helper Membuat Tombol Action Rekomendasi
+     */
+    protected function buildActionsForScopedData(array $scopedData, ?Pks $targetPks): array
+    {
+        $actions = [];
+
+        if ($targetPks) {
+            $actions[] = [
+                'label' => "💧 Lihat Detail Pengaliran PKS {$targetPks->akro}",
+                'query' => "rekap data pengaliran pks {$targetPks->nama} bulan ini",
+            ];
+            $actions[] = [
+                'label' => "🛠️ Cek Pemeliharaan PKS {$targetPks->akro}",
+                'query' => "rekap pemeliharaan pks {$targetPks->nama} bulan ini",
+            ];
+        } else {
+            $actions[] = [
+                'label' => '🚨 Cek PKS Belum Input Hari Ini',
+                'query' => 'pks mana saja yang belum input data hari ini?',
+            ];
+            $actions[] = [
+                'label' => '🚜 Cek Kesiapan Alat Berat',
+                'query' => 'bagaimana status ketersediaan alat berat?',
+            ];
+        }
+
+        return $actions;
     }
 
     /**
