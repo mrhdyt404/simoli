@@ -786,7 +786,7 @@
 
 {{-- Top KPI Stat Summary Cards --}}
 <div class="row g-3 mb-4 no-print">
-    <div class="col-xl-3 col-sm-6">
+    <div class="col-xxl col-lg-4 col-sm-6">
         <div class="card stat-card h-100">
             <div class="card-body p-3">
                 <div class="d-flex align-items-center gap-3">
@@ -801,7 +801,37 @@
             </div>
         </div>
     </div>
-    <div class="col-xl-3 col-sm-6">
+    <div class="col-xxl col-lg-4 col-sm-6">
+        <div class="card stat-card h-100" style="border-color:rgba(37,99,235,.2);background:#f8faff;">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div style="width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;background:#2563eb;color:#ffffff;">
+                        <i class="feather-activity"></i>
+                    </div>
+                    <div>
+                        <h4 style="font-family:'Outfit',sans-serif;font-weight:900;color:#1e40af;margin-bottom:2px;">{{ number_format($summary['vol_dihasilkan'], 0, ',', '.') }} <span style="font-size:13px;font-weight:600;color:#6b7280;">m³</span></h4>
+                        <span style="font-size:11.5px;color:#6b7280;font-weight:600;">Vol. Limbah Dihasilkan</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xxl col-lg-4 col-sm-6">
+        <div class="card stat-card h-100" style="border-color:rgba(22,163,74,.15);background:#f7faff;">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div style="width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;background:linear-gradient(135deg,#052e16,#16a34a);color:#86efac;">
+                        <i class="feather-droplet"></i>
+                    </div>
+                    <div>
+                        <h4 style="font-family:'Outfit',sans-serif;font-weight:900;color:#14532d;margin-bottom:2px;">{{ number_format($summary['vol_dialirkan'], 0, ',', '.') }} <span style="font-size:13px;font-weight:600;color:#6b7280;">m³</span></h4>
+                        <span style="font-size:11.5px;color:#6b7280;font-weight:600;">Vol. Limbah Dialirkan</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xxl col-lg-6 col-sm-6">
         <div class="card stat-card h-100" style="border-color:rgba(22,163,74,.15);background:#fbfdf9;">
             <div class="card-body p-3">
                 <div class="d-flex align-items-center gap-3">
@@ -816,7 +846,7 @@
             </div>
         </div>
     </div>
-    <div class="col-xl-3 col-sm-6">
+    <div class="col-xxl col-lg-6 col-sm-6">
         <div class="card stat-card h-100" style="border-color:rgba(217,119,6,.15);background:#fffaf7;">
             <div class="card-body p-3">
                 <div class="d-flex align-items-center gap-3">
@@ -826,21 +856,6 @@
                     <div>
                         <h4 style="font-family:'Outfit',sans-serif;font-weight:900;color:#b45309;margin-bottom:2px;">{{ number_format($summary['bed_sd_bulan_all'], 0, ',', '.') }} <span style="font-size:13px;font-weight:600;color:#6b7280;">Bed</span></h4>
                         <span style="font-size:11.5px;color:#6b7280;font-weight:600;">Progress S.d Bulan Ini</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-3 col-sm-6">
-        <div class="card stat-card h-100" style="border-color:rgba(22,163,74,.12);background:#f7faff;">
-            <div class="card-body p-3">
-                <div class="d-flex align-items-center gap-3">
-                    <div style="width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;background:linear-gradient(135deg,#052e16,#16a34a);color:#86efac;">
-                        <i class="feather-droplet"></i>
-                    </div>
-                    <div>
-                        <h4 style="font-family:'Outfit',sans-serif;font-weight:900;color:#14532d;margin-bottom:2px;">{{ number_format($summary['vol_dialirkan'], 0, ',', '.') }} <span style="font-size:13px;font-weight:600;color:#6b7280;">m³</span></h4>
-                        <span style="font-size:11.5px;color:#6b7280;font-weight:600;">Vol. Limbah Dialirkan</span>
                     </div>
                 </div>
             </div>
@@ -895,7 +910,7 @@
                                     <circle cx="56" cy="56" r="36" fill="url(#globeGrad)" />
                                     <!-- Continents / Earth shapes -->
                                     <path d="M42 32C46 30 52 32 56 36C60 40 56 46 50 48C44 50 38 46 38 40C38 36 40 33 42 32Z" fill="#22c55e" opacity="0.9"/>
-                                    <path d="M64 45C72 45 80 50 82 58C84 66 78 72 70 74C64 76 60 70 62 64C64 58 58 54 60 48C61 46 62 45 64 45Z" fill="#16a34a" opacity="0.95"/>
+                                    <path d="M64 45C72 45 80 50 82 58C84 66 78 72 70 74C64 58 58 54 60 48C61 46 62 45 64 45Z" fill="#16a34a" opacity="0.95"/>
                                     <path d="M36 62C40 60 48 64 46 72C44 80 34 84 30 78C26 72 32 64 36 62Z" fill="#22c55e" opacity="0.9"/>
                                     <!-- Lush Leaves overlay on top left of globe -->
                                     <path d="M12 28C12 28 24 16 46 18C44 32 30 42 12 28Z" fill="url(#leafGrad)"/>
@@ -948,21 +963,24 @@
                         <thead>
                             {{-- Header Tier 1 --}}
                             <tr>
-                                <th rowspan="2" class="th-blue" style="width: 44px;">NO</th>
-                                <th rowspan="2" class="th-blue" style="width: 86px;">PKS</th>
-                                <th rowspan="2" class="th-blue" style="width: 86px;">Total Bed</th>
-                                <th colspan="3" class="th-green-main">{{ $activeWeek === 'custom' ? strtoupper($weekLabel) : 'Progress Minggu Ini' }}</th>
-                                <th colspan="3" class="th-orange-main">{{ $bulan === 'all' ? 'Progress S.d Tahun Ini' : 'Progress S.d Bulan Ini' }}</th>
-                                <th rowspan="2" class="th-blue" style="width: 210px;">Keterangan</th>
+                                <th rowspan="2" class="th-blue" style="width: 40px;">NO</th>
+                                <th rowspan="2" class="th-blue" style="width: 78px;">PKS</th>
+                                <th rowspan="2" class="th-blue" style="width: 78px;">Total Bed</th>
+                                <th colspan="4" class="th-green-main">{{ $activeWeek === 'custom' ? strtoupper($weekLabel) : 'Progress Minggu Ini' }}</th>
+                                <th colspan="4" class="th-orange-main">{{ $bulan === 'all' ? 'Progress S.d Tahun Ini' : 'Progress S.d Bulan Ini' }}</th>
+                                <th rowspan="2" class="th-blue" style="width: 190px;">Keterangan</th>
                             </tr>
                             {{-- Header Tier 2 --}}
                             <tr>
-                                <th class="th-green-sub-dark" style="width: 76px;">Bed di alirkan</th>
-                                <th class="th-green-sub" style="width: 100px;">Block Pengaliran</th>
-                                <th class="th-green-sub" style="width: 140px;">Bak Distribusi</th>
-                                <th class="th-orange-sub-dark" style="width: 76px;">Bed di alirkan</th>
-                                <th class="th-orange-sub" style="width: 110px;">Block Pengaliran</th>
-                                <th class="th-orange-sub" style="width: 170px;">Bak Distribusi</th>
+                                <th class="th-green-sub-dark" style="width: 82px;">Vol Dihasilkan</th>
+                                <th class="th-green-sub-dark" style="width: 68px;">Bed dialirkan</th>
+                                <th class="th-green-sub" style="width: 90px;">Block Pengaliran</th>
+                                <th class="th-green-sub" style="width: 120px;">Bak Distribusi</th>
+
+                                <th class="th-orange-sub-dark" style="width: 82px;">Vol Dihasilkan</th>
+                                <th class="th-orange-sub-dark" style="width: 68px;">Bed dialirkan</th>
+                                <th class="th-orange-sub" style="width: 95px;">Block Pengaliran</th>
+                                <th class="th-orange-sub" style="width: 140px;">Bak Distribusi</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -991,6 +1009,11 @@
                                     {{ number_format($row->total_bed, 0, ',', '.') }}
                                 </td>
 
+                                {{-- Progress Minggu Ini: Vol Dihasilkan --}}
+                                <td class="text-end fw-semibold text-primary" style="white-space: nowrap;">
+                                    {{ $row->minggu_ini->vol_dihasilkan > 0 ? number_format($row->minggu_ini->vol_dihasilkan, 0, ',', '.') . ' m³' : '-' }}
+                                </td>
+
                                 {{-- Progress Minggu Ini: Bed di alirkan --}}
                                 <td class="text-center fw-bold">
                                     {{ $row->minggu_ini->bed_dialirkan > 0 ? number_format($row->minggu_ini->bed_dialirkan, 0, ',', '.') : '-' }}
@@ -1004,6 +1027,11 @@
                                 {{-- Progress Minggu Ini: Bak Distribusi --}}
                                 <td class="text-center" style="word-break: break-word;">
                                     {{ $row->minggu_ini->bak }}
+                                </td>
+
+                                {{-- Progress S.d Bulan Ini: Vol Dihasilkan --}}
+                                <td class="text-end fw-semibold text-primary" style="white-space: nowrap;">
+                                    {{ $row->sd_bulan_ini->vol_dihasilkan > 0 ? number_format($row->sd_bulan_ini->vol_dihasilkan, 0, ',', '.') . ' m³' : '-' }}
                                 </td>
 
                                 {{-- Progress S.d Bulan Ini: Bed di alirkan --}}
@@ -1039,12 +1067,27 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="10" class="text-center py-4 text-muted">
+                                <td colspan="12" class="text-center py-4 text-muted">
                                     Tidak ada data pengaliran untuk filter periode yang dipilih.
                                 </td>
                             </tr>
                             @endforelse
                         </tbody>
+                        @if(count($rekapPengaliran) > 0)
+                        <tfoot>
+                            <tr style="background: #f0fdf4; font-weight: 800; border-top: 2px solid rgba(22,163,74,.3);">
+                                <td colspan="2" class="text-center fw-bold" style="background:#052e16; color:#86efac; font-size: 11px;">TOTAL</td>
+                                <td class="text-center fw-bold">{{ number_format($summary['total_bed_all'], 0, ',', '.') }}</td>
+                                <td class="text-end fw-bold text-primary" style="white-space: nowrap;">{{ number_format($summary['vol_dihasilkan_minggu_ini_all'], 0, ',', '.') }} m³</td>
+                                <td class="text-center fw-bold">{{ number_format($summary['bed_minggu_ini_all'], 0, ',', '.') }}</td>
+                                <td colspan="2" class="text-center text-muted" style="font-size:10px;">-</td>
+                                <td class="text-end fw-bold text-primary" style="white-space: nowrap;">{{ number_format($summary['vol_dihasilkan_sd_bulan_all'], 0, ',', '.') }} m³</td>
+                                <td class="text-center fw-bold">{{ number_format($summary['bed_sd_bulan_all'], 0, ',', '.') }}</td>
+                                <td colspan="2" class="text-center text-muted" style="font-size:10px;">-</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                        @endif
                     </table>
                 </div>
             </div>
@@ -1124,61 +1167,76 @@
     <div class="tab-pane fade" id="tab-detail" role="tabpanel">
         {{-- Stats Summary Widgets --}}
         <div class="row g-3 mb-4 no-print">
-            <div class="col-xl-3 col-sm-6">
+            <div class="col-xl-2 col-md-4 col-sm-6">
                 <div class="card stat-card shadow-sm border-0">
                     <div class="card-body p-3">
                         <div class="d-flex align-items-center gap-3">
-                            <div class="stat-icon bg-soft-primary text-primary" style="width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                            <div class="stat-icon bg-soft-primary text-primary" style="width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px;">
                                 <i class="feather-file-text"></i>
                             </div>
                             <div>
-                                <h3 class="fw-bold mb-0">{{ $summary['count'] }}</h3>
-                                <span class="fs-12 text-muted">Total Data Catatan</span>
+                                <h4 class="fw-bold mb-0">{{ $summary['count'] }}</h4>
+                                <span class="fs-12 text-muted">Total Data</span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="col-xl-3 col-sm-6">
+            <div class="col-xl-3 col-md-4 col-sm-6">
                 <div class="card stat-card shadow-sm border-0">
                     <div class="card-body p-3">
                         <div class="d-flex align-items-center gap-3">
-                            <div class="stat-icon bg-soft-success text-success" style="width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                            <div class="stat-icon text-white" style="width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; background: #2563eb;">
+                                <i class="feather-activity"></i>
+                            </div>
+                            <div>
+                                <h4 class="fw-bold mb-0 text-primary">{{ number_format($summary['vol_dihasilkan'], 0, ',', '.') }} <span class="fs-12 text-muted fw-normal">m³</span></h4>
+                                <span class="fs-12 text-muted">Vol. Dihasilkan</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-4 col-sm-6">
+                <div class="card stat-card shadow-sm border-0">
+                    <div class="card-body p-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="stat-icon bg-soft-success text-success" style="width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px;">
                                 <i class="feather-droplet"></i>
                             </div>
                             <div>
-                                <h3 class="fw-bold mb-0">{{ number_format($summary['vol_dialirkan'], 0, ',', '.') }}</h3>
-                                <span class="fs-12 text-muted">Vol. Dialirkan (m³)</span>
+                                <h4 class="fw-bold mb-0 text-success">{{ number_format($summary['vol_dialirkan'], 0, ',', '.') }} <span class="fs-12 text-muted fw-normal">m³</span></h4>
+                                <span class="fs-12 text-muted">Vol. Dialirkan</span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="col-xl-3 col-sm-6">
+            <div class="col-xl-2 col-md-6 col-sm-6">
                 <div class="card stat-card shadow-sm border-0">
                     <div class="card-body p-3">
                         <div class="d-flex align-items-center gap-3">
-                            <div class="stat-icon bg-soft-info text-info" style="width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                            <div class="stat-icon bg-soft-info text-info" style="width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px;">
                                 <i class="feather-layers"></i>
                             </div>
                             <div>
-                                <h3 class="fw-bold mb-0">{{ number_format($summary['flat_bed'], 0, ',', '.') }}</h3>
-                                <span class="fs-12 text-muted">Total Bed Dialirkan</span>
+                                <h4 class="fw-bold mb-0">{{ number_format($summary['flat_bed'], 0, ',', '.') }} <span class="fs-12 text-muted fw-normal">Bed</span></h4>
+                                <span class="fs-12 text-muted">Total Bed</span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="col-xl-3 col-sm-6">
+            <div class="col-xl-2 col-md-6 col-sm-6">
                 <div class="card stat-card shadow-sm border-0">
                     <div class="card-body p-3">
                         <div class="d-flex align-items-center gap-3">
-                            <div class="stat-icon bg-soft-warning text-warning" style="width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                            <div class="stat-icon bg-soft-warning text-warning" style="width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px;">
                                 <i class="feather-map"></i>
                             </div>
                             <div>
-                                <h3 class="fw-bold mb-0">{{ number_format($summary['luas_area'], 2, ',', '.') }}</h3>
-                                <span class="fs-12 text-muted">Total Luas Area (Ha)</span>
+                                <h4 class="fw-bold mb-0">{{ number_format($summary['luas_area'], 2, ',', '.') }} <span class="fs-12 text-muted fw-normal">Ha</span></h4>
+                                <span class="fs-12 text-muted">Total Luas</span>
                             </div>
                         </div>
                     </div>

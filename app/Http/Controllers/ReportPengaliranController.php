@@ -373,11 +373,15 @@ class ReportPengaliranController extends Controller
             $bedMingguIni = (int) $this->numericSum($pksPengaliranWeek, 'flat_bed') + (int) $this->numericSum($pksMonitoringWeek, 'flat_bed');
             $blokMingguIni = $formatCombinedList($pksPengaliranWeek, 'blok', $pksMonitoringWeek, 'lokasi_blok');
             $bakMingguIni = $formatCombinedList($pksPengaliranWeek, 'no_bak', $pksMonitoringWeek, 'no_bak');
+            $volDihasilkanMingguIni = $this->numericSum($pksPengaliranWeek, 'vol_limbah_dihasilkan');
+            $volDialirkanMingguIni = $this->numericSum($pksPengaliranWeek, 'vol_limbah_dialirkan');
 
             // Progress S.d Bulan Ini
             $bedSdBulanIni = (int) $this->numericSum($pksPengaliranMonth, 'flat_bed') + (int) $this->numericSum($pksMonitoringMonth, 'flat_bed');
             $blokSdBulanIni = $formatCombinedList($pksPengaliranMonth, 'blok', $pksMonitoringMonth, 'lokasi_blok');
             $bakSdBulanIni = $formatCombinedList($pksPengaliranMonth, 'no_bak', $pksMonitoringMonth, 'no_bak');
+            $volDihasilkanSdBulanIni = $this->numericSum($pksPengaliranMonth, 'vol_limbah_dihasilkan');
+            $volDialirkanSdBulanIni = $this->numericSum($pksPengaliranMonth, 'vol_limbah_dialirkan');
 
             // Status & Keterangan matching the visual style in the image
             $latestPengaliran = $pksPengaliranMonth->last();
@@ -412,11 +416,15 @@ class ReportPengaliranController extends Controller
                 'total_bed' => $totalBed,
                 'minggu_ini' => (object) [
                     'bed_dialirkan' => $bedMingguIni,
+                    'vol_dihasilkan' => $volDihasilkanMingguIni,
+                    'vol_dialirkan' => $volDialirkanMingguIni,
                     'blok' => $blokMingguIni,
                     'bak' => $bakMingguIni,
                 ],
                 'sd_bulan_ini' => (object) [
                     'bed_dialirkan' => $bedSdBulanIni,
+                    'vol_dihasilkan' => $volDihasilkanSdBulanIni,
+                    'vol_dialirkan' => $volDialirkanSdBulanIni,
                     'blok' => $blokSdBulanIni,
                     'bak' => $bakSdBulanIni,
                 ],
@@ -435,6 +443,10 @@ class ReportPengaliranController extends Controller
             'total_bed_all' => collect($rekapPengaliran)->sum('total_bed'),
             'bed_minggu_ini_all' => collect($rekapPengaliran)->sum('minggu_ini.bed_dialirkan'),
             'bed_sd_bulan_all' => collect($rekapPengaliran)->sum('sd_bulan_ini.bed_dialirkan'),
+            'vol_dihasilkan_minggu_ini_all' => collect($rekapPengaliran)->sum('minggu_ini.vol_dihasilkan'),
+            'vol_dialirkan_minggu_ini_all' => collect($rekapPengaliran)->sum('minggu_ini.vol_dialirkan'),
+            'vol_dihasilkan_sd_bulan_all' => collect($rekapPengaliran)->sum('sd_bulan_ini.vol_dihasilkan'),
+            'vol_dialirkan_sd_bulan_all' => collect($rekapPengaliran)->sum('sd_bulan_ini.vol_dialirkan'),
         ];
 
         // Detailed logs grouped by PKS (filterable by id_pks in tab detail)
