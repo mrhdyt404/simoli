@@ -77,6 +77,7 @@ Route::middleware('auth')->group(function () {
 
     // AI Assistant SIMOLI (TEP)
     Route::prefix('ai-assistant')->name('ai.')->group(function () {
+        Route::post('/stream', [AiAssistantController::class, 'stream'])->name('stream');
         Route::post('/chat', [AiAssistantController::class, 'chat'])->name('chat');
         Route::get('/daily-audit', [AiAssistantController::class, 'dailyAudit'])->name('daily-audit');
         Route::post('/send-reminder', [AiAssistantController::class, 'sendReminder'])->name('send-reminder');

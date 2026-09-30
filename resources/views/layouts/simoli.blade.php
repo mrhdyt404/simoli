@@ -2382,5 +2382,8 @@
             });
         }
     </script>
+
+    <!-- Floating AI Assistant Widget (DeepSeek Local Engine) -->
+    @include('components.simoli-ai-widget')
 </body>
 </html>

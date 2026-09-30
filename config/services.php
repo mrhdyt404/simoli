@@ -45,4 +45,10 @@ return [
         'model' => env('GEMINI_MODEL', 'gemini-1.5-flash'),
     ],
 
+    'ollama' => [
+        'base_url' => env('OLLAMA_BASE_URL', 'http://127.0.0.1:11434'),
+        'model' => env('OLLAMA_MODEL', 'deepseek-r1:1.5b'),
+        'timeout' => env('OLLAMA_TIMEOUT', 120),
+    ],
+
 ];
