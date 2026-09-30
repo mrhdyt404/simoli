@@ -341,7 +341,7 @@ class SimoliAiAssistantService
         if (preg_match('/(?:tanggal|tgl)?\s*(\d{1,2})\s+([a-zA-Z]+)(?:\s+(\d{4}))?/i', $q, $m)) {
             $monthNum = self::$bulanMap[strtolower($m[2])] ?? null;
             if ($monthNum) {
-                $year = !empty($m[3]) ? (int)$m[3] : (int)$now->year;
+                $year = !empty($m[3]) ? (int)$m[3] : (preg_match('/\b(20\d{2})\b/', $q, $my) ? (int)$my[1] : (int)$now->year);
                 $d = Carbon::createFromDate($year, $monthNum, (int)$m[1]);
                 return [
                     'type' => 'single',
@@ -353,8 +353,24 @@ class SimoliAiAssistantService
             }
         }
 
-        // 12. Month & Year: bulan januari 2026 or januari 2026
-        if (preg_match('/(?:bulan|bln)?\s*([a-zA-Z]+)\s+(\d{4})\b/i', $q, $m)) {
+        // 12. Month & Year (Urutan: Tahun YYYY Bulan MMMM, misal: tahun 2025 bulan oktober, 2025 oktober)
+        if (preg_match('/(?:tahun|thn)?\s*\b(20\d{2})\b\s*(?:bulan|bln)?\s*([a-zA-Z]+)/i', $q, $m)) {
+            $monthNum = self::$bulanMap[strtolower($m[2])] ?? null;
+            if ($monthNum) {
+                $year = (int)$m[1];
+                $d = Carbon::createFromDate($year, $monthNum, 1);
+                return [
+                    'type' => 'month',
+                    'start_date' => $d->copy()->startOfMonth(),
+                    'end_date' => $d->copy()->endOfMonth(),
+                    'label' => 'Bulan ' . $d->locale('id')->translatedFormat('F Y'),
+                    'is_custom' => true,
+                ];
+            }
+        }
+
+        // 13. Month & Year (Urutan: Bulan MMMM Tahun YYYY, misal: bulan oktober 2025, oktober 2025, oktober tahun 2025)
+        if (preg_match('/(?:bulan|bln)?\s*([a-zA-Z]+)\s*(?:tahun|thn)?\s*\b(20\d{2})\b/i', $q, $m)) {
             $monthNum = self::$bulanMap[strtolower($m[1])] ?? null;
             if ($monthNum) {
                 $year = (int)$m[2];
@@ -369,11 +385,14 @@ class SimoliAiAssistantService
             }
         }
 
-        // 13. Month only: bulan januari
-        if (preg_match('/(?:bulan|bln)\s+([a-zA-Z]+)\b/i', $q, $m)) {
-            $monthNum = self::$bulanMap[strtolower($m[1])] ?? null;
-            if ($monthNum) {
-                $d = Carbon::createFromDate((int)$now->year, $monthNum, 1);
+        // 14. Flexible Month & Year Search: Jika ada nama bulan dan ada tahun 4 digit di posisi manapun dalam prompt
+        foreach (self::$bulanMap as $bName => $bNum) {
+            if (preg_match('/\b' . preg_quote($bName, '/') . '\b/i', $q)) {
+                $year = (int)$now->year;
+                if (preg_match('/\b(20\d{2})\b/', $q, $my)) {
+                    $year = (int)$my[1];
+                }
+                $d = Carbon::createFromDate($year, $bNum, 1);
                 return [
                     'type' => 'month',
                     'start_date' => $d->copy()->startOfMonth(),
@@ -384,7 +403,7 @@ class SimoliAiAssistantService
             }
         }
 
-        // 14. Year only: tahun 2022, 2025, 2026 or sepanjang 2022
+        // 15. Year only: tahun 2022, 2025, 2026 or sepanjang 2022
         if (preg_match('/(?:tahun|thn|sepanjang)?\s*\b(20\d{2})\b/i', $q, $m)) {
             $year = (int)$m[1];
             $d = Carbon::createFromDate($year, 1, 1);
