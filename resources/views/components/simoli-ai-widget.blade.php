@@ -1,88 +1,121 @@
 <!-- ============================================================
-     SIMOLI AI ASSISTANT — "SISIL" (LOCAL ENGINE WIDGET)
+     SISIL — SIMOLI Smart Intelligence Assistant (Ollama DeepSeek)
      PTPN IV Regional III — Sistem Pemantauan Limbah & Land Application
      ============================================================ -->
-<div id="simoli-ai-widget" class="simoli-ai-widget-wrapper">
-    <!-- Floating Trigger Button with "Tanya Sisil" Pill -->
-    <div class="simoli-ai-trigger-group">
-        <div class="simoli-ai-btn-label" onclick="document.getElementById('simoliAiTriggerBtn').click()">
-            <i class="feather-message-square me-1"></i>
-            <span>Tanya Sisil</span>
+<div id="simoli-sisil-root">
+    <!-- Floating Action Button (FAB) with "Tanya SISIL" Pill -->
+    <div class="sisil-fab-container">
+        <div class="sisil-fab-pill" onclick="window.toggleSisilChat()" role="button" aria-label="Buka Tanya SISIL">
+            <span class="sisil-pill-sparkle">✨</span>
+            <span class="sisil-pill-text">Tanya SISIL</span>
         </div>
-        <button type="button" id="simoliAiTriggerBtn" class="simoli-ai-trigger-btn" aria-label="Buka Tanya Sisil AI" title="Tanya Sisil — AI Assistant SIMOLI">
-            <div class="ai-btn-inner">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 2a10 10 0 0 1 10 10c0 5.523-4.477 10-10 10a9.96 9.96 0 0 1-4.587-1.112L3 21l1.112-4.413A9.96 9.96 0 0 1 2 12C2 6.477 6.477 2 12 2z"></path>
-                    <path d="m9 10 3-3 3 3"></path>
-                    <path d="m9 14 3 3 3-3"></path>
-                </svg>
-            </div>
-            <span class="ai-online-ping"></span>
+        <button type="button" id="sisilFabBtn" class="sisil-fab-btn" onclick="window.toggleSisilChat()" aria-label="Buka SISIL AI Assistant" title="Buka SISIL (Alt + A)">
+            <img src="{{ asset('images/sisil-avatar.jpg') }}" alt="SISIL Avatar" class="sisil-fab-avatar">
+            <span class="sisil-online-dot"></span>
         </button>
     </div>
 
-    <!-- Floating Chat Window -->
-    <div id="simoliAiCard" class="simoli-ai-window" style="display: none;" role="dialog" aria-modal="true" aria-label="Tanya Sisil">
-        <!-- Header -->
-        <div class="simoli-ai-card-header">
-            <div class="d-flex align-items-center gap-2 min-w-0">
-                <div class="ai-avatar-icon">
-                    <i class="feather-cpu text-white" style="font-size: 16px;"></i>
+    <!-- Backdrop Overlay -->
+    <div id="sisilBackdrop" class="sisil-drawer-backdrop" onclick="window.closeSisilChat()"></div>
+
+    <!-- Sliding Drawer Panel (Style Mirip Tampilan AI Lama SIMOLI) -->
+    <aside id="sisilDrawer" class="sisil-drawer-panel" role="dialog" aria-modal="true" aria-label="SISIL — SIMOLI Smart Intelligence Assistant">
+        <!-- Drawer Header -->
+        <div class="sisil-drawer-header">
+            <div class="d-flex align-items-center gap-3 min-w-0">
+                <div class="sisil-hdr-avatar-wrap">
+                    <img src="{{ asset('images/sisil-avatar.jpg') }}" alt="SISIL" class="sisil-hdr-avatar">
+                    <span class="sisil-hdr-pulse-dot"></span>
                 </div>
                 <div class="min-w-0">
                     <div class="d-flex align-items-center gap-2">
-                        <h6 class="ai-card-title mb-0 text-truncate">Sisil</h6>
-                        <span class="badge bg-white text-success fw-bold px-2 py-0" style="font-size: 9.5px; border-radius: 10px;">AI SIMOLI</span>
+                        <h5 class="sisil-hdr-title mb-0 text-truncate">SISIL</h5>
+                        <span class="sisil-badge-tag">AI Assistant</span>
                     </div>
-                    <div class="d-flex align-items-center gap-1 mt-0.5">
-                        <span class="ai-status-indicator"></span>
-                        <small class="ai-card-subtitle text-white-50">Asisten Virtual PTPN IV</small>
+                    <div class="sisil-hdr-subtitle text-truncate">SIMOLI Smart Intelligence Assistant</div>
+                    <div class="d-flex align-items-center gap-1 sisil-hdr-status">
+                        <span class="sisil-live-indicator"></span>
+                        <span>Ollama Local Engine &bull; PTPN IV Regional III</span>
                     </div>
                 </div>
             </div>
             <div class="d-flex align-items-center gap-1">
-                <button type="button" id="simoliAiClearBtn" class="ai-tool-btn" title="Hapus Riwayat Chat di Browser" aria-label="Hapus Riwayat Chat">
+                <button type="button" id="sisilClearChatBtn" class="sisil-icon-btn" title="Bersihkan Riwayat Percakapan" aria-label="Bersihkan Riwayat">
                     <i class="feather-trash-2"></i>
                 </button>
-                <button type="button" id="simoliAiCloseBtn" class="ai-tool-btn" title="Tutup Chat" aria-label="Tutup Chat">
+                <button type="button" id="sisilCloseBtn" class="sisil-icon-btn" onclick="window.closeSisilChat()" title="Tutup Drawer (Esc)" aria-label="Tutup">
                     <i class="feather-x"></i>
                 </button>
             </div>
         </div>
 
-        <!-- Chat Body (Messages) -->
-        <div id="simoliAiBody" class="simoli-ai-card-body">
-            <div class="ai-msg-bubble ai-msg-assistant">
-                <div class="bubble-content">
-                    Halo! 👋 Saya <strong>Sisil</strong>, asisten virtual SIMOLI PTPN IV Regional III. Ada yang bisa Sisil bantu mengenai data pengaliran limbah, RKP, pemeliharaan, atau status harian PKS?
+        <!-- Quick Prompts Bar (Chips) -->
+        <div class="sisil-quick-bar">
+            <button type="button" class="sisil-prompt-chip" onclick="window.sendSimoliAiPrompt('pks mana saja yang belum input data pengaliran, pemeliharaan, dan alat berat hari ini?')">
+                🚨 Belum Input Hari Ini
+            </button>
+            <button type="button" class="sisil-prompt-chip" onclick="window.sendSimoliAiPrompt('berapa total volume limbah dialirkan dan dihasilkan bulan ini?')">
+                💧 Rekap Pengaliran
+            </button>
+            <button type="button" class="sisil-prompt-chip" onclick="window.sendSimoliAiPrompt('data rkp tahun ' + new Date().getFullYear())">
+                🎯 Target RKP Bed
+            </button>
+            <button type="button" class="sisil-prompt-chip" onclick="window.sendSimoliAiPrompt('tampilkan ringkasan pemeliharaan kolam dan bed bulan ini')">
+                🛠️ Pemeliharaan
+            </button>
+            <button type="button" class="sisil-prompt-chip" onclick="window.sendSimoliAiPrompt('bagaimana status ketersediaan dan jam kerja alat berat?')">
+                🚜 Status Alat Berat
+            </button>
+            <button type="button" class="sisil-prompt-chip" onclick="window.sendSimoliAiPrompt('berikan ringkasan eksekutif kepatuhan seluruh unit pks')">
+                📊 Briefing Eksekutif
+            </button>
+        </div>
+
+        <!-- Chat Messages Body -->
+        <div id="sisilChatBody" class="sisil-chat-body">
+            <!-- Initial Welcome Message from SISIL -->
+            <div class="sisil-msg-item sisil-msg-bot">
+                <div class="sisil-msg-avatar-wrap">
+                    <img src="{{ asset('images/sisil-avatar.jpg') }}" alt="SISIL" class="sisil-msg-avatar">
                 </div>
-                <span class="bubble-time">{{ date('H:i') }}</span>
+                <div class="sisil-bubble-wrap">
+                    <div class="sisil-bubble sisil-bubble-bot">
+                        <p class="mb-1 fw-bold text-success" style="font-size: 13.5px;">
+                            👋 Halo! Saya <strong>SISIL</strong> (<em>SIMOLI Smart Intelligence Assistant</em>).
+                        </p>
+                        <p class="mb-2 text-muted" style="font-size: 12.5px; line-height: 1.55;">
+                            Saya asisten virtual cerdas yang siap membantu Anda memantau kepatuhan pelaporan harian, menganalisis data pengaliran limbah LA, target RKP, pemeliharaan kolam/bed, dan operasional alat berat pada 12 unit PKS PTPN IV Regional III.
+                        </p>
+                        <div class="sisil-intro-guide">
+                            <strong class="d-block mb-1 text-dark" style="font-size: 11.5px;">💡 Contoh pertanyaan yang bisa Anda ajukan:</strong>
+                            <ul class="mb-0 ps-3" style="font-size: 11.5px; color: #475569;">
+                                <li>"PKS mana saja yang belum input data hari ini?"</li>
+                                <li>"Rekap data pengaliran tahun 2025 bulan oktober"</li>
+                                <li>"Data RKP tahun 2026"</li>
+                                <li>"Rekap pemeliharaan flat bed bulan ini"</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <span class="sisil-msg-time">{{ date('H:i') }}</span>
+                </div>
             </div>
         </div>
 
-        <!-- Suggestion Chips Bar -->
-        <div class="simoli-ai-quick-chips">
-            <button type="button" class="ai-chip-item" onclick="window.sendSimoliAiPrompt('Status kepatuhan input PKS hari ini')">
-                <i class="feather-check-circle me-1 text-success"></i> Status Input Hari Ini
-            </button>
-            <button type="button" class="ai-chip-item" onclick="window.sendSimoliAiPrompt('Rekap data pengaliran limbah bulan ini')">
-                <i class="feather-droplet me-1 text-info"></i> Rekap Pengaliran
-            </button>
-            <button type="button" class="ai-chip-item" onclick="window.sendSimoliAiPrompt('Data RKP tahun ' + new Date().getFullYear())">
-                <i class="feather-clipboard me-1 text-warning"></i> Target RKP Bed
-            </button>
-        </div>
-
-        <!-- Footer Input -->
-        <div class="simoli-ai-card-footer">
-            <form id="simoliAiChatForm" class="d-flex align-items-center gap-2 m-0 w-100">
-                <input type="text" id="simoliAiInput" class="form-control ai-text-input" placeholder="Tanya Sisil tentang data SIMOLI..." autocomplete="off" required maxlength="1000">
-                <button type="submit" id="simoliAiSendBtn" class="btn ai-send-action-btn" aria-label="Kirim Pesan">
+        <!-- Drawer Footer / Input Bar -->
+        <div class="sisil-drawer-footer">
+            <form id="sisilChatForm" class="d-flex align-items-center gap-2 m-0 w-100" onsubmit="event.preventDefault(); window.handleSisilSubmit();">
+                <input type="text" id="sisilQueryInput" class="form-control sisil-chat-input"
+                       placeholder="Tanya SISIL tentang data SIMOLI (mis: 'rekap pengaliran')..."
+                       autocomplete="off" required maxlength="1000">
+                <button type="submit" id="sisilSendBtn" class="btn sisil-send-btn" aria-label="Kirim Pesan" title="Kirim Pesan">
                     <i class="feather-send"></i>
                 </button>
             </form>
+            <div class="sisil-footer-hint">
+                <span>SISIL Local Engine</span> &bull; <span>Tekan <kbd>Enter</kbd> untuk kirim</span> &bull; <span><kbd>Alt + A</kbd> toggle</span>
+            </div>
         </div>
-    </div>
+    </aside>
 </div>
 
 <!-- Dependencies: Markdown parser & Highlight.js for Code Blocks -->
@@ -92,248 +125,406 @@
 
 <style>
 /* ================================================================
-   SIMOLI AI ASSISTANT "SISIL" WIDGET STYLING
+   SISIL — SIMOLI SMART INTELLIGENCE ASSISTANT STYLING
    ================================================================ */
-.simoli-ai-widget-wrapper {
+.sisil-fab-container {
     position: fixed;
     bottom: 90px;
     right: 24px;
-    z-index: 10500;
+    z-index: 10400;
+    display: flex;
+    align-items: center;
+    gap: 10px;
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-.simoli-ai-trigger-group {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.simoli-ai-btn-label {
-    background: #ffffff;
+.sisil-fab-pill {
+    background: #linear-gradient(135deg, #062817 0%, #0c3e23 50%, #064e3b 100%);
     color: #16a34a;
-    font-weight: 700;
-    font-size: 12.5px;
-    padding: 7px 14px;
-    border-radius: 20px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(22, 163, 74, 0.15);
+    font-weight: 800;
+    font-size: 13px;
+    padding: 8px 16px;
+    border-radius: 24px;
+    box-shadow: 0 4px 18px rgba(15, 23, 42, 0.12), 0 0 0 1.5px rgba(22, 163, 74, 0.2);
     cursor: pointer;
     display: flex;
     align-items: center;
-    transition: all 0.25s ease;
+    gap: 6px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     user-select: none;
     white-space: nowrap;
 }
 
-.simoli-ai-btn-label:hover {
-    background: #16a34a;
-    color: #ffffff;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(22, 163, 74, 0.35);
-}
-
-.simoli-ai-trigger-btn {
-    width: 52px;
-    height: 52px;
-    border-radius: 50%;
+/* .sisil-fab-pill:hover {
     background: linear-gradient(135deg, #16a34a, #0d9488);
     color: #ffffff;
-    border: none;
-    box-shadow: 0 8px 24px rgba(22, 163, 74, 0.4);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px rgba(22, 163, 74, 0.35);
+} */
+
+.sisil-pill-sparkle {
+    font-size: 14px;
+}
+
+.sisil-fab-btn {
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    background: #0b1329;
+    border: 2px solid #38bdf8;
+    box-shadow: 0 8px 24px rgba(2, 132, 199, 0.4), 0 0 15px rgba(56, 189, 248, 0.35);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
+    padding: 0;
+    overflow: visible;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     flex-shrink: 0;
 }
 
-.simoli-ai-trigger-btn:hover {
-    transform: translateY(-2px) scale(1.06);
-    box-shadow: 0 12px 30px rgba(22, 163, 74, 0.55);
+.sisil-fab-btn:hover {
+    transform: translateY(-3px) scale(1.08);
+    box-shadow: 0 12px 30px rgba(2, 132, 199, 0.55), 0 0 22px rgba(56, 189, 248, 0.6);
 }
 
-.ai-online-ping {
+.sisil-fab-avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    display: block;
+}
+
+.sisil-online-dot {
     position: absolute;
-    top: 2px;
-    right: 2px;
-    width: 12px;
-    height: 12px;
+    top: 0px;
+    right: 0px;
+    width: 13px;
+    height: 13px;
     background: #22c55e;
     border: 2px solid #ffffff;
     border-radius: 50%;
+    box-shadow: 0 0 6px #22c55e;
 }
 
-.simoli-ai-window {
-    position: absolute;
-    bottom: 68px;
+/* Backdrop */
+.sisil-drawer-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 10500;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.sisil-drawer-backdrop.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Drawer Panel (Right Slide-over) */
+.sisil-drawer-panel {
+    position: fixed;
+    top: 0;
     right: 0;
-    width: 390px;
-    max-width: calc(100vw - 32px);
-    height: 550px;
-    max-height: calc(100vh - 120px);
+    width: 460px;
+    max-width: 100vw;
+    height: 100vh;
     background: #ffffff;
-    border-radius: 18px;
-    box-shadow: 0 20px 45px rgba(15, 23, 42, 0.2), 0 0 0 1px rgba(22, 163, 74, 0.15);
+    z-index: 10550;
+    box-shadow: -10px 0 35px rgba(0, 0, 0, 0.2);
     display: flex;
     flex-direction: column;
-    overflow: hidden;
-    animation: simoliAiPopIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    transform: translateX(100%);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-@keyframes simoliAiPopIn {
-    from { opacity: 0; transform: translateY(18px) scale(0.96); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
+.sisil-drawer-panel.active {
+    transform: translateX(0);
 }
 
-.simoli-ai-card-header {
-    background: linear-gradient(135deg, #16a34a, #0f766e);
-    padding: 12px 16px;
+/* Header */
+.sisil-drawer-header {
+    background: linear-gradient(135deg, #15803d, #0f766e);
+    padding: 16px 20px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex-shrink: 0;
-}
-
-.ai-avatar-icon {
-    width: 34px;
-    height: 34px;
-    background: rgba(255, 255, 255, 0.22);
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-.ai-card-title {
-    font-size: 14px;
-    font-weight: 800;
     color: #ffffff;
-    letter-spacing: -0.2px;
 }
 
-.ai-card-subtitle {
+.sisil-hdr-avatar-wrap {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    position: relative;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+    flex-shrink: 0;
+    background: #0b1329;
+}
+
+.sisil-hdr-avatar {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+}
+
+.sisil-hdr-pulse-dot {
+    position: absolute;
+    bottom: -1px;
+    right: -1px;
+    width: 11px;
+    height: 11px;
+    background: #4ade80;
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+}
+
+.sisil-hdr-title {
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+}
+
+.sisil-badge-tag {
+    background: rgba(255, 255, 255, 0.22);
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.sisil-hdr-subtitle {
+    font-size: 11.5px;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 600;
+}
+
+.sisil-hdr-status {
     font-size: 10.5px;
-    color: rgba(255, 255, 255, 0.85);
+    color: rgba(255, 255, 255, 0.75);
+    margin-top: 2px;
 }
 
-.ai-status-indicator {
+.sisil-live-indicator {
     display: inline-block;
     width: 6px;
     height: 6px;
     border-radius: 50%;
     background: #4ade80;
+    box-shadow: 0 0 5px #4ade80;
 }
 
-.ai-tool-btn {
+.sisil-icon-btn {
     background: transparent;
     border: none;
     color: rgba(255, 255, 255, 0.85);
-    padding: 6px 8px;
-    border-radius: 6px;
+    padding: 8px;
+    border-radius: 8px;
     cursor: pointer;
-    font-size: 14px;
-    transition: background 0.2s;
+    font-size: 16px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.ai-tool-btn:hover {
+.sisil-icon-btn:hover {
     background: rgba(255, 255, 255, 0.2);
     color: #ffffff;
 }
 
-.simoli-ai-card-body {
+/* Quick Bar Chips */
+.sisil-quick-bar {
+    padding: 10px 16px;
+    display: flex;
+    gap: 7px;
+    overflow-x: auto;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    flex-shrink: 0;
+    scrollbar-width: none;
+}
+
+.sisil-quick-bar::-webkit-scrollbar {
+    display: none;
+}
+
+.sisil-prompt-chip {
+    white-space: nowrap;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #334155;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.sisil-prompt-chip:hover {
+    background: #16a34a;
+    color: #ffffff;
+    border-color: #16a34a;
+    transform: translateY(-1px);
+}
+
+/* Chat Body */
+.sisil-chat-body {
     flex: 1;
     overflow-y: auto;
-    padding: 14px;
+    padding: 18px 20px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
     background: #f8fafc;
     scroll-behavior: smooth;
 }
 
-.ai-msg-bubble {
+.sisil-msg-item {
     display: flex;
-    flex-direction: column;
-    max-width: 90%;
+    gap: 10px;
+    max-width: 92%;
 }
 
-.ai-msg-user {
+.sisil-msg-user {
     align-self: flex-end;
+    flex-direction: row-reverse;
 }
 
-.ai-msg-assistant {
+.sisil-msg-bot {
     align-self: flex-start;
 }
 
-.bubble-content {
-    padding: 10px 14px;
-    border-radius: 14px;
-    font-size: 12.5px;
-    line-height: 1.55;
+.sisil-msg-avatar-wrap {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    overflow: hidden;
+    border: 1.5px solid rgba(22, 163, 74, 0.3);
+    background: #0b1329;
+}
+
+.sisil-msg-avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.sisil-msg-user-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #16a34a, #059669);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.sisil-bubble-wrap {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.sisil-bubble {
+    padding: 12px 16px;
+    border-radius: 16px;
+    font-size: 13px;
+    line-height: 1.6;
     word-break: break-word;
 }
 
-.ai-msg-user .bubble-content {
+.sisil-msg-user .sisil-bubble {
     background: #16a34a;
     color: #ffffff;
-    border-bottom-right-radius: 3px;
-    box-shadow: 0 2px 6px rgba(22, 163, 74, 0.25);
+    border-bottom-right-radius: 4px;
+    box-shadow: 0 2px 8px rgba(22, 163, 74, 0.25);
 }
 
-.ai-msg-assistant .bubble-content {
+.sisil-msg-bot .sisil-bubble {
     background: #ffffff;
     color: #1e293b;
     border: 1px solid #e2e8f0;
-    border-bottom-left-radius: 3px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    border-bottom-left-radius: 4px;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
 }
 
-.ai-msg-assistant .bubble-content p {
-    margin-bottom: 6px;
+.sisil-bubble p {
+    margin-bottom: 8px;
 }
 
-.ai-msg-assistant .bubble-content p:last-child {
+.sisil-bubble p:last-child {
     margin-bottom: 0;
 }
 
-.ai-msg-assistant .bubble-content pre {
-    background: #1e293b;
+.sisil-bubble pre {
+    background: #0f172a;
     color: #f8fafc;
-    padding: 8px 12px;
+    padding: 10px 14px;
     border-radius: 8px;
     overflow-x: auto;
-    font-size: 11px;
-    margin: 6px 0;
+    font-size: 11.5px;
+    margin: 8px 0;
 }
 
-.ai-msg-assistant .bubble-content table {
+.sisil-bubble table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 11px;
-    margin: 6px 0;
+    font-size: 11.5px;
+    margin: 8px 0;
 }
 
-.ai-msg-assistant .bubble-content table th,
-.ai-msg-assistant .bubble-content table td {
+.sisil-bubble table th,
+.sisil-bubble table td {
     border: 1px solid #cbd5e1;
-    padding: 4px 6px;
+    padding: 5px 8px;
 }
 
-.ai-msg-assistant .bubble-content table th {
+.sisil-bubble table th {
     background: #f1f5f9;
     font-weight: 700;
 }
 
-.bubble-time {
-    font-size: 9.5px;
+.sisil-intro-guide {
+    background: rgba(22, 163, 74, 0.05);
+    border: 1px solid rgba(22, 163, 74, 0.15);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-top: 8px;
+}
+
+.sisil-msg-time {
+    font-size: 10px;
     color: #94a3b8;
-    margin-top: 3px;
+    margin-top: 4px;
     padding: 0 4px;
 }
 
-.ai-msg-user .bubble-time {
+.sisil-msg-user .sisil-msg-time {
     text-align: right;
 }
 
@@ -341,94 +532,59 @@
 .sisil-typing-box {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     color: #64748b;
-    font-size: 11.5px;
+    font-size: 12px;
     font-style: italic;
+    padding: 4px 0;
 }
 
-.sisil-dots {
+.sisil-typing-dots {
     display: inline-flex;
     align-items: center;
-    gap: 3px;
+    gap: 4px;
 }
 
-.sisil-dots span {
-    width: 5px;
-    height: 5px;
+.sisil-typing-dots span {
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
     background: #16a34a;
-    animation: sisilBounce 1.2s infinite ease-in-out;
+    animation: sisilDotBounce 1.4s infinite ease-in-out both;
 }
 
-.sisil-dots span:nth-child(2) { animation-delay: 0.2s; }
-.sisil-dots span:nth-child(3) { animation-delay: 0.4s; }
+.sisil-typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+.sisil-typing-dots span:nth-child(2) { animation-delay: -0.16s; }
 
-@keyframes sisilBounce {
-    0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
-    40% { transform: translateY(-4px); opacity: 1; }
+@keyframes sisilDotBounce {
+    0%, 80%, 100% { transform: scale(0); opacity: 0.3; }
+    40% { transform: scale(1); opacity: 1; }
 }
 
-.simoli-ai-quick-chips {
-    padding: 7px 10px;
-    display: flex;
-    gap: 6px;
-    overflow-x: auto;
-    background: #ffffff;
-    border-top: 1px solid #f1f5f9;
-    flex-shrink: 0;
-    scrollbar-width: none;
-}
-
-.simoli-ai-quick-chips::-webkit-scrollbar {
-    display: none;
-}
-
-.ai-chip-item {
-    white-space: nowrap;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 16px;
-    padding: 4px 11px;
-    font-size: 11px;
-    color: #334155;
-    cursor: pointer;
-    transition: all 0.2s;
-    flex-shrink: 0;
-    display: inline-flex;
-    align-items: center;
-    font-weight: 500;
-}
-
-.ai-chip-item:hover {
-    background: #16a34a;
-    color: #ffffff;
-    border-color: #16a34a;
-}
-
-.simoli-ai-card-footer {
-    padding: 10px 12px;
+/* Footer & Input */
+.sisil-drawer-footer {
+    padding: 14px 18px;
     background: #ffffff;
     border-top: 1px solid #e2e8f0;
     flex-shrink: 0;
 }
 
-.ai-text-input {
-    border-radius: 20px;
-    font-size: 12.5px;
-    padding: 7px 14px;
-    border: 1px solid #cbd5e1;
+.sisil-chat-input {
+    border-radius: 24px;
+    font-size: 13px;
+    padding: 9px 18px;
+    border: 1.5px solid rgba(22, 163, 74, 0.25);
 }
 
-.ai-text-input:focus {
+.sisil-chat-input:focus {
     border-color: #16a34a;
     box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.15);
 }
 
-.ai-send-action-btn {
+.sisil-send-btn {
     border-radius: 50%;
-    width: 34px;
-    height: 34px;
+    width: 40px;
+    height: 40px;
     padding: 0;
     background: #16a34a;
     color: #ffffff;
@@ -437,46 +593,103 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    transition: background 0.2s;
+    transition: all 0.2s;
 }
 
-.ai-send-action-btn:hover {
+.sisil-send-btn:hover {
     background: #15803d;
-    color: #ffffff;
+    transform: scale(1.05);
 }
 
-.ai-send-action-btn:disabled {
+.sisil-send-btn:disabled {
     background: #94a3b8;
     cursor: not-allowed;
+    transform: none;
+}
+
+.sisil-footer-hint {
+    text-align: center;
+    color: #94a3b8;
+    font-size: 10.5px;
+    margin-top: 8px;
+}
+
+.sisil-footer-hint kbd {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-size: 9.5px;
+}
+
+/* Mobile responsive */
+@media (max-width: 575.98px) {
+    .sisil-fab-container {
+        bottom: 20px;
+        right: 16px;
+    }
+    .sisil-drawer-panel {
+        width: 100vw;
+    }
 }
 </style>
 
 <script>
 (function() {
-    const STORAGE_KEY = 'simoli_ai_chat_history_v1';
-    const triggerBtn = document.getElementById('simoliAiTriggerBtn');
-    const card = document.getElementById('simoliAiCard');
-    const closeBtn = document.getElementById('simoliAiCloseBtn');
-    const clearBtn = document.getElementById('simoliAiClearBtn');
-    const form = document.getElementById('simoliAiChatForm');
-    const input = document.getElementById('simoliAiInput');
-    const sendBtn = document.getElementById('simoliAiSendBtn');
-    const body = document.getElementById('simoliAiBody');
+    const STORAGE_KEY = 'simoli_sisil_chat_history_v2';
+    const backdrop = document.getElementById('sisilBackdrop');
+    const drawer = document.getElementById('sisilDrawer');
+    const input = document.getElementById('sisilQueryInput');
+    const sendBtn = document.getElementById('sisilSendBtn');
+    const body = document.getElementById('sisilChatBody');
+    const clearBtn = document.getElementById('sisilClearChatBtn');
 
-    if (!triggerBtn || !card || !form || !input || !body) return;
-
-    // Toggle Chat Window
-    triggerBtn.addEventListener('click', () => {
-        const isHidden = card.style.display === 'none';
-        card.style.display = isHidden ? 'flex' : 'none';
-        if (isHidden) {
-            input.focus();
-            body.scrollTop = body.scrollHeight;
+    // Global Drawer Controls
+    window.openSisilChat = function(initialQuery) {
+        if (backdrop && drawer) {
+            backdrop.classList.add('active');
+            drawer.classList.add('active');
+            if (input) {
+                setTimeout(() => input.focus(), 250);
+            }
+            if (initialQuery) {
+                window.sendSimoliAiPrompt(initialQuery);
+            }
         }
-    });
+    };
 
-    closeBtn?.addEventListener('click', () => {
-        card.style.display = 'none';
+    window.closeSisilChat = function() {
+        if (backdrop && drawer) {
+            backdrop.classList.remove('active');
+            drawer.classList.remove('active');
+        }
+    };
+
+    window.toggleSisilChat = function() {
+        if (drawer && drawer.classList.contains('active')) {
+            window.closeSisilChat();
+        } else {
+            window.openSisilChat();
+        }
+    };
+
+    // Backward compatibility for old dashboard links
+    window.openAiAssistant = function(query) {
+        window.openSisilChat(query);
+    };
+    window.closeAiAssistant = function() {
+        window.closeSisilChat();
+    };
+
+    // Keyboard shortcuts: Alt + A (Toggle), Escape (Close)
+    document.addEventListener('keydown', (e) => {
+        if (e.altKey && (e.key === 'a' || e.key === 'A')) {
+            e.preventDefault();
+            window.toggleSisilChat();
+        } else if (e.key === 'Escape' && drawer && drawer.classList.contains('active')) {
+            window.closeSisilChat();
+        }
     });
 
     // LocalStorage Operations
@@ -500,35 +713,44 @@
 
     function appendMessage(role, text, isMarkdown = true, timestamp = null) {
         const msgDiv = document.createElement('div');
-        msgDiv.className = `ai-msg-bubble ai-msg-${role === 'user' ? 'user' : 'assistant'}`;
-
-        const bubble = document.createElement('div');
-        bubble.className = 'bubble-content';
+        msgDiv.className = `sisil-msg-item sisil-msg-${role === 'user' ? 'user' : 'bot'}`;
 
         if (role === 'user') {
-            bubble.textContent = text;
-        } else if (isMarkdown) {
-            bubble.innerHTML = marked.parse(text);
-            bubble.querySelectorAll('pre code').forEach(block => {
+            msgDiv.innerHTML = `
+                <div class="sisil-msg-user-avatar"><i class="feather-user"></i></div>
+                <div class="sisil-bubble-wrap">
+                    <div class="sisil-bubble sisil-bubble-user">${escapeHtml(text)}</div>
+                    <span class="sisil-msg-time">${timestamp || renderTime()}</span>
+                </div>
+            `;
+        } else {
+            const parsedHtml = isMarkdown ? marked.parse(text) : text;
+            msgDiv.innerHTML = `
+                <div class="sisil-msg-avatar-wrap">
+                    <img src="{{ asset('images/sisil-avatar.jpg') }}" alt="SISIL" class="sisil-msg-avatar">
+                </div>
+                <div class="sisil-bubble-wrap">
+                    <div class="sisil-bubble sisil-bubble-bot">${parsedHtml}</div>
+                    <span class="sisil-msg-time">${timestamp || renderTime()}</span>
+                </div>
+            `;
+            msgDiv.querySelectorAll('pre code').forEach(block => {
                 try { hljs.highlightElement(block); } catch (e) {}
             });
-        } else {
-            bubble.innerHTML = text;
         }
 
-        const timeSpan = document.createElement('span');
-        timeSpan.className = 'bubble-time';
-        timeSpan.textContent = timestamp || renderTime();
-
-        msgDiv.appendChild(bubble);
-        msgDiv.appendChild(timeSpan);
         body.appendChild(msgDiv);
         body.scrollTop = body.scrollHeight;
-        return bubble;
+        return msgDiv.querySelector('.sisil-bubble');
     }
 
-    // Load LocalStorage history on startup
-    function loadSavedChat() {
+    function escapeHtml(str) {
+        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+        return String(str).replace(/[&<>"']/g, m => map[m]);
+    }
+
+    // Load LocalStorage on start
+    function loadSavedHistory() {
         const history = getHistory();
         if (history.length > 0) {
             body.innerHTML = '';
@@ -537,44 +759,52 @@
             });
         }
     }
-    loadSavedChat();
+    loadSavedHistory();
 
-    // Clear History Button
+    // Clear history
     clearBtn?.addEventListener('click', () => {
-        if (confirm('Hapus seluruh riwayat percakapan dengan Sisil di browser ini?')) {
+        if (confirm('Hapus seluruh riwayat percakapan dengan SISIL di browser ini?')) {
             localStorage.removeItem(STORAGE_KEY);
             body.innerHTML = `
-                <div class="ai-msg-bubble ai-msg-assistant">
-                    <div class="bubble-content">
-                        Halo! Riwayat percakapan telah dibersihkan. Ada yang bisa Sisil bantu selanjutnya? 😊
+                <div class="sisil-msg-item sisil-msg-bot">
+                    <div class="sisil-msg-avatar-wrap">
+                        <img src="{{ asset('images/sisil-avatar.jpg') }}" alt="SISIL" class="sisil-msg-avatar">
                     </div>
-                    <span class="bubble-time">${renderTime()}</span>
+                    <div class="sisil-bubble-wrap">
+                        <div class="sisil-bubble sisil-bubble-bot">
+                            <p class="mb-0 fw-bold text-success">👋 Riwayat percakapan telah dibersihkan.</p>
+                            <p class="mb-0 text-muted" style="font-size:12px;">Ada yang bisa SISIL bantu terkait data atau laporan SIMOLI?</p>
+                        </div>
+                        <span class="sisil-msg-time">${renderTime()}</span>
+                    </div>
                 </div>
             `;
         }
     });
 
-    // Handle Streaming Prompt
+    // Handle send message
     async function handleSend(promptText) {
         if (!promptText.trim()) return;
 
         const timeStr = renderTime();
         appendMessage('user', promptText, false, timeStr);
-        input.value = '';
-        input.disabled = true;
-        sendBtn.disabled = true;
+        if (input) {
+            input.value = '';
+            input.disabled = true;
+        }
+        if (sendBtn) sendBtn.disabled = true;
 
         const history = getHistory();
         history.push({ role: 'user', content: promptText, time: timeStr });
         saveHistory(history);
 
-        // Animated typing indicator (Bebas dari bug plaintext HTML)
+        // Typing indicator
         const typingHtml = `
             <div class="sisil-typing-box">
-                <div class="sisil-dots">
+                <div class="sisil-typing-dots">
                     <span></span><span></span><span></span>
                 </div>
-                <span>Sisil sedang berpikir...</span>
+                <span>SISIL sedang menganalisis...</span>
             </div>
         `;
         const botBubble = appendMessage('assistant', typingHtml, false);
@@ -598,7 +828,7 @@
                 })
             });
 
-            if (!res.ok) throw new Error(`HTTP ${res.status}: Gagal memproses permintaan`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}: Gagal memproses data`);
 
             const reader = res.body.getReader();
             const decoder = new TextDecoder('utf-8');
@@ -630,9 +860,7 @@
                             } else if (parsed.error) {
                                 botBubble.innerHTML = `<span class="text-danger fw-bold"><i class="feather-alert-triangle me-1"></i> ${parsed.error}</span>`;
                             }
-                        } catch (err) {
-                            // Ignored partial json chunk
-                        }
+                        } catch (err) {}
                     }
                 }
             }
@@ -649,21 +877,22 @@
         } catch (error) {
             botBubble.innerHTML = `<span class="text-danger"><i class="feather-alert-circle me-1"></i> Terjadi kesalahan: ${error.message}</span>`;
         } finally {
-            input.disabled = false;
-            sendBtn.disabled = false;
-            input.focus();
+            if (input) {
+                input.disabled = false;
+                input.focus();
+            }
+            if (sendBtn) sendBtn.disabled = false;
         }
     }
 
-    form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        handleSend(input.value);
-    });
+    window.handleSisilSubmit = function() {
+        if (input && input.value) {
+            handleSend(input.value);
+        }
+    };
 
     window.sendSimoliAiPrompt = function(text) {
-        if (card.style.display === 'none') {
-            card.style.display = 'flex';
-        }
+        window.openSisilChat();
         handleSend(text);
     };
 })();

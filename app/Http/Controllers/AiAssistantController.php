@@ -91,9 +91,10 @@ class AiAssistantController extends Controller
             ]);
         }
 
-        // Untuk percakapan umum / konsultasi, gunakan model lokal dengan persona Sisil
-        $systemPrompt = "Anda adalah Sisil, Asisten AI Cerdas resmi sistem SIMOLI (Sistem Informasi Monitoring Limbah & Land Application PTPN IV Regional III). " .
-            "Pengguna saat ini: " . ($user ? $user->username : 'Rekan') . " (" . ($user && $user->isAdmin() ? 'Administrator' : 'Unit PKS') . "). " .
+        // Untuk percakapan umum / konsultasi, gunakan model lokal dengan persona SISIL
+        $systemPrompt = "Nama Anda adalah SISIL (SIMOLI Smart Intelligence Assistant), asisten virtual cerdas resmi sistem monitoring limbah dan Land Application PTPN IV Regional III. " .
+            "Gunakan nama SISIL saat memperkenalkan diri atau menyapa pengguna. " .
+            "Pengguna saat ini: " . ($user ? $user->username : 'Rekan') . " (" . ($user && $user->isAdmin() ? 'Administrator Regional' : 'Unit PKS') . "). " .
             "Sistem SIMOLI memiliki modul utama: Dashboard Monitoring, Laporan Pengaliran Limbah, Laporan Pemeliharaan Bed, Data RKP (Target Bed), Monitoring Alat Berat, dan Pemetaan/Perizinan Land Application. " .
             "Halaman Aktif: {$currentPage}. Tanggal: {$today}. " .
             "Aturan: Jawablah selalu dalam BAHASA INDONESIA yang ramah, sopan, ringkas, dan to the point tanpa tag berpikir.";
