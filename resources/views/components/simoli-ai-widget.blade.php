@@ -1,22 +1,28 @@
 <!-- ============================================================
-     SIMOLI AI ASSISTANT (DEEPSEEK LOCAL ENGINE WIDGET)
+     SIMOLI AI ASSISTANT — "SISIL" (LOCAL ENGINE WIDGET)
      PTPN IV Regional III — Sistem Pemantauan Limbah & Land Application
      ============================================================ -->
 <div id="simoli-ai-widget" class="simoli-ai-widget-wrapper">
-    <!-- Floating Trigger Button -->
-    <button type="button" id="simoliAiTriggerBtn" class="simoli-ai-trigger-btn" aria-label="Buka SIMOLI AI Assistant" title="Tanya SIMOLI AI Assistant">
-        <div class="ai-btn-inner">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 2a10 10 0 0 1 10 10c0 5.523-4.477 10-10 10a9.96 9.96 0 0 1-4.587-1.112L3 21l1.112-4.413A9.96 9.96 0 0 1 2 12C2 6.477 6.477 2 12 2z"></path>
-                <path d="m9 10 3-3 3 3"></path>
-                <path d="m9 14 3 3 3-3"></path>
-            </svg>
+    <!-- Floating Trigger Button with "Tanya Sisil" Pill -->
+    <div class="simoli-ai-trigger-group">
+        <div class="simoli-ai-btn-label" onclick="document.getElementById('simoliAiTriggerBtn').click()">
+            <i class="feather-message-square me-1"></i>
+            <span>Tanya Sisil</span>
         </div>
-        <span class="ai-online-ping"></span>
-    </button>
+        <button type="button" id="simoliAiTriggerBtn" class="simoli-ai-trigger-btn" aria-label="Buka Tanya Sisil AI" title="Tanya Sisil — AI Assistant SIMOLI">
+            <div class="ai-btn-inner">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2a10 10 0 0 1 10 10c0 5.523-4.477 10-10 10a9.96 9.96 0 0 1-4.587-1.112L3 21l1.112-4.413A9.96 9.96 0 0 1 2 12C2 6.477 6.477 2 12 2z"></path>
+                    <path d="m9 10 3-3 3 3"></path>
+                    <path d="m9 14 3 3 3-3"></path>
+                </svg>
+            </div>
+            <span class="ai-online-ping"></span>
+        </button>
+    </div>
 
     <!-- Floating Chat Window -->
-    <div id="simoliAiCard" class="simoli-ai-window" style="display: none;" role="dialog" aria-modal="true" aria-label="SIMOLI AI Assistant">
+    <div id="simoliAiCard" class="simoli-ai-window" style="display: none;" role="dialog" aria-modal="true" aria-label="Tanya Sisil">
         <!-- Header -->
         <div class="simoli-ai-card-header">
             <div class="d-flex align-items-center gap-2 min-w-0">
@@ -24,10 +30,13 @@
                     <i class="feather-cpu text-white" style="font-size: 16px;"></i>
                 </div>
                 <div class="min-w-0">
-                    <h6 class="ai-card-title mb-0 text-truncate">SIMOLI AI Assistant</h6>
-                    <div class="d-flex align-items-center gap-1">
+                    <div class="d-flex align-items-center gap-2">
+                        <h6 class="ai-card-title mb-0 text-truncate">Sisil</h6>
+                        <span class="badge bg-white text-success fw-bold px-2 py-0" style="font-size: 9.5px; border-radius: 10px;">AI SIMOLI</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-1 mt-0.5">
                         <span class="ai-status-indicator"></span>
-                        <small class="ai-card-subtitle text-white-50">DeepSeek Local Engine</small>
+                        <small class="ai-card-subtitle text-white-50">Asisten Virtual PTPN IV</small>
                     </div>
                 </div>
             </div>
@@ -45,7 +54,7 @@
         <div id="simoliAiBody" class="simoli-ai-card-body">
             <div class="ai-msg-bubble ai-msg-assistant">
                 <div class="bubble-content">
-                    Halo! 👋 Saya <strong>SIMOLI AI Assistant</strong> yang berjalan lokal di server PTPN IV. Ada yang bisa saya bantu mengenai data pengaliran limbah, RKP, pemeliharaan, atau status harian PKS?
+                    Halo! 👋 Saya <strong>Sisil</strong>, asisten virtual SIMOLI PTPN IV Regional III. Ada yang bisa Sisil bantu mengenai data pengaliran limbah, RKP, pemeliharaan, atau status harian PKS?
                 </div>
                 <span class="bubble-time">{{ date('H:i') }}</span>
             </div>
@@ -67,7 +76,7 @@
         <!-- Footer Input -->
         <div class="simoli-ai-card-footer">
             <form id="simoliAiChatForm" class="d-flex align-items-center gap-2 m-0 w-100">
-                <input type="text" id="simoliAiInput" class="form-control ai-text-input" placeholder="Ketik pertanyaan atau perintah..." autocomplete="off" required maxlength="1000">
+                <input type="text" id="simoliAiInput" class="form-control ai-text-input" placeholder="Tanya Sisil tentang data SIMOLI..." autocomplete="off" required maxlength="1000">
                 <button type="submit" id="simoliAiSendBtn" class="btn ai-send-action-btn" aria-label="Kirim Pesan">
                     <i class="feather-send"></i>
                 </button>
@@ -83,19 +92,48 @@
 
 <style>
 /* ================================================================
-   SIMOLI AI ASSISTANT WIDGET STYLING
+   SIMOLI AI ASSISTANT "SISIL" WIDGET STYLING
    ================================================================ */
 .simoli-ai-widget-wrapper {
     position: fixed;
-    bottom: 24px;
+    bottom: 90px;
     right: 24px;
     z-index: 10500;
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
+.simoli-ai-trigger-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.simoli-ai-btn-label {
+    background: #ffffff;
+    color: #16a34a;
+    font-weight: 700;
+    font-size: 12.5px;
+    padding: 7px 14px;
+    border-radius: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(22, 163, 74, 0.15);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: all 0.25s ease;
+    user-select: none;
+    white-space: nowrap;
+}
+
+.simoli-ai-btn-label:hover {
+    background: #16a34a;
+    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(22, 163, 74, 0.35);
+}
+
 .simoli-ai-trigger-btn {
-    width: 54px;
-    height: 54px;
+    width: 52px;
+    height: 52px;
     border-radius: 50%;
     background: linear-gradient(135deg, #16a34a, #0d9488);
     color: #ffffff;
@@ -107,6 +145,7 @@
     justify-content: center;
     position: relative;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0;
 }
 
 .simoli-ai-trigger-btn:hover {
@@ -129,10 +168,10 @@
     position: absolute;
     bottom: 68px;
     right: 0;
-    width: 380px;
+    width: 390px;
     max-width: calc(100vw - 32px);
-    height: 540px;
-    max-height: calc(100vh - 100px);
+    height: 550px;
+    max-height: calc(100vh - 120px);
     background: #ffffff;
     border-radius: 18px;
     box-shadow: 0 20px 45px rgba(15, 23, 42, 0.2), 0 0 0 1px rgba(22, 163, 74, 0.15);
@@ -157,10 +196,10 @@
 }
 
 .ai-avatar-icon {
-    width: 32px;
-    height: 32px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 9px;
+    width: 34px;
+    height: 34px;
+    background: rgba(255, 255, 255, 0.22);
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -168,15 +207,15 @@
 }
 
 .ai-card-title {
-    font-size: 13.5px;
-    font-weight: 700;
+    font-size: 14px;
+    font-weight: 800;
     color: #ffffff;
     letter-spacing: -0.2px;
 }
 
 .ai-card-subtitle {
-    font-size: 10px;
-    color: rgba(255, 255, 255, 0.75);
+    font-size: 10.5px;
+    color: rgba(255, 255, 255, 0.85);
 }
 
 .ai-status-indicator {
@@ -199,7 +238,7 @@
 }
 
 .ai-tool-btn:hover {
-    background: rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.2);
     color: #ffffff;
 }
 
@@ -217,7 +256,7 @@
 .ai-msg-bubble {
     display: flex;
     flex-direction: column;
-    max-width: 88%;
+    max-width: 90%;
 }
 
 .ai-msg-user {
@@ -298,8 +337,40 @@
     text-align: right;
 }
 
+/* Typing Indicator */
+.sisil-typing-box {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #64748b;
+    font-size: 11.5px;
+    font-style: italic;
+}
+
+.sisil-dots {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.sisil-dots span {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #16a34a;
+    animation: sisilBounce 1.2s infinite ease-in-out;
+}
+
+.sisil-dots span:nth-child(2) { animation-delay: 0.2s; }
+.sisil-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes sisilBounce {
+    0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+    40% { transform: translateY(-4px); opacity: 1; }
+}
+
 .simoli-ai-quick-chips {
-    padding: 6px 10px;
+    padding: 7px 10px;
     display: flex;
     gap: 6px;
     overflow-x: auto;
@@ -318,7 +389,7 @@
     background: #f8fafc;
     border: 1px solid #e2e8f0;
     border-radius: 16px;
-    padding: 3px 10px;
+    padding: 4px 11px;
     font-size: 11px;
     color: #334155;
     cursor: pointer;
@@ -326,6 +397,7 @@
     flex-shrink: 0;
     display: inline-flex;
     align-items: center;
+    font-weight: 500;
 }
 
 .ai-chip-item:hover {
@@ -433,13 +505,15 @@
         const bubble = document.createElement('div');
         bubble.className = 'bubble-content';
 
-        if (role === 'user' || !isMarkdown) {
+        if (role === 'user') {
             bubble.textContent = text;
-        } else {
+        } else if (isMarkdown) {
             bubble.innerHTML = marked.parse(text);
             bubble.querySelectorAll('pre code').forEach(block => {
                 try { hljs.highlightElement(block); } catch (e) {}
             });
+        } else {
+            bubble.innerHTML = text;
         }
 
         const timeSpan = document.createElement('span');
@@ -467,12 +541,12 @@
 
     // Clear History Button
     clearBtn?.addEventListener('click', () => {
-        if (confirm('Hapus seluruh riwayat percakapan AI di browser ini?')) {
+        if (confirm('Hapus seluruh riwayat percakapan dengan Sisil di browser ini?')) {
             localStorage.removeItem(STORAGE_KEY);
             body.innerHTML = `
                 <div class="ai-msg-bubble ai-msg-assistant">
                     <div class="bubble-content">
-                        Riwayat percakapan telah dibersihkan. Ada yang bisa saya bantu selanjutnya? 😊
+                        Halo! Riwayat percakapan telah dibersihkan. Ada yang bisa Sisil bantu selanjutnya? 😊
                     </div>
                     <span class="bubble-time">${renderTime()}</span>
                 </div>
@@ -494,7 +568,16 @@
         history.push({ role: 'user', content: promptText, time: timeStr });
         saveHistory(history);
 
-        const botBubble = appendMessage('assistant', '<span class="text-muted fst-italic"><i class="feather-loader me-1"></i> Sedang berpikir...</span>', false);
+        // Animated typing indicator (Bebas dari bug plaintext HTML)
+        const typingHtml = `
+            <div class="sisil-typing-box">
+                <div class="sisil-dots">
+                    <span></span><span></span><span></span>
+                </div>
+                <span>Sisil sedang berpikir...</span>
+            </div>
+        `;
+        const botBubble = appendMessage('assistant', typingHtml, false);
         let fullResponse = '';
 
         try {

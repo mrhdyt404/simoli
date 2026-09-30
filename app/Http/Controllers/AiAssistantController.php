@@ -19,7 +19,7 @@ class AiAssistantController extends Controller
     }
 
     /**
-     * Endpoint Streaming SSE AI Assistant via Ollama DeepSeek
+     * Endpoint Streaming SSE AI Assistant via Sisil / Ollama Local Engine
      */
     public function stream(Request $request): StreamedResponse
     {
@@ -30,29 +30,78 @@ class AiAssistantController extends Controller
         ]);
 
         $user = Auth::user();
-        $userPrompt = $request->input('prompt');
+        $userPrompt = trim($request->input('prompt'));
         $clientHistory = $request->input('history', []);
         $currentPage = $request->input('current_page', 'Dashboard');
         $today = date('Y-m-d');
 
-        // Data audit SIMOLI terkini sebagai konteks (RAG)
-        $auditData = $this->aiService->getDailyAudit($today);
-        $missingCount = count($auditData['missing_pks'] ?? []);
-        $inputtedCount = count($auditData['inputted_pks'] ?? []);
-        $missingNames = implode(', ', array_column($auditData['missing_pks'] ?? [], 'akro'));
+        // Deteksi apakah query terkait data / operasional SIMOLI
+        $lowerPrompt = strtolower($userPrompt);
+        $isDomainQuery = str_contains($lowerPrompt, 'rekap') ||
+            str_contains($lowerPrompt, 'pengaliran') ||
+            str_contains($lowerPrompt, 'limbah') ||
+            str_contains($lowerPrompt, 'rkp') ||
+            str_contains($lowerPrompt, 'rencana') ||
+            str_contains($lowerPrompt, 'pemeliharaan') ||
+            str_contains($lowerPrompt, 'alat berat') ||
+            str_contains($lowerPrompt, 'hm') ||
+            str_contains($lowerPrompt, 'bbm') ||
+            str_contains($lowerPrompt, 'kepatuhan') ||
+            str_contains($lowerPrompt, 'input') ||
+            str_contains($lowerPrompt, 'pks') ||
+            str_contains($lowerPrompt, 'audit') ||
+            str_contains($lowerPrompt, 'laporan') ||
+            str_contains($lowerPrompt, 'volume') ||
+            str_contains($lowerPrompt, 'flat bed');
 
-        $systemPrompt = "Anda adalah Asisten Cerdas SIMOLI (Sistem Informasi Monitoring Limbah & Land Aplikasi PTPN IV Regional III). " .
-            "Identitas Pengguna: " . ($user ? $user->username : 'Guest') . " (" . ($user && $user->isAdmin() ? 'Administrator' : 'Unit PKS') . "). " .
-            "Halaman Aktif: {$currentPage}. Tanggal Hari Ini: {$today}. " .
-            "Status Input Hari Ini: {$inputtedCount} PKS sudah input, {$missingCount} PKS belum input" . ($missingCount > 0 ? " (PKS belum input: {$missingNames})" : "") . ". " .
-            "Panduan: Jawablah dengan akurat, ramah, dan profesional dalam Bahasa Indonesia. Gunakan format Markdown (bold, list, tabel) untuk mempermudah pembacaan. " .
-            "Jika pengguna menanyakan data tertentu, gunakan konteks sistem di atas.";
+        // Jika query adalah data SIMOLI, gunakan engine data langsung (Sangat cepat < 0.1 detik & 100% akurat)
+        if ($isDomainQuery) {
+            $dataResult = $this->aiService->answerQuery($userPrompt, $today);
+            $fullAnswer = $dataResult['answer'] ?? 'Tidak ada data yang dapat ditampilkan.';
+
+            return response()->stream(function () use ($fullAnswer) {
+                if (function_exists('apache_setenv')) {
+                    @apache_setenv('no-gzip', 1);
+                }
+                @ini_set('zlib.output_compression', 'Off');
+                @ini_set('implicit_flush', 1);
+                while (ob_get_level() > 0) {
+                    ob_end_flush();
+                }
+                ob_implicit_flush(1);
+
+                // Stream kata-per-kata secara dinamis agar UX halus dan instan
+                $words = preg_split('/(?<=\s)|(?=\n)/', $fullAnswer);
+                foreach ($words as $chunk) {
+                    if ($chunk === '') continue;
+                    echo "data: " . json_encode(['text' => $chunk]) . "\n\n";
+                    if (ob_get_level() > 0) ob_flush();
+                    flush();
+                    usleep(10000); // 10ms jeda antar kata
+                }
+
+                echo "data: [DONE]\n\n";
+                if (ob_get_level() > 0) ob_flush();
+                flush();
+            }, 200, [
+                'Content-Type' => 'text/event-stream',
+                'Cache-Control' => 'no-cache, no-transform',
+                'Connection' => 'keep-alive',
+                'X-Accel-Buffering' => 'no',
+            ]);
+        }
+
+        // Untuk percakapan umum / konsultasi, gunakan Ollama dengan persona Sisil
+        $systemPrompt = "Nama Anda adalah Sisil, Asisten AI Cerdas resmi sistem SIMOLI (PTPN IV Regional III). " .
+            "Pengguna saat ini: " . ($user ? $user->username : 'Rekan') . " (" . ($user && $user->isAdmin() ? 'Administrator' : 'Unit PKS') . "). " .
+            "Halaman Aktif: {$currentPage}. Tanggal: {$today}. " .
+            "Aturan Utama: Jawablah selalu dalam BAHASA INDONESIA yang ramah, sopan, ringkas, dan profesional. " .
+            "Jawab langsung tanpa pengantar berbelit dan tanpa menuliskan proses berpikir internal (<think>).";
 
         $messages = [
             ['role' => 'system', 'content' => $systemPrompt]
         ];
 
-        // Ambil maksimal 4 interaksi terakhir dari client untuk efisiensi RAM 2GB
         if (!empty($clientHistory) && is_array($clientHistory)) {
             $recent = array_slice($clientHistory, -4);
             foreach ($recent as $msg) {
@@ -86,8 +135,9 @@ class AiAssistantController extends Controller
                 'messages' => $messages,
                 'stream' => true,
                 'options' => [
-                    'temperature' => 0.6,
-                    'num_ctx' => 2048,
+                    'temperature' => 0.5,
+                    'num_ctx' => 1024,
+                    'num_thread' => 2,
                 ]
             ]);
 
@@ -96,9 +146,11 @@ class AiAssistantController extends Controller
             curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
             curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, false);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 120);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 60);
 
-            curl_setopt($ch, CURLOPT_WRITEFUNCTION, function ($curl, $data) {
+            $inThink = false;
+
+            curl_setopt($ch, CURLOPT_WRITEFUNCTION, function ($curl, $data) use (&$inThink) {
                 $lines = explode("\n", $data);
                 foreach ($lines as $line) {
                     $line = trim($line);
@@ -107,6 +159,21 @@ class AiAssistantController extends Controller
                     $json = json_decode($line, true);
                     if ($json && isset($json['message']['content'])) {
                         $chunk = $json['message']['content'];
+
+                        // Filter tag <think> dan </think> agar tidak bocor dan tidak memperlambat UI
+                        if (str_contains($chunk, '<think>')) {
+                            $inThink = true;
+                            $chunk = str_replace('<think>', '', $chunk);
+                        }
+                        if (str_contains($chunk, '</think>')) {
+                            $inThink = false;
+                            $chunk = str_replace('</think>', '', $chunk);
+                        }
+
+                        if ($inThink || empty(trim($chunk))) {
+                            continue;
+                        }
+
                         echo "data: " . json_encode(['text' => $chunk]) . "\n\n";
                         if (ob_get_level() > 0) ob_flush();
                         flush();
@@ -117,7 +184,7 @@ class AiAssistantController extends Controller
 
             curl_exec($ch);
             if (curl_errno($ch)) {
-                echo "data: " . json_encode(['error' => 'Gagal terhubung ke engine Ollama: ' . curl_error($ch)]) . "\n\n";
+                echo "data: " . json_encode(['error' => 'Maaf, Sisil sedang tidak dapat terhubung ke engine AI: ' . curl_error($ch)]) . "\n\n";
                 if (ob_get_level() > 0) ob_flush();
                 flush();
             }
