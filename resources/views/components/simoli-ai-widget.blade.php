@@ -29,7 +29,7 @@
                 </div>
                 <div class="min-w-0">
                     <div class="d-flex align-items-center gap-2">
-                        <h5 class="sisil-hdr-title mb-0 text-truncate">SISIL</h5>
+                        <h5 class="text-white sisil-hdr-title mb-0 text-truncate">SISIL</h5>
                         <span class="sisil-badge-tag">AI Assistant</span>
                     </div>
                     <div class="sisil-hdr-subtitle text-truncate">SIMOLI Smart Intelligence Assistant</div>
@@ -104,15 +104,18 @@
         <!-- Drawer Footer / Input Bar -->
         <div class="sisil-drawer-footer">
             <form id="sisilChatForm" class="d-flex align-items-center gap-2 m-0 w-100" onsubmit="event.preventDefault(); window.handleSisilSubmit();">
-                <input type="text" id="sisilQueryInput" class="form-control sisil-chat-input"
-                       placeholder="Tanya SISIL tentang data SIMOLI (mis: 'rekap pengaliran')..."
-                       autocomplete="off" required maxlength="1000">
+                <div class="sisil-input-wrap">
+                    <input type="text" id="sisilQueryInput" class="form-control sisil-chat-input"
+                           placeholder="Tanya SISIL tentang data SIMOLI (maks 500 karakter)..."
+                           autocomplete="off" required maxlength="500">
+                    <span id="sisilCharCounter" class="sisil-char-counter" title="Batas maksimal 500 karakter">0/500</span>
+                </div>
                 <button type="submit" id="sisilSendBtn" class="btn sisil-send-btn" aria-label="Kirim Pesan" title="Kirim Pesan">
                     <i class="feather-send"></i>
                 </button>
             </form>
             <div class="sisil-footer-hint">
-                <span>SISIL Local Engine</span> &bull; <span>Tekan <kbd>Enter</kbd> untuk kirim</span> &bull; <span><kbd>Alt + A</kbd> toggle</span>
+                <span>SISIL Engine (Ultra-Ringan)</span> &bull; <span>Batas 500 Karakter</span> &bull; <span><kbd>Alt + A</kbd> toggle</span>
             </div>
         </div>
     </aside>
@@ -139,8 +142,8 @@
 }
 
 .sisil-fab-pill {
-    background: #linear-gradient(135deg, #062817 0%, #0c3e23 50%, #064e3b 100%);
-    color: #16a34a;
+    background: linear-gradient(135deg, var(--theme-hero-from, #030d07) 0%, var(--theme-hero-mid, #0a2317) 35%, var(--theme-hero-to, #0e3b26) 65%, var(--theme-hero-accent, #16a34a) 100%);
+    color: #ffffff;
     font-weight: 800;
     font-size: 13px;
     padding: 8px 16px;
@@ -569,16 +572,58 @@
     flex-shrink: 0;
 }
 
+.sisil-input-wrap {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
 .sisil-chat-input {
     border-radius: 24px;
     font-size: 13px;
-    padding: 9px 18px;
+    padding: 9px 58px 9px 18px;
     border: 1.5px solid rgba(22, 163, 74, 0.25);
+    width: 100%;
 }
 
 .sisil-chat-input:focus {
     border-color: #16a34a;
     box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.15);
+}
+
+.sisil-char-counter {
+    position: absolute;
+    right: 12px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #94a3b8;
+    background: #f1f5f9;
+    padding: 2px 7px;
+    border-radius: 12px;
+    pointer-events: none;
+    transition: all 0.2s;
+    user-select: none;
+    border: 1px solid #e2e8f0;
+}
+
+.sisil-char-counter.sisil-counter-warning {
+    color: #d97706;
+    background: #fef3c7;
+    border-color: #fde68a;
+}
+
+.sisil-char-counter.sisil-counter-limit {
+    color: #dc2626;
+    background: #fee2e2;
+    border-color: #fca5a5;
+    animation: sisilShake 0.25s ease-in-out;
+}
+
+@keyframes sisilShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-3px); }
+    75% { transform: translateX(3px); }
 }
 
 .sisil-send-btn {
@@ -638,12 +683,57 @@
 <script>
 (function() {
     const STORAGE_KEY = 'simoli_sisil_chat_history_v2';
+    const MAX_PROMPT_CHARS = 500;
     const backdrop = document.getElementById('sisilBackdrop');
     const drawer = document.getElementById('sisilDrawer');
     const input = document.getElementById('sisilQueryInput');
     const sendBtn = document.getElementById('sisilSendBtn');
+    const charCounter = document.getElementById('sisilCharCounter');
     const body = document.getElementById('sisilChatBody');
     const clearBtn = document.getElementById('sisilClearChatBtn');
+
+    // Real-time Character Counter & Hard Limit Blocker
+    function updateCharCounter() {
+        if (!input || !charCounter) return;
+        if (input.value.length > MAX_PROMPT_CHARS) {
+            input.value = input.value.slice(0, MAX_PROMPT_CHARS);
+        }
+        const len = input.value.length;
+        charCounter.textContent = `${len}/${MAX_PROMPT_CHARS}`;
+
+        if (len >= MAX_PROMPT_CHARS) {
+            charCounter.classList.add('sisil-counter-limit');
+            charCounter.classList.remove('sisil-counter-warning');
+        } else if (len >= MAX_PROMPT_CHARS * 0.8) {
+            charCounter.classList.add('sisil-counter-warning');
+            charCounter.classList.remove('sisil-counter-limit');
+        } else {
+            charCounter.classList.remove('sisil-counter-warning', 'sisil-counter-limit');
+        }
+    }
+
+    if (input) {
+        input.addEventListener('input', updateCharCounter);
+        input.addEventListener('paste', () => {
+            setTimeout(updateCharCounter, 0);
+        });
+        input.addEventListener('keydown', (e) => {
+            // Mencegah pengetikan jika sudah mencapai batas maksimal 500 karakter
+            if (input.value.length >= MAX_PROMPT_CHARS && 
+                e.key !== 'Backspace' && 
+                e.key !== 'Delete' && 
+                e.key !== 'ArrowLeft' && 
+                e.key !== 'ArrowRight' && 
+                e.key !== 'ArrowUp' && 
+                e.key !== 'ArrowDown' && 
+                !e.ctrlKey && 
+                !e.metaKey && 
+                e.key !== 'Enter') {
+                e.preventDefault();
+                updateCharCounter();
+            }
+        });
+    }
 
     // Global Drawer Controls
     window.openSisilChat = function(initialQuery) {

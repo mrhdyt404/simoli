@@ -24,13 +24,13 @@ class AiAssistantController extends Controller
     public function stream(Request $request): StreamedResponse
     {
         $request->validate([
-            'prompt' => 'required|string|max:1000',
+            'prompt' => 'required|string|max:500',
             'history' => 'nullable|array',
             'current_page' => 'nullable|string',
         ]);
 
         $user = Auth::user();
-        $userPrompt = trim($request->input('prompt'));
+        $userPrompt = mb_substr(trim($request->input('prompt')), 0, 500);
         $clientHistory = $request->input('history', []);
         $currentPage = $request->input('current_page', 'Dashboard');
         $today = date('Y-m-d');
@@ -91,25 +91,24 @@ class AiAssistantController extends Controller
             ]);
         }
 
-        // Untuk percakapan umum / konsultasi, gunakan model lokal dengan persona SISIL
+        // Untuk percakapan umum / konsultasi, gunakan model lokal dengan persona SISIL (Ultra-ringan di RAM 2GB)
         $systemPrompt = "Nama Anda adalah SISIL (SIMOLI Smart Intelligence Assistant), asisten virtual cerdas resmi sistem monitoring limbah dan Land Application PTPN IV Regional III. " .
-            "Gunakan nama SISIL saat memperkenalkan diri atau menyapa pengguna. " .
             "Pengguna saat ini: " . ($user ? $user->username : 'Rekan') . " (" . ($user && $user->isAdmin() ? 'Administrator Regional' : 'Unit PKS') . "). " .
-            "Sistem SIMOLI memiliki modul utama: Dashboard Monitoring, Laporan Pengaliran Limbah, Laporan Pemeliharaan Bed, Data RKP (Target Bed), Monitoring Alat Berat, dan Pemetaan/Perizinan Land Application. " .
             "Halaman Aktif: {$currentPage}. Tanggal: {$today}. " .
-            "Aturan: Jawablah selalu dalam BAHASA INDONESIA yang ramah, sopan, ringkas, dan to the point tanpa tag berpikir.";
+            "Aturan: Jawablah selalu dalam BAHASA INDONESIA secara PADAT, RINGKAS, dan LANGSUNG KE INTI JAWABAN (maksimal 2-3 paragraf singkat atau poin ringkas). Hindari berbelit-belit atau tag berpikir.";
 
         $messages = [
             ['role' => 'system', 'content' => $systemPrompt]
         ];
 
+        // Hemat RAM 2GB: Ambil hanya 2 pesan percakapan terakhir
         if (!empty($clientHistory) && is_array($clientHistory)) {
-            $recent = array_slice($clientHistory, -4);
+            $recent = array_slice($clientHistory, -2);
             foreach ($recent as $msg) {
                 if (isset($msg['role'], $msg['content']) && in_array($msg['role'], ['user', 'assistant'])) {
                     $messages[] = [
                         'role' => $msg['role'],
-                        'content' => (string) $msg['content']
+                        'content' => mb_substr((string) $msg['content'], 0, 300)
                     ];
                 }
             }
@@ -136,9 +135,9 @@ class AiAssistantController extends Controller
                 'messages' => $messages,
                 'stream' => true,
                 'options' => [
-                    'temperature' => 0.4,
-                    'num_predict' => 200, // Menghindari looping panjang di CPU
-                    'num_ctx' => 1024,
+                    'temperature' => 0.3, // Lebih deterministik & cepat
+                    'num_predict' => 150, // Respon cepat 1-3 detik, cegah looping CPU
+                    'num_ctx' => 768,    // Sangat hemat memori RAM 2GB
                     'num_thread' => 2,
                 ]
             ]);
