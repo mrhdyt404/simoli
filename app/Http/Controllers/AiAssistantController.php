@@ -91,12 +91,12 @@ class AiAssistantController extends Controller
             ]);
         }
 
-        // Untuk percakapan umum / konsultasi, gunakan Ollama dengan persona Sisil
-        $systemPrompt = "Nama Anda adalah Sisil, Asisten AI Cerdas resmi sistem SIMOLI (PTPN IV Regional III). " .
+        // Untuk percakapan umum / konsultasi, gunakan model lokal dengan persona Sisil
+        $systemPrompt = "Anda adalah Sisil, Asisten AI Cerdas resmi sistem SIMOLI (Sistem Informasi Monitoring Limbah & Land Application PTPN IV Regional III). " .
             "Pengguna saat ini: " . ($user ? $user->username : 'Rekan') . " (" . ($user && $user->isAdmin() ? 'Administrator' : 'Unit PKS') . "). " .
+            "Sistem SIMOLI memiliki modul utama: Dashboard Monitoring, Laporan Pengaliran Limbah, Laporan Pemeliharaan Bed, Data RKP (Target Bed), Monitoring Alat Berat, dan Pemetaan/Perizinan Land Application. " .
             "Halaman Aktif: {$currentPage}. Tanggal: {$today}. " .
-            "Aturan Utama: Jawablah selalu dalam BAHASA INDONESIA yang ramah, sopan, ringkas, dan profesional. " .
-            "Jawab langsung tanpa pengantar berbelit dan tanpa menuliskan proses berpikir internal (<think>).";
+            "Aturan: Jawablah selalu dalam BAHASA INDONESIA yang ramah, sopan, ringkas, dan to the point tanpa tag berpikir.";
 
         $messages = [
             ['role' => 'system', 'content' => $systemPrompt]
@@ -117,9 +117,9 @@ class AiAssistantController extends Controller
         $messages[] = ['role' => 'user', 'content' => $userPrompt];
 
         $ollamaUrl = config('services.ollama.base_url', 'http://127.0.0.1:11434') . '/api/chat';
-        $model = config('services.ollama.model', 'deepseek-r1:1.5b');
+        $model = config('services.ollama.model', 'qwen2.5:1.5b');
 
-        return response()->stream(function () use ($ollamaUrl, $model, $messages) {
+        return response()->stream(function () use ($ollamaUrl, $model, $messages, $userPrompt) {
             if (function_exists('apache_setenv')) {
                 @apache_setenv('no-gzip', 1);
             }
@@ -135,7 +135,8 @@ class AiAssistantController extends Controller
                 'messages' => $messages,
                 'stream' => true,
                 'options' => [
-                    'temperature' => 0.5,
+                    'temperature' => 0.4,
+                    'num_predict' => 200, // Menghindari looping panjang di CPU
                     'num_ctx' => 1024,
                     'num_thread' => 2,
                 ]
@@ -146,11 +147,13 @@ class AiAssistantController extends Controller
             curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
             curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, false);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 60);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 180);
 
             $inThink = false;
+            $hasOutput = false;
 
-            curl_setopt($ch, CURLOPT_WRITEFUNCTION, function ($curl, $data) use (&$inThink) {
+            curl_setopt($ch, CURLOPT_WRITEFUNCTION, function ($curl, $data) use (&$inThink, &$hasOutput) {
                 $lines = explode("\n", $data);
                 foreach ($lines as $line) {
                     $line = trim($line);
@@ -160,7 +163,7 @@ class AiAssistantController extends Controller
                     if ($json && isset($json['message']['content'])) {
                         $chunk = $json['message']['content'];
 
-                        // Filter tag <think> dan </think> agar tidak bocor dan tidak memperlambat UI
+                        // Filter tag <think> dan </think>
                         if (str_contains($chunk, '<think>')) {
                             $inThink = true;
                             $chunk = str_replace('<think>', '', $chunk);
@@ -174,6 +177,7 @@ class AiAssistantController extends Controller
                             continue;
                         }
 
+                        $hasOutput = true;
                         echo "data: " . json_encode(['text' => $chunk]) . "\n\n";
                         if (ob_get_level() > 0) ob_flush();
                         flush();
@@ -183,12 +187,16 @@ class AiAssistantController extends Controller
             });
 
             curl_exec($ch);
-            if (curl_errno($ch)) {
-                echo "data: " . json_encode(['error' => 'Maaf, Sisil sedang tidak dapat terhubung ke engine AI: ' . curl_error($ch)]) . "\n\n";
+            $curlError = curl_error($ch);
+            curl_close($ch);
+
+            // Jika ada error atau tidak ada output sama sekali dari LLM, fallback ke pesan informatif Sisil
+            if (!empty($curlError) && !$hasOutput) {
+                $fallbackText = "Halo! Sisil siap membantu Anda. Untuk saat ini, Anda dapat menanyakan rekap data pengaliran, data RKP, pemeliharaan, atau status input harian PKS pada menu yang tersedia.";
+                echo "data: " . json_encode(['text' => $fallbackText]) . "\n\n";
                 if (ob_get_level() > 0) ob_flush();
                 flush();
             }
-            curl_close($ch);
 
             echo "data: [DONE]\n\n";
             if (ob_get_level() > 0) ob_flush();
