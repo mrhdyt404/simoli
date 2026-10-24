@@ -33,6 +33,39 @@ class SimoliAiAssistantService
         'desember' => 12, 'des' => 12, 'dec' => 12, 'december' => 12,
     ];
 
+    /**
+     * Urutan standar baku 12 Unit PKS PTPN IV Regional III untuk AI Assistant SIMOLI:
+     * TPU, TME, SGO, SPA, SGH, SBT, LDA, TAN, TER, STA, SRO, SIN
+     */
+    public const PKS_STANDARD_ORDER = [
+        'TPU',
+        'TME',
+        'SGO',
+        'SPA',
+        'SGH',
+        'SBT',
+        'LDA',
+        'TAN',
+        'TER',
+        'STA',
+        'SRO',
+        'SIN',
+    ];
+
+    /**
+     * Dapatkan daftar 12 unit operasional PKS dengan urutan standar baku SIMOLI
+     */
+    public static function getOrderedOperationalPks()
+    {
+        $pksList = Pks::whereNotIn('akro', ['TEP', 'DTM', 'DBR'])->get();
+        $orderMap = array_flip(self::PKS_STANDARD_ORDER);
+
+        return $pksList->sortBy(function ($pks) use ($orderMap) {
+            $akro = strtoupper(trim($pks->akro ?: ''));
+            return $orderMap[$akro] ?? 999;
+        })->values();
+    }
+
     public function __construct(SidobeWaService $waService)
     {
         $this->waService = $waService;
@@ -64,7 +97,7 @@ class SimoliAiAssistantService
     public function getDailyAudit(?string $date = null): array
     {
         $targetDate = $date ? Carbon::parse($date)->format('Y-m-d') : Carbon::now('Asia/Jakarta')->format('Y-m-d');
-        $pksList = Pks::whereNotIn('akro', ['TEP', 'DTM', 'DBR'])->orderBy('nama')->get();
+        $pksList = self::getOrderedOperationalPks();
 
         $auditData = [];
         $missingPengaliran = [];
@@ -493,16 +526,20 @@ class SimoliAiAssistantService
         $rencanaQ = Rencana::with('pks')->where('tahun', $targetYear);
         if ($targetPks) {
             $rencanaQ->where('id_pks', $targetPks->id_pks);
+        } else {
+            $rencanaQ->whereHas('pks', function ($q) {
+                $q->whereNotIn('akro', ['TEP', 'DTM', 'DBR']);
+            });
         }
         $rencanaRecords = $rencanaQ->get();
         $totalRencanaFlatBed = self::numericSum($rencanaRecords, 'flat_bed');
         $totalRencanaLongBed = self::numericSum($rencanaRecords, 'long_bed');
         $availableRencanaYears = Rencana::distinct()->orderBy('tahun', 'desc')->pluck('tahun')->values()->all();
 
-        // Per-PKS Breakdown jika Multi PKS
+        // Per-PKS Breakdown jika Multi PKS (Mengikuti Urutan Standar Baku Unit PKS)
         $pksBreakdown = [];
         if (!$targetPks) {
-            $allOperationalPks = Pks::whereNotIn('akro', ['TEP', 'DTM', 'DBR'])->orderBy('nama')->get();
+            $allOperationalPks = self::getOrderedOperationalPks();
             foreach ($allOperationalPks as $p) {
                 $pksPeng = $pengaliranRecords->where('id_pks', $p->id_pks);
                 $pksPem = $pemeliharaanRecords->where('id_pks', $p->id_pks);
@@ -677,8 +714,37 @@ class SimoliAiAssistantService
             . "4. OPERASIONAL ALAT BERAT:\n"
             . "   - Total Jam Kerja (HM): " . number_format($ab['total_hm'], 2) . " Jam\n"
             . "   - Total Konsumsi BBM: " . number_format($ab['total_bbm'], 2) . " Liter\n"
-            . "   - Status Populasi Unit: Ready {$ab['operational']}, Breakdown {$ab['breakdown']}, Maint {$ab['maintenance']}, Rolling {$ab['rolling']} dari total {$ab['total_unit']} Unit\n\n"
-            . "=== ATURAN PENTING & INTEGRITAS JAWABAN ===\n"
+            . "   - Status Populasi Unit: Ready {$ab['operational']}, Breakdown {$ab['breakdown']}, Maint {$ab['maintenance']}, Rolling {$ab['rolling']} dari total {$ab['total_unit']} Unit\n\n";
+
+        if (!$targetPks && !empty($scopedData['pks_breakdown'])) {
+            $systemContext .= "=== DATA REKAPITULASI SETIAP UNIT PKS (URUTAN BAKU SIMOLI) ===\n";
+            $systemContext .= "| No | PKS | Vol Dihasilkan | Vol Dialirkan | Flat Bed | HM Alat | BBM |\n";
+            foreach ($scopedData['pks_breakdown'] as $idx => $row) {
+                $vh = number_format($row['vol_dihasilkan'], 1);
+                $va = number_format($row['vol_dialirkan'], 1);
+                $fb = number_format($row['flat_bed_pengaliran']);
+                $hm = number_format($row['total_hm'], 1);
+                $bbm = number_format($row['total_bbm'], 1);
+                $systemContext .= "| " . ($idx + 1) . " | {$row['akro']} | {$vh} m³ | {$va} m³ | {$fb} Bed | {$hm} Jam | {$bbm} L |\n";
+            }
+            $systemContext .= "\n";
+        }
+
+        $systemContext .= "=== ATURAN PENTING & INTEGRITAS JAWABAN ===\n"
+            . "- ATURAN MUTLAK URUTAN PKS: Saat merekap, membuat tabel, atau menampilkan data untuk semua 12 unit PKS, Anda WAJIB SELALU mengurutkan unit PKS secara mutlak persis sesuai urutan baku SIMOLI berikut:\n"
+            . "  1. TPU (Tanah Putih)\n"
+            . "  2. TME (Tanjung Medan)\n"
+            . "  3. SGO (Sei Garo)\n"
+            . "  4. SPA (Sei Pagar)\n"
+            . "  5. SGH (Sei Galuh)\n"
+            . "  6. SBT (Sei Buatan)\n"
+            . "  7. LDA (Lubuk Dalam)\n"
+            . "  8. TAN (Tandun)\n"
+            . "  9. TER (Terantam)\n"
+            . "  10. STA (Sei Tapung)\n"
+            . "  11. SRO (Sei Rokan)\n"
+            . "  12. SIN (Sei Intan)\n"
+            . "  DILARANG KERAS mengurutkan secara alfabetis, acak, atau urutan lain!\n"
             . "- JIKA USER MENANYAKAN RKP / RENCANA / RKAP: Jawablah berdasarkan data RKP di poin 1. Jika data RKP tidak ada di database untuk tahun tersebut, katakan DENGAN TEGAS bahwa data RKP tahun tersebut TIDAK DITEMUKAN / BELUM DIINPUT di SIMOLI, dan sebutkan tahun RKP yang ada di sistem. JANGAN PERNAH menampilkan data pengaliran limbah jika user menanyakan RKP!\n"
             . "- JIKA USER MENANYAKAN PENGALIRAN: Jawablah berdasarkan poin 2.\n"
             . "- JIKA USER MENANYAKAN PEMELIHARAAN: Jawablah berdasarkan poin 3.\n"
@@ -778,12 +844,28 @@ class SimoliAiAssistantService
                 $text .= "🏢 **Rincian Target RKP per Unit PKS ({$tahunRencana}):**\n";
                 $text .= "| No | PKS | Flat Bed | Long Bed | Total Bed |\n";
                 $text .= "| :-: | :--- | -: | -: | -: |\n";
-                foreach ($r['items'] as $idx => $item) {
-                    $pksName = $item->pks ? $item->pks->akro : ($item->nama ?: 'PKS');
-                    $fb = number_format($item->flat_bed, 0, ',', '.');
-                    $lb = number_format($item->long_bed, 0, ',', '.');
-                    $tb = number_format(($item->flat_bed + $item->long_bed), 0, ',', '.');
-                    $text .= "| " . ($idx + 1) . " | **{$pksName}** | {$fb} Bed | {$lb} Bed | **{$tb} Bed** |\n";
+                $orderMap = array_flip(self::PKS_STANDARD_ORDER);
+                $groupedRencana = $r['items']->groupBy('id_pks')->map(function ($items) {
+                    $first = $items->first();
+                    $flatBed = self::numericSum($items, 'flat_bed');
+                    $longBed = self::numericSum($items, 'long_bed');
+                    return [
+                        'pks' => $first->pks,
+                        'akro' => $first->pks ? $first->pks->akro : ($first->akro ?: 'PKS'),
+                        'flat_bed' => $flatBed,
+                        'long_bed' => $longBed,
+                        'total_bed' => $flatBed + $longBed,
+                    ];
+                })->sortBy(function ($item) use ($orderMap) {
+                    $akro = strtoupper(trim($item['akro']));
+                    return $orderMap[$akro] ?? 999;
+                })->values();
+
+                foreach ($groupedRencana as $idx => $item) {
+                    $fb = number_format($item['flat_bed'], 0, ',', '.');
+                    $lb = number_format($item['long_bed'], 0, ',', '.');
+                    $tb = number_format($item['total_bed'], 0, ',', '.');
+                    $text .= "| " . ($idx + 1) . " | **{$item['akro']}** | {$fb} Bed | {$lb} Bed | **{$tb} Bed** |\n";
                 }
                 $text .= "\n";
             }
@@ -1065,17 +1147,20 @@ class SimoliAiAssistantService
             $text .= "- 📋 **Total Entri Data:** " . number_format($p['records']) . " Transaksi\n\n";
 
             // Tabel Breakdown per PKS jika ada data
-            if (!empty($scopedData['pks_breakdown']) && $p['records'] > 0) {
-                $text .= "🏢 **Rekap Singkat per PKS:**\n";
-                $text .= "| PKS | Vol Dihasilkan | Vol Dialirkan | Flat Bed | Luas |\n";
-                $text .= "| :--- | -: | -: | -: | -: |\n";
-                foreach (array_slice($scopedData['pks_breakdown'], 0, 12) as $row) {
-                    if ($row['vol_dialirkan'] > 0 || $row['vol_dihasilkan'] > 0 || $row['flat_bed_pengaliran'] > 0) {
+            if (!empty($scopedData['pks_breakdown'])) {
+                $isAllPksRequested = str_contains($q, 'semua') || str_contains($q, 'seluruh') || str_contains($q, '12') || str_contains($q, 'unit');
+                $text .= "🏢 **Rekap Singkat per Unit PKS (Urutan Baku):**\n";
+                $text .= "| No | PKS | Vol Dihasilkan | Vol Dialirkan | Flat Bed | Luas |\n";
+                $text .= "| :-: | :--- | -: | -: | -: | -: |\n";
+                $no = 1;
+                foreach ($scopedData['pks_breakdown'] as $row) {
+                    $hasData = ($row['vol_dialirkan'] > 0 || $row['vol_dihasilkan'] > 0 || $row['flat_bed_pengaliran'] > 0);
+                    if ($hasData || $isAllPksRequested) {
                         $vh = number_format($row['vol_dihasilkan'], 0, ',', '.');
                         $va = number_format($row['vol_dialirkan'], 0, ',', '.');
                         $fb = number_format($row['flat_bed_pengaliran'], 0, ',', '.');
                         $la = number_format($row['luas_area'], 1, ',', '.');
-                        $text .= "| **{$row['akro']}** | {$vh} m³ | {$va} m³ | {$fb} Bed | {$la} Ha |\n";
+                        $text .= "| " . ($no++) . " | **{$row['akro']}** | {$vh} m³ | {$va} m³ | {$fb} Bed | {$la} Ha |\n";
                     }
                 }
                 $text .= "\n";
