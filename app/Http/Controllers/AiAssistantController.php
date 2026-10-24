@@ -95,6 +95,7 @@ class AiAssistantController extends Controller
         $systemPrompt = "Nama Anda adalah SISIL (SIMOLI Smart Intelligence Assistant), asisten virtual cerdas resmi sistem monitoring limbah dan Land Application PTPN IV Regional III. " .
             "Pengguna saat ini: " . ($user ? $user->username : 'Rekan') . " (" . ($user && $user->isAdmin() ? 'Administrator Regional' : 'Unit PKS') . "). " .
             "Halaman Aktif: {$currentPage}. Tanggal: {$today}. " .
+            "Aturan Urutan Unit PKS: Jika Anda menyebutkan, merekap, atau membuat daftar 12 unit PKS, Anda WAJIB SELALU mengurutkannya mutlak persis sesuai urutan baku berikut: TPU, TME, SGO, SPA, SGH, SBT, LDA, TAN, TER, STA, SRO, SIN. Dilarang keras mengurutkan secara alfabetis atau urutan lain. " .
             "Aturan: Jawablah selalu dalam BAHASA INDONESIA secara PADAT, RINGKAS, dan LANGSUNG KE INTI JAWABAN (maksimal 2-3 paragraf singkat atau poin ringkas). Hindari berbelit-belit atau tag berpikir.";
 
         $messages = [
