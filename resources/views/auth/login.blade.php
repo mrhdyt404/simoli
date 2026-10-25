@@ -586,7 +586,7 @@
         <div class="corporate-logos-strip">
             <img src="{{ asset('img/png-transparent-bumn-untuk-indonesia-thumbnail.png') }}" alt="BUMN Untuk Indonesia" title="BUMN Untuk Indonesia">
             <div class="corporate-logo-divider"></div>
-            <img src="{{ asset('img/logo-perkebunan-nusantara-ptpn-png-svg.webp') }}" alt="Holding Perkebunan Nusantara" title="Holding Perkebunan Nusantara">
+            <img src="{{ asset('img/logo-perkebunan-nusantara-ptpn-png-svg.png') }}" alt="Holding Perkebunan Nusantara" title="Holding Perkebunan Nusantara">
             <div class="corporate-logo-divider"></div>
             <img src="{{ asset('img/Logo PTPN IV-CyWK9qsP.png') }}" alt="PTPN IV PalmCo" title="PTPN IV PalmCo">
         </div>
@@ -639,7 +639,7 @@
                 <div class="card-corporate-logos">
                     <img src="{{ asset('img/png-transparent-bumn-untuk-indonesia-thumbnail.png') }}" alt="BUMN" title="BUMN Untuk Indonesia">
                     <div class="corporate-logo-divider"></div>
-                    <img src="{{ asset('img/logo-perkebunan-nusantara-ptpn-png-svg.webp') }}" alt="PTPN" title="Holding Perkebunan Nusantara">
+                    <img src="{{ asset('img/logo-perkebunan-nusantara-ptpn-png-svg.png') }}" alt="PTPN" title="Holding Perkebunan Nusantara">
                     <div class="corporate-logo-divider"></div>
                     <img src="{{ asset('img/Logo PTPN IV-CyWK9qsP.png') }}" alt="PTPN IV" title="PTPN IV PalmCo">
                 </div>
