@@ -17,25 +17,26 @@ class MonitoringApiController extends Controller
 {
     private function getUserFromToken(Request $request)
     {
-        $authHeader = $request->header('Authorization');
-        if (!$authHeader || !str_starts_with($authHeader, 'Bearer ')) {
-            return null;
-        }
-
-        $token = str_replace('Bearer ', '', $authHeader);
-        $decoded = base64_decode($token, true);
-        if ($decoded === false) return null;
-
-        $parts = explode(':', $decoded);
-
-        if (count($parts) < 2) return null;
-
-        $user = User::with('pks')->find($parts[0]);
-        if ($user && $user->username === $parts[1]) {
+        if ($user = $request->user()) {
             return $user;
         }
 
-        return null;
+        $authHeader = $request->header('Authorization');
+        if ($authHeader && str_starts_with($authHeader, 'Bearer ')) {
+            $token = trim(substr($authHeader, 7));
+            $decoded = base64_decode($token, true);
+            if ($decoded !== false) {
+                $parts = explode(':', $decoded);
+                if (count($parts) >= 2) {
+                    $user = User::with('pks')->find($parts[0]);
+                    if ($user && $user->username === $parts[1]) {
+                        return $user;
+                    }
+                }
+            }
+        }
+
+        return \Illuminate\Support\Facades\Auth::user() ?? \Illuminate\Support\Facades\Auth::guard('web')->user();
     }
 
     public function dashboardStats(Request $request)
