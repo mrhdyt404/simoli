@@ -945,7 +945,7 @@
 
                             {{-- Perkebunan Nusantara Logo --}}
                             <div class="corp-logo-item" title="Perkebunan Nusantara">
-                                <img src="{{ asset('img/logo-perkebunan-nusantara-ptpn-png-svg.webp') }}" alt="Perkebunan Nusantara" style="max-height: 44px; width: auto; object-fit: contain;">
+                                <img src="{{ asset('img/logo-perkebunan-nusantara-ptpn-png-svg.png') }}" alt="Perkebunan Nusantara" style="max-height: 44px; width: auto; object-fit: contain;">
                             </div>
                         </div>
                     </div>
