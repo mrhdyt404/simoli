@@ -292,14 +292,18 @@ class SyncApiController extends Controller
     {
         try {
             $user = $this->getAuthenticatedUser($request);
-
-            $idPks = $request->input('id_pks');
-            if (!$idPks && $user && ($user->isUnit() || $user->isFieldUser() || $user->id_pks)) {
-                $idPks = $user->id_pks;
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthenticated. Silakan login terlebih dahulu.',
+                ], 401);
             }
 
-            if (!$idPks) {
-                $idPks = Pks::value('id_pks') ?? 1;
+            // Enforce unit isolation: unit/field user can only pull their assigned PKS data
+            if (($user->isUnit() || $user->isFieldUser()) && $user->id_pks) {
+                $idPks = $user->id_pks;
+            } else {
+                $idPks = $request->input('id_pks') ?? $user->id_pks ?? Pks::value('id_pks') ?? 1;
             }
 
             $lastSync = $request->input('last_sync');
@@ -378,6 +382,17 @@ class SyncApiController extends Controller
      */
     public function push(Request $request)
     {
+        // Graceful response for GET requests (prevents 405 MethodNotAllowed)
+        if ($request->isMethod('get')) {
+            return response()->json([
+                'success' => true,
+                'status' => 'ready',
+                'message' => 'Endpoint sinkronisasi offline SIMOLI siap digunakan. Gunakan metode HTTP POST berserta payload transaksi offline untuk melakukan sinkronisasi data.',
+                'endpoint' => '/api/sync/push',
+                'supported_methods' => ['POST'],
+            ]);
+        }
+
         $user = $this->getAuthenticatedUser($request);
         if (!$user) {
             return response()->json([
